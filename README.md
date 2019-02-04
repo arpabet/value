@@ -1,2 +1,2 @@
-# generictable
+# genval
 Generic Table in GO
