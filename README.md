@@ -1,2 +1,2 @@
 # genval
-Generic Table in GO
+Generic Value in GO
