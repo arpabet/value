@@ -3,6 +3,7 @@ package genval
 import (
 	"reflect"
 	"io"
+	"github.com/shvid/genval/genval_impl"
 )
 
 /**
@@ -93,21 +94,30 @@ type Expression interface {
 		Gets token at the index
 	 */
 
-	GetAt(int) String
+	GetAt(int) string
 
 	/**
 		Gets the whole path of the value
 	 */
 
-	GetPath() []String
+	GetPath() []string
 
 	/**
 		Outputs expression as a string
 	 */
 
-	String() String
+	String() string
 
 }
+
+/**
+	Parses expression
+ */
+
+func Expr(str string) Expression {
+	return genval_impl.ParseExpr(str)
+}
+
 
 /**
 	Boolean interface
