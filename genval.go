@@ -42,13 +42,7 @@ type Value interface {
 		Converts Generic Value to String
 	 */
 
-	String() String
-
-	/**
-		Converts Generic Value to Hex String
-    */
-
-	HexString() String
+	String() string
 
 	/**
 		Converts Generic Value to Byte String (msgpack format)
@@ -66,7 +60,7 @@ type Value interface {
 		Converts Generic Value to JSON
 	 */
 
-	Json() String
+	Json() string
 
 }
 
