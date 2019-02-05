@@ -2,7 +2,6 @@ package genval
 
 import (
 	"reflect"
-	"io"
 	"github.com/shvid/genval/genval_impl"
 )
 
@@ -45,22 +44,38 @@ type Value interface {
 	String() string
 
 	/**
-		Converts Generic Value to Byte String (msgpack format)
+		Pack generic value by using packer
 	 */
 
-	ByteString() []byte
-
-	/**
-		Writes Generic Value to the io.Writer
-	 */
-
-	WriteTo(io.Writer)
+	Pack(Packer)
 
 	/**
 		Converts Generic Value to JSON
 	 */
 
 	Json() string
+
+}
+
+/**
+	Base interface for the packing values
+ */
+
+type Packer interface {
+
+	PackNil()
+
+	PackBool(bool)
+
+	PackLong(int64)
+
+	PackDouble(float64)
+
+	PackString(string)
+
+	PackBytes([]byte)
+
+	Error() error
 
 }
 

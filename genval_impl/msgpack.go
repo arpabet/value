@@ -1,5 +1,11 @@
 package genval_impl
 
+import (
+	"io"
+	"math"
+	"encoding/binary"
+)
+
 const (
 
 	mpPosFixIntMask 	byte = 0x80
@@ -50,5 +56,164 @@ const (
 
 	mpNegFixIntPrefix 	byte = 0xe0
 
+	defBufSize = 16
 )
 
+var (
+	mpNilBin 	=  []byte { mpNil }
+	mpTrueBin 	=  []byte { mpTrue }
+	mpFalseBin 	=  []byte { mpFalse }
+)
+
+
+type MessagePacker struct {
+	buf 	[defBufSize]byte
+	w 		io.Writer
+	err     error
+}
+
+func NewMessagePacker(w io.Writer) *MessagePacker {
+	return &MessagePacker{w: w}
+}
+
+func (p MessagePacker) PackNil()  {
+	if p.err == nil {
+		_, p.err = p.w.Write(mpNilBin)
+	}
+}
+
+func (p MessagePacker) PackBool(val bool) {
+	if p.err == nil {
+		if val {
+			_, p.err = p.w.Write(mpTrueBin)
+		} else {
+			_, p.err = p.w.Write(mpFalseBin)
+		}
+	}
+}
+
+func (p MessagePacker) PackLong(val int64) {
+	if p.err == nil {
+		_, p.err = p.w.Write(p.writeVLong(val))
+	}
+}
+
+func (p MessagePacker) PackDouble(val float64) {
+	if p.err == nil {
+		_, p.err = p.w.Write(p.writeFixedULong(math.Float64bits(val)))
+	}
+}
+
+func (p MessagePacker) PackString(str string) {
+	b := []byte(str)
+	if p.err == nil {
+		_, p.err = p.w.Write(p.writeStrHeader(len(b)))
+	}
+	if p.err == nil {
+		_, p.err = p.w.Write(b)
+	}
+}
+
+func (p MessagePacker) PackBytes(b []byte) {
+	if p.err == nil {
+		_, p.err = p.w.Write(p.writeBinHeader(len(b)))
+	}
+	if p.err == nil {
+		_, p.err = p.w.Write(b)
+	}
+}
+
+func (p MessagePacker) writeVLong(val int64) []byte {
+
+	switch {
+		case val >= 0:
+			return p.writeVULong(uint64(val))
+		case val >= -32:
+			p.buf[0] = byte(val)
+			return p.buf[:1]
+		case val >= math.MinInt8:
+			p.buf[0] = mpInt8
+			p.buf[1] = byte(val)
+			return p.buf[:2]
+		case val >= math.MinInt16:
+			p.buf[0] = mpInt16
+			binary.BigEndian.PutUint16(p.buf[1:3], uint16(val))
+			return p.buf[:3]
+		case val >= math.MinInt32:
+			p.buf[0] = mpInt32
+			binary.BigEndian.PutUint32(p.buf[1:5], uint32(val))
+			return p.buf[:5]
+		default:
+			p.buf[0] = mpInt64
+			binary.BigEndian.PutUint64(p.buf[1:9], uint64(val))
+			return p.buf[:9]
+	}
+
+}
+
+func (p MessagePacker) writeVULong(val uint64) []byte {
+	switch {
+	case val <= math.MaxInt8:
+		p.buf[0] = byte(val)
+		return p.buf[:1]
+	case val <= math.MaxUint8:
+		p.buf[0] = mpUint8
+		p.buf[1] = byte(val)
+		return p.buf[:2]
+	case val <= math.MaxUint16:
+		p.buf[0] = mpUint16
+		binary.BigEndian.PutUint16(p.buf[1:3], uint16(val))
+		return p.buf[:3]
+	case val <= math.MaxUint32:
+		p.buf[0] = mpUint32
+		binary.BigEndian.PutUint32(p.buf[1:5], uint32(val))
+		return p.buf[:5]
+	default:
+		p.buf[0] = mpUint64
+		binary.BigEndian.PutUint64(p.buf[1:9], val)
+		return p.buf[:9]
+	}
+}
+
+func (p MessagePacker) writeFixedULong(val uint64) []byte {
+	b := p.buf[:8]
+	binary.BigEndian.PutUint64(b, val)
+	return b
+}
+
+func (p MessagePacker) writeBinHeader(len int) []byte {
+	switch {
+	case len <= math.MaxUint8:
+		p.buf[0] = mpBin8
+		p.buf[1] = byte(len)
+		return p.buf[:2]
+	case len <= math.MaxUint16:
+		p.buf[0] = mpBin16
+		binary.BigEndian.PutUint16(p.buf[1:3], uint16(len))
+		return p.buf[:3]
+	default:
+		p.buf[0] = mpBin32
+		binary.BigEndian.PutUint32(p.buf[1:5], uint32(len))
+		return p.buf[:5]
+	}
+}
+
+func (p MessagePacker) writeStrHeader(len int) []byte {
+	switch {
+	case len < 32:
+		p.buf[0] = mpFixStrPrefix | byte(len)
+		return p.buf[:1]
+	case len <= math.MaxUint8:
+		p.buf[0] = mpStr8
+		p.buf[1] = byte(len)
+		return p.buf[:2]
+	case len <= math.MaxUint16:
+		p.buf[0] = mpStr16
+		binary.BigEndian.PutUint16(p.buf[1:3], uint16(len))
+		return p.buf[:3]
+	default:
+		p.buf[0] = mpStr32
+		binary.BigEndian.PutUint32(p.buf[1:5], uint32(len))
+		return p.buf[:5]
+	}
+}

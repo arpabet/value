@@ -2,11 +2,12 @@ package genval_impl
 
 import (
 	"reflect"
-	"io"
 	"github.com/shvid/genval"
+	"strconv"
 )
 
 type BoolVal bool
+
 
 func (b BoolVal) Kind() genval.Kind {
 	return genval.BoolVal
@@ -17,27 +18,11 @@ func (b BoolVal) Class() reflect.Type {
 }
 
 func (b BoolVal) String() string {
-	if b {
-		return "true"
-	} else {
-		return "false"
-	}
+	return strconv.FormatBool(bool(b))
 }
 
-func (b BoolVal) ByteString() []byte {
-	if b {
-		return []byte { mpTrue }
-	} else {
-		return []byte { mpFalse }
-	}
-}
-
-func (b BoolVal) WriteTo(writer io.Writer) {
-	if b {
-		writer.Write([]byte { mpTrue })
-	} else {
-		writer.Write([]byte { mpFalse })
-	}
+func (b BoolVal) Pack(p genval.Packer) {
+	p.PackBool(bool(b))
 }
 
 func (b BoolVal) Json() string {
