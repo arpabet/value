@@ -221,10 +221,16 @@ type String interface {
 	Type() StringType
 
 	/**
+		Length of the string
+	 */
+
+	Len() int
+
+	/**
 		Gets string as utf8 string
 	 */
 
-	UTF8() String
+	Utf8() string
 
 	/**
 		Gets string as byte array
