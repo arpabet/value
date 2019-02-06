@@ -23,7 +23,7 @@ func Utf8(val string) *StringValue {
 	}
 }
 
-func Bytes(val []byte, copy bool) *StringValue {
+func Raw(val []byte, copy bool) *StringValue {
 	return &StringValue{
 		dt: RAW,
 		bytes: val,
