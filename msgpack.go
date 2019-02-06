@@ -1,4 +1,4 @@
-package genval_impl
+package genval
 
 import (
 	"io"
@@ -100,7 +100,9 @@ func (p MessagePacker) PackLong(val int64) {
 
 func (p MessagePacker) PackDouble(val float64) {
 	if p.err == nil {
-		_, p.err = p.w.Write(p.writeFixedULong(math.Float64bits(val)))
+		p.buf[0] = mpFloat64
+		binary.BigEndian.PutUint64(p.buf[1:9], math.Float64bits(val))
+		_, p.err = p.w.Write(p.buf[:9])
 	}
 }
 
@@ -121,6 +123,10 @@ func (p MessagePacker) PackBytes(b []byte) {
 	if p.err == nil {
 		_, p.err = p.w.Write(b)
 	}
+}
+
+func (p MessagePacker) Error() error {
+	return p.err
 }
 
 func (p MessagePacker) writeVLong(val int64) []byte {

@@ -2,7 +2,6 @@ package genval
 
 import (
 	"reflect"
-	"github.com/shvid/genval/genval_impl"
 )
 
 /**
@@ -15,12 +14,12 @@ import (
 type Kind int
 
 const (
-	InvalidVal Kind = iota
-	NilVal
-	BoolVal
-	NumberVal
-	StringVal
-	TableVal
+	INVALID Kind = iota
+	NIL
+	BOOL
+	NUMBER
+	STRING
+	TABLE
 )
 
 type Value interface {
@@ -85,7 +84,7 @@ type Packer interface {
     Author: Alex Shvid
  */
 
-type Expression interface {
+type Expr interface {
 
 	/**
 		Returns true if expression is empty
@@ -119,14 +118,6 @@ type Expression interface {
 
 }
 
-/**
-	Parses expression
- */
-
-func Expr(str string) Expression {
-	return genval_impl.ParseExpr(str)
-}
-
 
 /**
 	Boolean interface
@@ -156,8 +147,8 @@ type NumberType int
 
 const (
 	InvalidNumber NumberType = iota
-	Long
-	Double
+	LONG
+	DOUBLE
 )
 
 type Number interface {
@@ -208,7 +199,7 @@ type StringType int
 const (
 	InvalidString StringType = iota
 	UTF8
-	Bytes
+	RAW
 )
 
 type String interface {
@@ -236,7 +227,7 @@ type String interface {
 		Gets string as byte array
 	 */
 
-	Bytes() []byte
+	Raw() []byte
 
 }
 
@@ -254,8 +245,8 @@ type TableType int
 
 const (
 	InvalidTable TableType = iota
-	Array
-	Map
+	ARRAY
+	MAP
 )
 
 type Table interface {
@@ -331,31 +322,31 @@ type Table interface {
 		Gets value by the expression
  	*/
 
-	GetX(Expression) Value
+	GetX(Expr) Value
 
 	/**
 		Gets table by the expression
 	 */
 
-	GetTableX(Expression) Table
+	GetTableX(Expr) Table
 
 	/**
 		Gets boolean value by the expression
 	 */
 
-	GetBoolX(Expression) Bool
+	GetBoolX(Expr) Bool
 
 	/**
 		Gets number value by the expression
 	 */
 
-	GetNumberX(Expression) Number
+	GetNumberX(Expr) Number
 
 	/**
 		Gets string value by the expression
 	 */
 
-	GetStringX(Expression) String
+	GetStringX(Expr) String
 
 	/**
 		Puts value by the key and returns old one
@@ -373,7 +364,7 @@ type Table interface {
 		Puts value by the expression and returns old one
  	*/
 
-	PutX(exp Expression, value Value) Value
+	PutX(exp Expr, value Value) Value
 
 	/**
 		Removes value by the key and returns old one
@@ -391,7 +382,7 @@ type Table interface {
 		Removes value by the expression and returns old one
  	*/
 
-	RemoveX(Expression) Value
+	RemoveX(Expr) Value
 
 	/**
 		Returns Map of entries
