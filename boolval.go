@@ -5,38 +5,38 @@ import (
 	"strconv"
 )
 
-type BoolValue bool
+type boolValue bool
 
 func Boolean(b bool) Bool {
-	return BoolValue(b)
+	return boolValue(b)
 }
 
-func ParseBoolean(str string) BoolValue {
+func ParseBoolean(str string) boolValue {
 	b, _ := strconv.ParseBool(str)
-	return BoolValue(b)
+	return boolValue(b)
 }
 
-func (b BoolValue) Kind() Kind {
+func (b boolValue) Kind() Kind {
 	return BOOL
 }
 
-func (b BoolValue) Class() reflect.Type {
-	return reflect.TypeOf(BoolValue(false))
+func (b boolValue) Class() reflect.Type {
+	return reflect.TypeOf(boolValue(false))
 }
 
-func (b BoolValue) String() string {
+func (b boolValue) String() string {
 	return strconv.FormatBool(bool(b))
 }
 
-func (b BoolValue) Pack(p Packer) {
+func (b boolValue) Pack(p Packer) {
 	p.PackBool(bool(b))
 }
 
-func (b BoolValue) Json() string {
+func (b boolValue) Json() string {
 	return b.String()
 }
 
-func (b BoolValue) Boolean() bool {
+func (b boolValue) Boolean() bool {
 	return bool(b)
 }
 

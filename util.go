@@ -8,7 +8,7 @@ import (
 func Hex(val Value) string {
 
 	buf := bytes.Buffer{}
-	p := NewMessagePacker(&buf)
+	p := MessagePacker(&buf)
 	val.Pack(p)
 
 	return hex.EncodeToString(buf.Bytes())

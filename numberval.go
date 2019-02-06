@@ -6,35 +6,35 @@ import (
 	"fmt"
 )
 
-type NumberValue struct {
+type numberValue struct {
 	dt 		NumberType
 	long 	int64
 	double 	float64
 }
 
-func Long(val int64) *NumberValue {
-	return &NumberValue{
+func Long(val int64) *numberValue {
+	return &numberValue{
 		dt: LONG,
 		long: val,
 	}
 }
 
-func Double(val float64) *NumberValue {
-	return &NumberValue{
+func Double(val float64) *numberValue {
+	return &numberValue{
 		dt: DOUBLE,
 		double: val,
 	}
 }
 
-func (n NumberValue) Kind() Kind {
+func (n numberValue) Kind() Kind {
 	return NUMBER
 }
 
-func (n NumberValue) Class() reflect.Type {
-	return reflect.TypeOf((*NumberValue)(nil)).Elem()
+func (n numberValue) Class() reflect.Type {
+	return reflect.TypeOf((*numberValue)(nil)).Elem()
 }
 
-func (n NumberValue) String() string {
+func (n numberValue) String() string {
 	switch n.dt {
 	case LONG:
 		return strconv.FormatInt(n.long, 10)
@@ -44,7 +44,7 @@ func (n NumberValue) String() string {
 	return "nil"
 }
 
-func (n NumberValue) Pack(p Packer) {
+func (n numberValue) Pack(p Packer) {
 	switch n.dt {
 	case LONG:
 		p.PackLong(n.long)
@@ -55,15 +55,15 @@ func (n NumberValue) Pack(p Packer) {
 	}
 }
 
-func (n NumberValue) Json() string {
+func (n numberValue) Json() string {
 	return n.String()
 }
 
-func (n NumberValue) Type() NumberType {
+func (n numberValue) Type() NumberType {
 	return n.dt
 }
 
-func (n NumberValue) Long() int64 {
+func (n numberValue) Long() int64 {
 	switch n.dt {
 	case LONG:
 		return n.long
@@ -73,7 +73,7 @@ func (n NumberValue) Long() int64 {
 	return 0
 }
 
-func (n NumberValue) Double() float64 {
+func (n numberValue) Double() float64 {
 	switch n.dt {
 	case LONG:
 		return float64(n.long)
@@ -83,11 +83,11 @@ func (n NumberValue) Double() float64 {
 	return 0
 }
 
-func (n NumberValue) Add(other Number) Number {
+func (n numberValue) Add(other Number) Number {
 	return &n
 }
 
-func (n NumberValue) Subtract(other Number) Number {
+func (n numberValue) Subtract(other Number) Number {
 	return &n
 }
 

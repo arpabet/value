@@ -8,30 +8,33 @@ const (
 	exprSep = "."
 )
 
-type Expression struct {
+type expression struct {
 	path []string
 }
 
-func ParseExpr(str string) *Expression {
-	return &Expression{strings.Split(str, exprSep)}
+func Exp(str string) *expression {
+	return &expression{strings.Split(str, exprSep)}
 }
 
-func (e Expression) Empty() bool {
+func (e expression) Empty() bool {
 	return len(e.path) == 0
 }
 
-func (e Expression) Size() int {
+func (e expression) Size() int {
 	return len(e.path)
 }
 
-func (e Expression) GetAt(index int) string {
+func (e expression) GetAt(index int) string {
+	if index < 0 || index >= len(e.path) {
+		return ""
+	}
 	return e.path[index]
 }
 
-func (e Expression) GetPath() []string {
+func (e expression) GetPath() []string {
 	return e.path
 }
 
-func (e Expression) String() string {
+func (e expression) String() string {
 	return strings.Join(e.path, exprSep)
 }

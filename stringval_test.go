@@ -20,7 +20,7 @@ func TestString(t *testing.T) {
 		b := genval.Utf8(str)
 
 		require.Equal(t, genval.STRING, b.Kind())
-		require.Equal(t, "genval.StringValue", b.Class().String())
+		require.Equal(t, "genval.stringValue", b.Class().String())
 		require.Equal(t, hex, genval.Hex(b))
 		require.Equal(t, "\""+ str + "\"", b.Json())
 		require.Equal(t, str, b.String())

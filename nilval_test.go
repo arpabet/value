@@ -11,7 +11,7 @@ func TestNil(t *testing.T) {
 	b := genval.Nil()
 
 	require.Equal(t, genval.NIL, b.Kind())
-	require.Equal(t, "genval.NilValue", b.Class().String())
+	require.Equal(t, "genval.nilValue", b.Class().String())
 	require.Equal(t, "c0", genval.Hex(b))
 	require.Equal(t, "null", b.Json())
 	require.Equal(t, "nil", b.String())

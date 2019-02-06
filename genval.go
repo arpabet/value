@@ -234,9 +234,9 @@ type String interface {
 /**
 	Table interface
 
-    Tables can be Array or Map
+    Tables can be List or Map
 
-    For Array indexes start from 1 and increase sequentially
+    For List indexes start from 1 and increase sequentially
 
     Author: Alex Shvid
  */
@@ -245,7 +245,7 @@ type TableType int
 
 const (
 	InvalidTable TableType = iota
-	ARRAY
+	LIST
 	MAP
 )
 
@@ -391,10 +391,10 @@ type Table interface {
 	Map() map[string]Value
 
 	/**
-		Returns Array of values
+		Returns Slice of values
  	*/
 
-	Array() []Value
+	List() []Value
 
 	/**
 		Returns size of the table (number of entries)

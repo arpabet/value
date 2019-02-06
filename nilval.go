@@ -4,29 +4,29 @@ import (
 	"reflect"
 )
 
-type NilValue int
+type nilValue int
 
-func Nil() NilValue {
-	return NilValue(0)
+func Nil() nilValue {
+	return nilValue(0)
 }
 
-func (n NilValue) Kind() Kind {
+func (n nilValue) Kind() Kind {
 	return NIL
 }
 
-func (n NilValue) Class() reflect.Type {
-	return reflect.TypeOf(NilValue(0))
+func (n nilValue) Class() reflect.Type {
+	return reflect.TypeOf(nilValue(0))
 }
 
-func (n NilValue) String() string {
+func (n nilValue) String() string {
 	return "nil"
 }
 
-func (n NilValue) Pack(p Packer) {
+func (n nilValue) Pack(p Packer) {
 	p.PackNil()
 }
 
-func (n NilValue) Json() string {
+func (n nilValue) Json() string {
 	return "null"
 }
 
