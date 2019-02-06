@@ -15,7 +15,6 @@ type Kind int
 
 const (
 	INVALID Kind = iota
-	NIL
 	BOOL
 	NUMBER
 	STRING
@@ -146,7 +145,7 @@ type Bool interface {
 type NumberType int
 
 const (
-	NAN 	NumberType = iota
+	InvalidNumber 	NumberType = iota
 	LONG
 	DOUBLE
 )

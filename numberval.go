@@ -4,7 +4,9 @@ import (
 	"reflect"
 	"strconv"
 	"fmt"
+	"math"
 )
+
 
 type numberValue struct {
 	dt 		NumberType
@@ -26,6 +28,13 @@ func Double(val float64) *numberValue {
 	}
 }
 
+func Nan() *numberValue {
+	return &numberValue{
+		dt: DOUBLE,
+		double: math.NaN(),
+	}
+}
+
 func ParseNumber(str string) *numberValue {
 
 	if len(str) == 0 {
@@ -42,9 +51,7 @@ func ParseNumber(str string) *numberValue {
 		}
 	}
 
-	return &numberValue{
-		dt: NAN,
-	}
+	return Nan()
 
 }
 
@@ -63,7 +70,7 @@ func (n numberValue) String() string {
 	case DOUBLE:
 		return fmt.Sprint(n.double)
 	}
-	return "NAN"
+	return ""
 }
 
 func (n numberValue) Pack(p Packer) {
@@ -82,9 +89,13 @@ func (n numberValue) Json() string {
 	case LONG:
 		return strconv.FormatInt(n.long, 10)
 	case DOUBLE:
-		return fmt.Sprint(n.double)
+		if math.IsNaN(n.double) {
+			return "null"
+		} else {
+			return fmt.Sprint(n.double)
+		}
 	}
-	return ""
+	return "null"
 }
 
 func (n numberValue) Type() NumberType {
@@ -96,7 +107,11 @@ func (n numberValue) Long() int64 {
 	case LONG:
 		return n.long
 	case DOUBLE:
-		return int64(n.double)
+		if math.IsNaN(n.double) {
+			return 0
+		} else {
+			return int64(n.double)
+		}
 	}
 	return 0
 }
@@ -108,14 +123,34 @@ func (n numberValue) Double() float64 {
 	case DOUBLE:
 		return n.double
 	}
-	return 0
+	return math.NaN()
 }
 
 func (n numberValue) Add(other Number) Number {
-	return &n
+	switch n.dt {
+	case LONG:
+		return Long(n.long + other.Long())
+	case DOUBLE:
+		right := other.Double()
+		if math.IsNaN(n.double) || math.IsNaN(right) {
+			return Nan()
+		}
+		return Double(n.double + right)
+	}
+	return Nan()
 }
 
 func (n numberValue) Subtract(other Number) Number {
-	return &n
+	switch n.dt {
+	case LONG:
+		return Long(n.long - other.Long())
+	case DOUBLE:
+		right := other.Double()
+		if math.IsNaN(n.double) || math.IsNaN(right) {
+			return Nan()
+		}
+		return Double(n.double - right)
+	}
+	return Nan()
 }
 

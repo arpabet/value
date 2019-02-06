@@ -203,10 +203,12 @@ func TestParseNaN(t *testing.T) {
 	b := genval.ParseNumber("not a number")
 
 	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.NAN, b.Type())
+	require.Equal(t, genval.DOUBLE, b.Type())
+	require.True(t, math.IsNaN(b.Double()))
+	require.Equal(t, int64(0), b.Long())
 	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "c0", genval.Hex(b))
-	require.Equal(t, "", b.Json())
-	require.Equal(t, "NAN", b.String())
+	require.Equal(t, "cb7ff8000000000001", genval.Hex(b))
+	require.Equal(t, "null", b.Json())
+	require.Equal(t, "NaN", b.String())
 
 }
