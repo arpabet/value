@@ -12,7 +12,7 @@ type expression struct {
 	path []string
 }
 
-func Exp(str string) *expression {
+func Expression(str string) *expression {
 	return &expression{strings.Split(str, exprSep)}
 }
 

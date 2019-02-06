@@ -146,7 +146,7 @@ type Bool interface {
 type NumberType int
 
 const (
-	InvalidNumber NumberType = iota
+	NAN 	NumberType = iota
 	LONG
 	DOUBLE
 )
@@ -322,79 +322,103 @@ type Table interface {
 		Gets value by the expression
  	*/
 
-	GetX(Expr) Value
+	GetExp(Expr) Value
 
 	/**
 		Gets table by the expression
 	 */
 
-	GetTableX(Expr) Table
+	GetTableExp(Expr) Table
 
 	/**
 		Gets boolean value by the expression
 	 */
 
-	GetBoolX(Expr) Bool
+	GetBoolExp(Expr) Bool
 
 	/**
 		Gets number value by the expression
 	 */
 
-	GetNumberX(Expr) Number
+	GetNumberExp(Expr) Number
 
 	/**
 		Gets string value by the expression
 	 */
 
-	GetStringX(Expr) String
+	GetStringExp(Expr) String
+
+	/**
+		Adds value to table (list), equivalent of Put(MaxIndex()+1, value)
+	 */
+
+	Insert(Value)
 
 	/**
 		Puts value by the key and returns old one
 	 */
 
-	Put(key string, value Value) Value
+	Put(key string, value Value)
 
 	/**
 		Puts value by the index and returns old one
  	*/
 
-	PutAt(index int, value Value) Value
+	PutAt(index int, value Value)
 
 	/**
 		Puts value by the expression and returns old one
  	*/
 
-	PutX(exp Expr, value Value) Value
+	PutExp(exp Expr, value Value)
 
 	/**
 		Removes value by the key and returns old one
  	*/
 
-	Remove(string) Value
+	Remove(string)
 
 	/**
 		Removes value by the index and returns old one
  	*/
 
-	RemoveAt(int) Value
+	RemoveAt(int)
 
 	/**
 		Removes value by the expression and returns old one
  	*/
 
-	RemoveX(Expr) Value
+	RemoveExp(Expr)
 
 	/**
-		Returns Map of entries
+		Returns key-value pairs in map
 	 */
 
 	Map() map[string]Value
 
 	/**
-		Returns Slice of values
+		Returns values as a slice
  	*/
 
 	List() []Value
+
+	/**
+		Gets sorted indexes and keys
+	 */
+
+	Keys() []string
+
+	/**
+		Gets sorted indexes only
+	 */
+
+	Indexes() []int
+
+	/**
+		Returns max index for list or 0
+	 */
+
+	MaxIndex() int
 
 	/**
 		Returns size of the table (number of entries)

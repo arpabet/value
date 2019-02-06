@@ -26,6 +26,28 @@ func Double(val float64) *numberValue {
 	}
 }
 
+func ParseNumber(str string) *numberValue {
+
+	if len(str) == 0 {
+		return Long(0)
+	}
+
+	long, err := strconv.ParseInt(str, 10, 64)
+	if err == nil {
+		return Long(long)
+	} else {
+		double, err := strconv.ParseFloat(str, 64)
+		if err == nil {
+			return Double(double)
+		}
+	}
+
+	return &numberValue{
+		dt: NAN,
+	}
+
+}
+
 func (n numberValue) Kind() Kind {
 	return NUMBER
 }
@@ -41,7 +63,7 @@ func (n numberValue) String() string {
 	case DOUBLE:
 		return fmt.Sprint(n.double)
 	}
-	return "nil"
+	return "NAN"
 }
 
 func (n numberValue) Pack(p Packer) {
@@ -56,7 +78,13 @@ func (n numberValue) Pack(p Packer) {
 }
 
 func (n numberValue) Json() string {
-	return n.String()
+	switch n.dt {
+	case LONG:
+		return strconv.FormatInt(n.long, 10)
+	case DOUBLE:
+		return fmt.Sprint(n.double)
+	}
+	return ""
 }
 
 func (n numberValue) Type() NumberType {

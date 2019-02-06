@@ -2,10 +2,13 @@ package genval
 
 import (
 	"reflect"
+	"encoding/base64"
+	"strings"
 )
 
 const (
 	jsonQuote = "\""
+	base64Prefix = "base64!"
 )
 
 var jsonQuoteByte = byte(jsonQuote[0])
@@ -28,6 +31,16 @@ func Raw(val []byte, copy bool) *stringValue {
 		dt: RAW,
 		bytes: val,
 	}
+}
+
+func ParseString(str string) *stringValue {
+	if strings.HasPrefix(str, base64Prefix) {
+		raw, err := base64.RawStdEncoding.DecodeString(str[len(base64Prefix):])
+		if err == nil {
+			return Raw(raw, false)
+		}
+	}
+	return Utf8(str)
 }
 
 func (s stringValue) Kind() Kind {
@@ -54,7 +67,7 @@ func (s stringValue) String() string {
 	case UTF8:
 		return s.utf8
 	case RAW:
-		return string(s.bytes)
+		return base64Prefix + base64.RawStdEncoding.EncodeToString(s.bytes)
 	default:
 		return ""
 	}
@@ -72,19 +85,7 @@ func (s stringValue) Pack(p Packer) {
 }
 
 func (s stringValue) Json() string {
-	switch s.dt {
-	case UTF8:
-		return jsonQuote + s.utf8 + jsonQuote
-	case RAW:
-		l := len(s.bytes)
-		b := make([]byte, 1 + l + 1)
-		b[0] = jsonQuoteByte
-		copy(b[1:], s.bytes)
-		b[l] = jsonQuoteByte
-		return string(b)
-	default:
-		return jsonQuote + jsonQuote
-	}
+	return jsonQuote + s.String() + jsonQuote
 }
 
 func (s stringValue) Type() StringType {
@@ -102,7 +103,7 @@ func (s stringValue) Utf8() string {
 	}
 }
 
-func (s stringValue) Bytes() []byte {
+func (s stringValue) Raw() []byte {
 	switch s.dt {
 	case UTF8:
 		return []byte(s.utf8)
