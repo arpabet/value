@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/shvid/genval"
 	"bytes"
+	"strconv"
 )
 
 var testStrings = map[string]string {
@@ -28,6 +29,20 @@ func TestUtf8String(t *testing.T) {
 		require.Equal(t, str, b.String())
 
 	}
+
+}
+
+func TestJsonString(t *testing.T) {
+
+	src := "json\"val\"json"
+
+	s := genval.Utf8(src)
+
+	require.Equal(t, src, s.String())
+	require.Equal(t, "\"json\\\"val\\\"json\"", s.Json())
+
+	actual, _ := strconv.Unquote(s.Json())
+	require.Equal(t, src, actual)
 
 }
 

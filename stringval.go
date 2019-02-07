@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"encoding/base64"
 	"strings"
+	"strconv"
 )
 
 const (
@@ -85,7 +86,14 @@ func (s stringValue) Pack(p Packer) {
 }
 
 func (s stringValue) Json() string {
-	return jsonQuote + s.String() + jsonQuote
+	switch s.dt {
+	case UTF8:
+		return strconv.Quote(s.utf8)
+	case RAW:
+		return jsonQuote + base64Prefix + base64.RawStdEncoding.EncodeToString(s.bytes) + jsonQuote
+	default:
+		return jsonQuote + jsonQuote
+	}
 }
 
 func (s stringValue) Type() StringType {
