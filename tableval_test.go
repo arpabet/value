@@ -205,3 +205,33 @@ func TestTablePutLongNum(t *testing.T) {
 	require.Equal(t, 0, b.Size())
 
 }
+
+func TestJsonListTable(t *testing.T) {
+
+	b := genval.List()
+
+	b.Insert(genval.Boolean(true))
+	b.Insert(genval.Long(123))
+	b.Insert(genval.Double(-12.34))
+	b.Insert(genval.Utf8("text"))
+	b.Insert(genval.Raw([]byte{0, 1, 2}, false))
+
+	require.Equal(t, "[true,123,-12.34,\"text\",\"base64,AAEC\"]", b.Json())
+	require.Equal(t, "95c37bcbc028ae147ae147aea474657874c403000102", genval.Hex(b))
+
+}
+
+func TestJsonMapTable(t *testing.T) {
+
+	b := genval.Map()
+
+	b.Insert(genval.Boolean(true))
+	b.Insert(genval.Long(123))
+	b.Insert(genval.Double(-12.34))
+	b.Insert(genval.Utf8("text"))
+	b.Insert(genval.Raw([]byte{0, 1, 2}, false))
+
+	require.Equal(t, "{\"1\": true,\"2\": 123,\"3\": -12.34,\"4\": \"text\",\"5\": \"base64,AAEC\"}", b.Json())
+	require.Equal(t, "8501c3027b03cbc028ae147ae147ae04a47465787405c403000102", genval.Hex(b))
+
+}

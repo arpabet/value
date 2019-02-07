@@ -68,8 +68,13 @@ func (l tableKey) Compare(r tableKey) int {
 func (k tableKey) String() string {
 	if k.typ == INDEX {
 		return strconv.Itoa(k.index)
+	} else {
+		return k.key
 	}
-	return k.key
+}
+
+func (k tableKey) Json() string {
+	return strconv.Quote(k.String())
 }
 
 func (k tableKey) Describe() string {
@@ -151,26 +156,41 @@ func (t tableValue) Class() reflect.Type {
 }
 
 func (t *tableValue) String() string {
-
-	// this call will compact table
-	if t.isSequenceList() {
-		return "[]"
-	} else {
-		return "{}"
-	}
-
-
+	return t.Json()
 }
 
 func (t *tableValue) Json() string {
 
+	var b strings.Builder
+
 	// this call will compact table
 	if t.isSequenceList() {
-		return "[]"
+		b.WriteRune('[')
+
+		for i, e := range t.entries {
+			if i != 0 {
+				b.WriteRune(',')
+			}
+			b.WriteString(e.value.Json())
+		}
+
+		b.WriteRune(']')
 	} else {
-		return "{}"
+		b.WriteRune('{')
+
+		for i, e := range t.entries {
+			if i != 0 {
+				b.WriteRune(',')
+			}
+			b.WriteString(e.key.Json())
+			b.WriteString(": ")
+			b.WriteString(e.value.Json())
+		}
+
+		b.WriteRune('}')
 	}
 
+	return b.String()
 }
 
 

@@ -10,10 +10,11 @@ import (
 
 const (
 	jsonQuote = "\""
-	base64Prefix = "base64!"
 )
 
 var jsonQuoteByte = byte(jsonQuote[0])
+
+var Base64Prefix = "base64,"
 
 type stringValue struct {
 	dt 		StringType
@@ -53,8 +54,8 @@ func Raw(val []byte, copy bool) *stringValue {
 }
 
 func ParseString(str string) *stringValue {
-	if strings.HasPrefix(str, base64Prefix) {
-		raw, err := base64.RawStdEncoding.DecodeString(str[len(base64Prefix):])
+	if strings.HasPrefix(str, Base64Prefix) {
+		raw, err := base64.RawStdEncoding.DecodeString(str[len(Base64Prefix):])
 		if err == nil {
 			return Raw(raw, false)
 		}
@@ -86,7 +87,7 @@ func (s stringValue) String() string {
 	case UTF8:
 		return s.utf8
 	case RAW:
-		return base64Prefix + base64.RawStdEncoding.EncodeToString(s.bytes)
+		return Base64Prefix + base64.RawStdEncoding.EncodeToString(s.bytes)
 	default:
 		return ""
 	}
@@ -108,7 +109,7 @@ func (s stringValue) Json() string {
 	case UTF8:
 		return strconv.Quote(s.utf8)
 	case RAW:
-		return jsonQuote + base64Prefix + base64.RawStdEncoding.EncodeToString(s.bytes) + jsonQuote
+		return jsonQuote + Base64Prefix + base64.RawStdEncoding.EncodeToString(s.bytes) + jsonQuote
 	default:
 		return jsonQuote + jsonQuote
 	}

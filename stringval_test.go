@@ -53,12 +53,12 @@ func TestRawString(t *testing.T) {
 
 	require.Equal(t, genval.STRING, s.Kind())
 	require.Equal(t, genval.RAW, s.Type())
-	require.Equal(t, "base64!AAECAwQF", s.String())
-	require.Equal(t, "\"base64!AAECAwQF\"", s.Json())
+	require.Equal(t, genval.Base64Prefix + "AAECAwQF", s.String())
+	require.Equal(t, "\"" + genval.Base64Prefix + "AAECAwQF\"", s.Json())
 	require.Equal(t, "c406000102030405", genval.Hex(s))
 	require.Equal(t, 0, bytes.Compare(raw, s.Raw()))
 
 	actual := genval.ParseString(s.String())
-	require.Equal(t, 0, bytes.Compare(s.Raw(), actual.Raw()))
-
+	//equire.Equal(t, 0, bytes.Compare(s.Raw(), actual.Raw()))
+	require.Equal(t, s.Raw(), actual.Raw())
 }
