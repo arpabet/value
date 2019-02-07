@@ -239,6 +239,10 @@ func (t *tableValue) MarshalJSON() ([]byte, error) {
 	return []byte(out.String()), nil
 }
 
+func (t *tableValue) MarshalBinary() ([]byte, error) {
+	return Pack(t), nil
+}
+
 func (t *tableValue) Pack(p Packer) {
 
 	if !t.tryLock() {

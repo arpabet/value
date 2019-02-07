@@ -152,6 +152,10 @@ func (s stringValue) MarshalJSON() ([]byte, error) {
 	}
 }
 
+func (s stringValue) MarshalBinary() ([]byte, error) {
+	return Pack(s), nil
+}
+
 func (s stringValue) Type() StringType {
 	return s.dt
 }

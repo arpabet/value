@@ -158,6 +158,18 @@ func (n numberValue) MarshalJSON() ([]byte, error) {
 	}
 }
 
+func (n numberValue) MarshalBinary() ([]byte, error) {
+	mp := &messagePacker{}
+	switch n.dt {
+	case LONG:
+		return mp.writeVLong(n.long), nil
+	case DOUBLE:
+		return mp.writeDouble(n.double), nil
+	default:
+		return nil, errors.New("unknown data type")
+	}
+}
+
 func (n numberValue) Type() NumberType {
 	return n.dt
 }

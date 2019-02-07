@@ -22,6 +22,7 @@ import (
 	"reflect"
 	"strings"
 	"encoding/json"
+	"encoding"
 )
 
 /**
@@ -43,6 +44,7 @@ const (
 
 type Value interface {
 	json.Marshaler
+	encoding.BinaryMarshaler
 
 	/**
 		Gets value kind type for easy reflection

@@ -96,17 +96,13 @@ func MessagePacker(w io.Writer) *messagePacker {
 
 func (p messagePacker) PackNil()  {
 	if p.err == nil {
-		_, p.err = p.w.Write(mpNilBin)
+		_, p.err = p.w.Write(p.writeNil())
 	}
 }
 
 func (p messagePacker) PackBool(val bool) {
 	if p.err == nil {
-		if val {
-			_, p.err = p.w.Write(mpTrueBin)
-		} else {
-			_, p.err = p.w.Write(mpFalseBin)
-		}
+		_, p.err = p.w.Write(p.writeBool(val))
 	}
 }
 
@@ -118,9 +114,7 @@ func (p messagePacker) PackLong(val int64) {
 
 func (p messagePacker) PackDouble(val float64) {
 	if p.err == nil {
-		p.buf[0] = mpFloat64
-		binary.BigEndian.PutUint64(p.buf[1:9], math.Float64bits(val))
-		_, p.err = p.w.Write(p.buf[:9])
+		_, p.err = p.w.Write(p.writeDouble(val))
 	}
 }
 
@@ -163,6 +157,18 @@ func (p messagePacker) PackMap(size int) {
 
 func (p messagePacker) Error() error {
 	return p.err
+}
+
+func (p messagePacker) writeNil() []byte {
+	return mpNilBin
+}
+
+func (p messagePacker) writeBool(val bool) []byte {
+	if val {
+		return mpTrueBin
+	} else {
+		return mpFalseBin
+	}
 }
 
 func (p messagePacker) writeVLong(val int64) []byte {
@@ -217,10 +223,10 @@ func (p messagePacker) writeVULong(val uint64) []byte {
 	}
 }
 
-func (p messagePacker) writeFixedULong(val uint64) []byte {
-	b := p.buf[:8]
-	binary.BigEndian.PutUint64(b, val)
-	return b
+func (p messagePacker) writeDouble(val float64) []byte {
+	p.buf[0] = mpFloat64
+	binary.BigEndian.PutUint64(p.buf[1:9], math.Float64bits(val))
+	return p.buf[:9]
 }
 
 func (p messagePacker) writeBinHeader(len int) []byte {
