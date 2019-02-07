@@ -16,9 +16,9 @@ func TestEmptyTable(t *testing.T) {
 	require.Equal(t, "genval.tableValue", b.Class().String())
 	require.Equal(t, 0, b.Len())
 	require.Equal(t, 0, b.Size())
-	require.Equal(t, "80", genval.Hex(b))
-	require.Equal(t, "{}", b.Json())
-	require.Equal(t, "{}", b.String())
+	require.Equal(t, "90", genval.Hex(b))
+	require.Equal(t, "[]", b.Json())
+	require.Equal(t, "[]", b.String())
 
 	b = genval.Map()
 
@@ -45,11 +45,11 @@ func TestConvertTable(t *testing.T) {
 
 	b.Put("first", genval.Long(1))
 	require.False(t,  b.Sorted())
+	require.Equal(t, 1, b.Len())
 
 	require.Equal(t, genval.TABLE, b.Kind())
 	require.Equal(t, genval.MAP, b.Type())
 
-	require.Equal(t, 1, b.Len())
 	require.Equal(t, 1, b.Size())
 
 	// Clear

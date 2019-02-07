@@ -151,35 +151,83 @@ func (t tableValue) Class() reflect.Type {
 }
 
 func (t *tableValue) String() string {
-	t.Sort()
-	return "{}"
-}
 
-func (t *tableValue) Pack(p Packer) {
-	t.Compact()
-	p.PackMap(len(t.entries))
-
-	for _, e := range t.entries {
-
-		switch e.key.typ {
-		case INDEX:
-			p.PackLong(int64(e.key.index))
-		case KEY:
-			p.PackString(e.key.key)
-		}
-
-		// after Compact all ops are PUT
-		e.value.Pack(p)
+	// this call will compact table
+	if t.isSequenceList() {
+		return "[]"
+	} else {
+		return "{}"
 	}
+
+
 }
 
 func (t *tableValue) Json() string {
-	t.Sort()
-	return "{}"
+
+	// this call will compact table
+	if t.isSequenceList() {
+		return "[]"
+	} else {
+		return "{}"
+	}
+
 }
 
-func (t tableValue) Type() TableType {
-	return t.typ
+
+func (t *tableValue) Pack(p Packer) {
+
+	// this call will compact table
+	if t.isSequenceList() {
+
+		p.PackList(len(t.entries))
+
+		for _, e := range t.entries {
+			e.value.Pack(p)
+		}
+
+	} else {
+
+		p.PackMap(len(t.entries))
+
+		for _, e := range t.entries {
+
+			switch e.key.typ {
+			case INDEX:
+				p.PackLong(int64(e.key.index))
+			case KEY:
+				p.PackString(e.key.key)
+			}
+
+			// after Compact all ops are PUT
+			e.value.Pack(p)
+		}
+
+	}
+
+}
+
+/**
+	Check if List starts from FirstIndex and a sequence of numbers
+ */
+
+func (t tableValue) isSequenceList() bool {
+	t.Compact()
+	if t.typ == LIST {
+		l := len(t.entries)
+		if l <= 1 {
+			return true
+		}
+		return t.entries[0].key.index == FirstIndex && t.entries[l-1].key.index == FirstIndex + l - 1
+	}
+	return false
+}
+
+func (t *tableValue) Type() TableType {
+	if t.typ == LIST && t.isSequenceList() {
+		return LIST
+	} else {
+		return MAP
+	}
 }
 
 func (t *tableValue) Get(key string) Value {
@@ -562,6 +610,10 @@ func (t *tableValue) Compact() {
 		t.entryProcessor(func(e *tableEntry) {
 			list = append(list, e)
 		})
+		if len(list) == 0 {
+			t.typ = LIST
+			t.maxIndex = 0
+		}
 		t.entries = list
 		t.compacted = true
 	}

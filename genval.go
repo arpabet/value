@@ -78,6 +78,8 @@ type Packer interface {
 
 	PackBytes([]byte)
 
+	PackList(int)
+
 	PackMap(int)
 
 	Error() error
