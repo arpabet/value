@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"strconv"
 	"sort"
+	"fmt"
+	"strings"
 )
 
 //
@@ -85,11 +87,19 @@ type tableValue struct {
 	sorted   	bool
 }
 
+func (t *tableValue) Equal(val Value) bool {
+	if val == nil || val.Kind() != TABLE {
+		return false
+	}
+	o := val.(*tableValue)
+	return reflect.DeepEqual(t.Map(), o.Map())
+}
+
 func (t tableValue) Len() int {
 	return len(t.entries)
 }
 
-func (t tableValue) Swap(i, j int) {
+func (t *tableValue) Swap(i, j int) {
 	t.entries[i], t.entries[j] = t.entries[j], t.entries[i]
 }
 
@@ -101,7 +111,7 @@ func (t tableValue) Less(i, j int) bool {
 	c := l.key.Compare(r.key)
 
 	if c == 0 {
-		c = l.rev - r.rev
+		c = r.rev - l.rev
 	}
 
 	if c < 0 {
@@ -112,14 +122,14 @@ func (t tableValue) Less(i, j int) bool {
 }
 
 func List() *tableValue {
-	return NewTable(LIST)
+	return newTable(LIST)
 }
 
 func Map() *tableValue {
-	return NewTable(MAP)
+	return newTable(MAP)
 }
 
-func NewTable(typ TableType) *tableValue {
+func newTable(typ TableType) *tableValue {
 	return &tableValue{typ: typ, entries: make([]*tableEntry, 0, InitTableSize), sorted: true}
 }
 
@@ -131,17 +141,17 @@ func (t tableValue) Class() reflect.Type {
 	return reflect.TypeOf((*tableValue)(nil)).Elem()
 }
 
-func (t tableValue) String() string {
+func (t *tableValue) String() string {
 	t.sortIfNeeded()
 	return "{}"
 }
 
-func (t tableValue) Pack(p Packer) {
+func (t *tableValue) Pack(p Packer) {
 	t.sortIfNeeded()
 	p.PackNil()
 }
 
-func (t tableValue) Json() string {
+func (t *tableValue) Json() string {
 	t.sortIfNeeded()
 	return "{}"
 }
@@ -150,9 +160,9 @@ func (t tableValue) Type() TableType {
 	return t.typ
 }
 
-func (t tableValue) Get(key string) Value {
+func (t *tableValue) Get(key string) Value {
 
-	if isDigitalString(key) {
+	if isNumericString(key) {
 		index, err := strconv.Atoi(key)
 		if err == nil {
 			return t.GetAt(index)
@@ -177,7 +187,7 @@ func (t tableValue) Get(key string) Value {
 	return nil
 }
 
-func (t tableValue) GetTable(key string) Table {
+func (t *tableValue) GetTable(key string) Table {
 	value := t.Get(key)
 	if value != nil && value.Kind() == TABLE {
 		return value.(Table)
@@ -185,7 +195,7 @@ func (t tableValue) GetTable(key string) Table {
 	return nil
 }
 
-func (t tableValue) GetBool(key string) Bool {
+func (t *tableValue) GetBool(key string) Bool {
 	value := t.Get(key)
 	if value != nil {
 		if value.Kind() == BOOL {
@@ -196,7 +206,7 @@ func (t tableValue) GetBool(key string) Bool {
 	return nil
 }
 
-func (t tableValue) GetNumber(key string) Number {
+func (t *tableValue) GetNumber(key string) Number {
 	value := t.Get(key)
 	if value != nil {
 		if value.Kind() == NUMBER {
@@ -207,7 +217,7 @@ func (t tableValue) GetNumber(key string) Number {
 	return nil
 }
 
-func (t tableValue) GetString(key string) String {
+func (t *tableValue) GetString(key string) String {
 	value := t.Get(key)
 	if value != nil {
 		if value.Kind() == STRING {
@@ -218,7 +228,7 @@ func (t tableValue) GetString(key string) String {
 	return nil
 }
 
-func (t tableValue) GetAt(index int) Value {
+func (t *tableValue) GetAt(index int) Value {
 	t.sortIfNeeded()
 	n := len(t.entries)
 	i := sort.Search(n, func(i int) bool {
@@ -237,7 +247,7 @@ func (t tableValue) GetAt(index int) Value {
 	return nil
 }
 
-func (t tableValue) GetTableAt(index int) Table {
+func (t *tableValue) GetTableAt(index int) Table {
 	value := t.GetAt(index)
 	if value != nil && value.Kind() == TABLE {
 		return value.(Table)
@@ -245,7 +255,7 @@ func (t tableValue) GetTableAt(index int) Table {
 	return nil
 }
 
-func (t tableValue) GetBoolAt(index int) Bool {
+func (t *tableValue) GetBoolAt(index int) Bool {
 	value := t.GetAt(index)
 	if value != nil {
 		if value.Kind() == BOOL {
@@ -256,7 +266,7 @@ func (t tableValue) GetBoolAt(index int) Bool {
 	return nil
 }
 
-func (t tableValue) GetNumberAt(index int) Number {
+func (t *tableValue) GetNumberAt(index int) Number {
 	value := t.GetAt(index)
 	if value != nil {
 		if value.Kind() == NUMBER {
@@ -267,7 +277,7 @@ func (t tableValue) GetNumberAt(index int) Number {
 	return nil
 }
 
-func (t tableValue) GetStringAt(index int) String {
+func (t *tableValue) GetStringAt(index int) String {
 	value := t.GetAt(index)
 	if value != nil {
 		if value.Kind() == STRING {
@@ -278,7 +288,7 @@ func (t tableValue) GetStringAt(index int) String {
 	return nil
 }
 
-func (t tableValue) GetExp(e Expr) Value {
+func (t *tableValue) GetExp(e Expr) Value {
 	return t.evaluate(e, false, func(table *tableValue, key string) Value {
 		if table != nil {
 			return table.Get(key)
@@ -287,7 +297,7 @@ func (t tableValue) GetExp(e Expr) Value {
 	})
 }
 
-func (t tableValue) GetTableExp(e Expr) Table {
+func (t *tableValue) GetTableExp(e Expr) Table {
 	value := t.GetExp(e)
 	if value != nil && value.Kind() == TABLE {
 		return value.(Table)
@@ -295,7 +305,7 @@ func (t tableValue) GetTableExp(e Expr) Table {
 	return nil
 }
 
-func (t tableValue) GetBoolExp(e Expr) Bool {
+func (t *tableValue) GetBoolExp(e Expr) Bool {
 	value := t.GetExp(e)
 	if value != nil {
 		if value.Kind() == BOOL {
@@ -306,7 +316,7 @@ func (t tableValue) GetBoolExp(e Expr) Bool {
 	return nil
 }
 
-func (t tableValue) GetNumberExp(e Expr) Number {
+func (t *tableValue) GetNumberExp(e Expr) Number {
 	value := t.GetExp(e)
 	if value != nil {
 		if value.Kind() == NUMBER {
@@ -317,7 +327,7 @@ func (t tableValue) GetNumberExp(e Expr) Number {
 	return nil
 }
 
-func (t tableValue) GetStringExp(e Expr) String {
+func (t *tableValue) GetStringExp(e Expr) String {
 	value := t.GetExp(e)
 	if value != nil {
 		if value.Kind() == STRING {
@@ -328,13 +338,13 @@ func (t tableValue) GetStringExp(e Expr) String {
 	return nil
 }
 
-func (t tableValue) Insert(value Value) {
+func (t *tableValue) Insert(value Value) {
 	t.PutAt(t.MaxIndex()+1, value)
 }
 
-func (t tableValue) Put(key string, value Value) {
+func (t *tableValue) Put(key string, value Value) {
 
-	if isDigitalString(key) {
+	if isNumericString(key) {
 		index, err := strconv.Atoi(key)
 		if err == nil {
 			t.PutAt(index, value)
@@ -354,7 +364,7 @@ func (t tableValue) Put(key string, value Value) {
 	t.sorted = false
 }
 
-func (t tableValue) PutAt(index int, value Value) {
+func (t *tableValue) PutAt(index int, value Value) {
 
 	if t.maxIndex < index {
 		t.maxIndex = index
@@ -370,7 +380,7 @@ func (t tableValue) PutAt(index int, value Value) {
 	t.sorted = false
 }
 
-func (t tableValue) PutExp(exp Expr, value Value) {
+func (t *tableValue) PutExp(exp Expr, value Value) {
 
 	t.evaluate(exp, true, func(table *tableValue, key string) Value {
 		table.Put(key, value)
@@ -379,9 +389,9 @@ func (t tableValue) PutExp(exp Expr, value Value) {
 
 }
 
-func (t tableValue) Remove(key string) {
+func (t *tableValue) Remove(key string) {
 
-	if isDigitalString(key) {
+	if isNumericString(key) {
 		index, err := strconv.Atoi(key)
 		if err == nil {
 			t.RemoveAt(index)
@@ -395,7 +405,7 @@ func (t tableValue) Remove(key string) {
 	t.sorted = false
 }
 
-func (t tableValue) RemoveAt(index int) {
+func (t *tableValue) RemoveAt(index int) {
 
 	entry := &tableEntry{ key: tableKey{typ: INDEX, index: index}, rev: t.nextRevision(), op: REMOVE}
 	t.entries = append(t.entries, entry)
@@ -403,7 +413,7 @@ func (t tableValue) RemoveAt(index int) {
 	t.sorted = false
 }
 
-func (t tableValue) RemoveExp(exp Expr) {
+func (t *tableValue) RemoveExp(exp Expr) {
 
 	t.evaluate(exp, false, func(table *tableValue, key string) Value {
 		if table != nil {
@@ -414,7 +424,7 @@ func (t tableValue) RemoveExp(exp Expr) {
 
 }
 
-func (t tableValue) Map() map[string]Value {
+func (t *tableValue) Map() map[string]Value {
 	m := make(map[string]Value)
 	t.entryProcessor(func (e *tableEntry) {
 		m[e.key.String()] = e.value
@@ -422,7 +432,7 @@ func (t tableValue) Map() map[string]Value {
 	return m
 }
 
-func (t tableValue) List() []Value {
+func (t *tableValue) List() []Value {
 	list := make([]Value, 0, len(t.entries))
 	t.entryProcessor(func (e *tableEntry) {
 		list = append(list, e.value)
@@ -430,7 +440,7 @@ func (t tableValue) List() []Value {
 	return list
 }
 
-func (t tableValue) Keys() []string {
+func (t *tableValue) Keys() []string {
 	list := make([]string, 0, len(t.entries))
 	t.entryProcessor(func (e *tableEntry) {
 		list = append(list, e.key.String())
@@ -438,7 +448,7 @@ func (t tableValue) Keys() []string {
 	return list
 }
 
-func (t tableValue) Indexes() []int {
+func (t *tableValue) Indexes() []int {
 	list := make([]int, 0, len(t.entries))
 	t.entryProcessor(func (e *tableEntry) {
 		if e.key.typ == INDEX {
@@ -452,11 +462,15 @@ func (t tableValue) MaxIndex() int {
 	return t.maxIndex
 }
 
-func (t tableValue) Size() int {
-	return len(t.entries)
+func (t *tableValue) Size() int {
+	size := 0
+	t.entryProcessor(func (e *tableEntry) {
+		size = size + 1
+	})
+	return size
 }
 
-func (t tableValue) Clear() {
+func (t *tableValue) Clear() {
 	t.typ = LIST
 	t.entries = make([]*tableEntry, 0, InitTableSize)
 	t.revision = 0
@@ -464,21 +478,25 @@ func (t tableValue) Clear() {
 	t.sorted = true
 }
 
-func (t tableValue) sortIfNeeded() {
+func (t tableValue) Sorted() bool {
+	return t.sorted
+}
+
+func (t *tableValue) sortIfNeeded() {
 	if !t.sorted {
 		sort.Sort(t)
 		t.sorted = true
 	}
 }
 
-func (t tableValue) nextRevision() int {
+func (t *tableValue) nextRevision() int {
 	t.revision = t.revision + 1
 	return t.revision
 }
 
 type entryCallback = func (*tableEntry)
 
-func (t tableValue) entryProcessor(cb entryCallback) {
+func (t *tableValue) entryProcessor(cb entryCallback) {
 	t.sortIfNeeded()
 	var k *tableKey
 	for _, e := range t.entries {
@@ -495,7 +513,7 @@ func (t tableValue) entryProcessor(cb entryCallback) {
 
 type operationFunc = func (table *tableValue, key string) Value
 
-func (t tableValue) evaluate(ve Expr, createSubTables bool, op operationFunc) Value {
+func (t *tableValue) evaluate(ve Expr, createSubTables bool, op operationFunc) Value {
 
 	if ve.Empty() {
 		return nil
@@ -503,7 +521,7 @@ func (t tableValue) evaluate(ve Expr, createSubTables bool, op operationFunc) Va
 
 	lastIndex := ve.Size() - 1
 
-	current := &t;
+	current := t;
 	for i := 0; i < lastIndex; i++ {
 
 		key := ve.GetAt(i)
@@ -531,7 +549,43 @@ func (t tableValue) evaluate(ve Expr, createSubTables bool, op operationFunc) Va
 
 }
 
-func isDigitalString(str string) bool {
+func (t tableValue) Describe() string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "table: %s, revision=%d, maxIndex=%d, sorted=%t {\n", t.typ, t.revision, t.maxIndex, t.sorted)
+	for i, e := range t.entries {
+		fmt.Fprintf(&b,"    entry[%d]=", i)
+		e.DescribeTo(&b)
+		fmt.Fprint(&b, "\n")
+	}
+	fmt.Fprintf(&b, "}\n")
+	return b.String()
+}
+
+func (e tableEntry) DescribeTo(b *strings.Builder) {
+	fmt.Fprintf(b, "rev=%d, op=%s, key=%v, value=%v", e.rev, e.op, e.key, e.value)
+}
+
+func (o opCode) String() string {
+	switch o {
+	case PUT:
+		return "PUT"
+	case REMOVE:
+		return "REMOVE"
+	}
+	return "InvalidOp"
+}
+
+func (t TableType) String() string {
+	switch t {
+	case LIST:
+		return "LIST"
+	case MAP:
+		return "MAP"
+	}
+	return "InvalidTable"
+}
+
+func isNumericString(str string) bool {
 	for _, ch := range str {
 		if ch < '0' || ch > '9' {
 			return false

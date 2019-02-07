@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"strings"
 	"strconv"
+	"bytes"
 )
 
 const (
@@ -18,6 +19,23 @@ type stringValue struct {
 	dt 		StringType
 	utf8 	string
 	bytes 	[]byte
+}
+
+func (s stringValue) Equal(val Value) bool {
+	if val == nil || val.Kind() != STRING {
+		return false
+	}
+	o := val.(*stringValue)
+	if s.dt != o.dt {
+		return false
+	}
+	switch s.dt {
+	case UTF8:
+		return s.utf8 == o.utf8
+	case RAW:
+		return bytes.Compare(s.bytes, o.bytes) == 0
+	}
+	return false
 }
 
 func Utf8(val string) *stringValue {

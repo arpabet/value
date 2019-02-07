@@ -7,6 +7,14 @@ import (
 
 type boolValue bool
 
+func (b boolValue) Equal(val Value) bool {
+	if val == nil || val.Kind() != BOOL {
+		return false
+	}
+	o := val.(boolValue)
+	return b == o
+}
+
 func Boolean(b bool) Bool {
 	return boolValue(b)
 }

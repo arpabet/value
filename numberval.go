@@ -7,11 +7,35 @@ import (
 	"math"
 )
 
+const (
+	precisionLevel = 0.00001
+)
 
 type numberValue struct {
 	dt 		NumberType
 	long 	int64
 	double 	float64
+}
+
+func (n numberValue) Equal(val Value) bool {
+	if val == nil || val.Kind() != NUMBER {
+		return false
+	}
+	o := val.(*numberValue)
+	if n.dt != o.dt {
+		return false
+	}
+	switch n.dt {
+	case LONG:
+		return n.long == o.long
+	case DOUBLE:
+		if math.IsNaN(n.double) {
+			return math.IsNaN(o.double)
+		} else {
+			return math.Abs(n.double - o.double) < precisionLevel
+		}
+	}
+	return false
 }
 
 func Long(val int64) *numberValue {

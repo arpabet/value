@@ -42,7 +42,7 @@ type Value interface {
 	String() string
 
 	/**
-		Pack generic value by using packer
+		Pack generic value by using packer, must not be nil
 	 */
 
 	Pack(Packer)
@@ -53,6 +53,11 @@ type Value interface {
 
 	Json() string
 
+	/**
+		Check if values are equal, nil friendly function
+	 */
+
+	Equal(Value) bool
 }
 
 /**
