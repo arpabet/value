@@ -91,7 +91,8 @@ type tableValue struct {
 	entries  	[]*tableEntry
 	revision 	int         // the same as the last operation revision
 	maxIndex 	int
-	sorted   	bool
+	sorted      bool
+	compacted   bool
 }
 
 func (t *tableValue) Equal(val Value) bool {
@@ -106,7 +107,7 @@ func (t tableValue) Len() int {
 	return len(t.entries)
 }
 
-func (t *tableValue) Swap(i, j int) {
+func (t tableValue) Swap(i, j int) {
 	t.entries[i], t.entries[j] = t.entries[j], t.entries[i]
 }
 
@@ -137,7 +138,7 @@ func Map() *tableValue {
 }
 
 func newTable(typ TableType) *tableValue {
-	return &tableValue{typ: typ, entries: make([]*tableEntry, 0, InitTableSize), sorted: true}
+	return &tableValue{typ: typ, entries: make([]*tableEntry, 0, InitTableSize), sorted: true, compacted: true}
 }
 
 func (t tableValue) Kind() Kind {
@@ -149,17 +150,30 @@ func (t tableValue) Class() reflect.Type {
 }
 
 func (t *tableValue) String() string {
-	t.sortIfNeeded()
+	t.Sort()
 	return "{}"
 }
 
 func (t *tableValue) Pack(p Packer) {
-	t.sortIfNeeded()
-	p.PackNil()
+	t.Compact()
+	p.PackMap(len(t.entries))
+
+	for _, e := range t.entries {
+
+		switch e.key.typ {
+		case INDEX:
+			p.PackLong(int64(e.key.index))
+		case KEY:
+			p.PackString(e.key.key)
+		}
+
+		// after Compact all ops are PUT
+		e.value.Pack(p)
+	}
 }
 
 func (t *tableValue) Json() string {
-	t.sortIfNeeded()
+	t.Sort()
 	return "{}"
 }
 
@@ -176,7 +190,7 @@ func (t *tableValue) Get(key string) Value {
 		}
 	}
 
-	t.sortIfNeeded()
+	t.Sort()
 	n := len(t.entries)
 	i := sort.Search(n, func(i int) bool {
 		e := t.entries[i]
@@ -240,7 +254,7 @@ func (t *tableValue) GetString(key string) String {
 }
 
 func (t *tableValue) GetAt(index int) Value {
-	t.sortIfNeeded()
+	t.Sort()
 	n := len(t.entries)
 	i := sort.Search(n, func(i int) bool {
 		e := t.entries[i]
@@ -377,6 +391,7 @@ func (t *tableValue) Put(key string, value Value) {
 	t.entries = append(t.entries, entry)
 
 	t.sorted = false
+	t.compacted = false
 }
 
 func (t *tableValue) PutAt(index int, value Value) {
@@ -393,6 +408,7 @@ func (t *tableValue) PutAt(index int, value Value) {
 	t.entries = append(t.entries, entry)
 
 	t.sorted = false
+	t.compacted = false
 }
 
 func (t *tableValue) PutExp(exp Expr, value Value) {
@@ -418,6 +434,7 @@ func (t *tableValue) Remove(key string) {
 	t.entries = append(t.entries, entry)
 
 	t.sorted = false
+	t.compacted = false
 }
 
 func (t *tableValue) RemoveAt(index int) {
@@ -426,6 +443,7 @@ func (t *tableValue) RemoveAt(index int) {
 	t.entries = append(t.entries, entry)
 
 	t.sorted = false
+	t.compacted = false
 }
 
 func (t *tableValue) RemoveExp(exp Expr) {
@@ -478,11 +496,16 @@ func (t tableValue) MaxIndex() int {
 }
 
 func (t *tableValue) Size() int {
-	size := 0
-	t.entryProcessor(func (e *tableEntry) {
-		size = size + 1
-	})
-	return size
+	if t.compacted {
+		return len(t.entries)
+	} else {
+		t.Sort()
+		cnt := 0
+		t.entryProcessor(func (e *tableEntry) {
+			cnt = cnt + 1
+		})
+		return cnt
+	}
 }
 
 func (t *tableValue) Clear() {
@@ -491,13 +514,29 @@ func (t *tableValue) Clear() {
 	t.revision = 0
 	t.maxIndex = 0
 	t.sorted = true
+	t.compacted = true
 }
 
 func (t tableValue) Sorted() bool {
 	return t.sorted
 }
 
-func (t *tableValue) sortIfNeeded() {
+func (t tableValue) Compacted() bool {
+	return t.compacted
+}
+
+func (t *tableValue) Compact() {
+	if !t.compacted {
+		list := make([]*tableEntry, 0, len(t.entries))
+		t.entryProcessor(func(e *tableEntry) {
+			list = append(list, e)
+		})
+		t.entries = list
+		t.compacted = true
+	}
+}
+
+func (t *tableValue) Sort() {
 	if !t.sorted {
 		sort.Sort(t)
 		t.sorted = true
@@ -512,7 +551,7 @@ func (t *tableValue) nextRevision() int {
 type entryCallback = func (*tableEntry)
 
 func (t *tableValue) entryProcessor(cb entryCallback) {
-	t.sortIfNeeded()
+	t.Sort()
 	var k *tableKey
 	for _, e := range t.entries {
 		if k != nil && e.key.Compare(*k) == 0 {
@@ -566,7 +605,7 @@ func (t *tableValue) evaluate(ve Expr, createSubTables bool, op operationFunc) V
 
 func (t tableValue) Describe() string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "table: %s, revision=%d, maxIndex=%d, sorted=%t {\n", t.typ, t.revision, t.maxIndex, t.sorted)
+	fmt.Fprintf(&b, "table: %s, revision=%d, maxIndex=%d, sorted=%t, compacted=%t {\n", t.typ, t.revision, t.maxIndex, t.sorted, t.compacted)
 	for i, e := range t.entries {
 		fmt.Fprintf(&b,"    entry[%d]=", i)
 		e.DescribeTo(&b)

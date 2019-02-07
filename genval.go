@@ -78,6 +78,8 @@ type Packer interface {
 
 	PackBytes([]byte)
 
+	PackMap(int)
+
 	Error() error
 
 }
@@ -435,6 +437,18 @@ type Table interface {
 	 */
 
 	Clear()
+
+	/**
+		Trigger table compaction
+	 */
+
+	Compact()
+
+	/**
+		Sort entries in table
+ 	*/
+
+	Sort()
 
 }
 

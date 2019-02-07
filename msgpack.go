@@ -125,6 +125,15 @@ func (p messagePacker) PackBytes(b []byte) {
 	}
 }
 
+func (p messagePacker) PackMap(size int) {
+	if size < 0 {
+		size = 0
+	}
+	if p.err == nil {
+		_, p.err = p.w.Write(p.writeMapHeader(size))
+	}
+}
+
 func (p messagePacker) Error() error {
 	return p.err
 }
@@ -219,6 +228,22 @@ func (p messagePacker) writeStrHeader(len int) []byte {
 		return p.buf[:3]
 	default:
 		p.buf[0] = mpStr32
+		binary.BigEndian.PutUint32(p.buf[1:5], uint32(len))
+		return p.buf[:5]
+	}
+}
+
+func (p messagePacker) writeMapHeader(len int) []byte {
+	switch {
+	case len < 16:
+		p.buf[0] = mpFixMapPrefix | byte(len)
+		return p.buf[:1]
+	case len <= math.MaxUint16:
+		p.buf[0] = mpMap16
+		binary.BigEndian.PutUint16(p.buf[1:3], uint16(len))
+		return p.buf[:3]
+	default:
+		p.buf[0] = mpMap32
 		binary.BigEndian.PutUint32(p.buf[1:5], uint32(len))
 		return p.buf[:5]
 	}

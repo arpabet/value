@@ -16,7 +16,7 @@ func TestEmptyTable(t *testing.T) {
 	require.Equal(t, "genval.tableValue", b.Class().String())
 	require.Equal(t, 0, b.Len())
 	require.Equal(t, 0, b.Size())
-	require.Equal(t, "c0", genval.Hex(b))
+	require.Equal(t, "80", genval.Hex(b))
 	require.Equal(t, "{}", b.Json())
 	require.Equal(t, "{}", b.String())
 
@@ -27,7 +27,7 @@ func TestEmptyTable(t *testing.T) {
 	require.Equal(t, "genval.tableValue", b.Class().String())
 	require.Equal(t, 0, b.Len())
 	require.Equal(t, 0, b.Size())
-	require.Equal(t, "c0", genval.Hex(b))
+	require.Equal(t, "80", genval.Hex(b))
 	require.Equal(t, "{}", b.Json())
 	require.Equal(t, "{}", b.String())
 
@@ -184,5 +184,24 @@ func TestTablePut(t *testing.T) {
 		genval.Utf8("alex"),
 	}
 	require.True(t, reflect.DeepEqual(expectedList, b.List()))
+
+}
+
+func TestTablePutLongNum(t *testing.T) {
+
+	b := genval.List()
+
+	b.Put("12345678901234567890", genval.Long(555))
+
+	require.Equal(t, genval.MAP, b.Type())
+
+	num := b.GetNumber("12345678901234567890")
+	require.NotNil(t, num)
+
+	require.True(t, genval.Long(555).Equal(num))
+
+	b.Remove("12345678901234567890")
+
+	require.Equal(t, 0, b.Size())
 
 }
