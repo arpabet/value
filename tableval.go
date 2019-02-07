@@ -72,6 +72,13 @@ func (k tableKey) String() string {
 	return k.key
 }
 
+func (k tableKey) Describe() string {
+	if k.typ == INDEX {
+		return "INDEX:" + strconv.Itoa(k.index)
+	}
+	return "KEY:" + k.key
+}
+
 type tableEntry struct {
 	key     tableKey
 	rev     int
@@ -173,8 +180,12 @@ func (t *tableValue) Get(key string) Value {
 	n := len(t.entries)
 	i := sort.Search(n, func(i int) bool {
 		e := t.entries[i]
-		if e.key.typ == KEY {
-			return e.key.key > key
+		switch e.key.typ {
+		case INDEX:
+			// all indexes are in front
+			return false
+		case KEY:
+			return e.key.key >= key
 		}
 		return false
 	});
@@ -233,8 +244,12 @@ func (t *tableValue) GetAt(index int) Value {
 	n := len(t.entries)
 	i := sort.Search(n, func(i int) bool {
 		e := t.entries[i]
-		if e.key.typ == INDEX {
-			return e.key.index >= index
+		switch e.key.typ {
+			case INDEX:
+				return e.key.index >= index
+			case KEY:
+				// all keys are in the back
+				return true
 		}
 		return false
 	});
@@ -562,7 +577,7 @@ func (t tableValue) Describe() string {
 }
 
 func (e tableEntry) DescribeTo(b *strings.Builder) {
-	fmt.Fprintf(b, "rev=%d, op=%s, key=%v, value=%v", e.rev, e.op, e.key, e.value)
+	fmt.Fprintf(b, "rev=%d, op=%s, key=%v, value=%v", e.rev, e.op, e.key.Describe(), e.value)
 }
 
 func (o opCode) String() string {

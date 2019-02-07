@@ -4,6 +4,7 @@ import (
 	"testing"
 	"github.com/stretchr/testify/require"
 	"github.com/shvid/genval"
+	"reflect"
 )
 
 func TestEmptyTable(t *testing.T) {
@@ -89,24 +90,99 @@ func TestTablePutAt(t *testing.T) {
 	require.False(t,  b.Sorted())
 	require.Equal(t,  9, b.MaxIndex())
 
+	// Get
+
 	require.True(t, genval.Long(555).Equal(b.GetAt(5)))
 	require.True(t, genval.Long(777).Equal(b.GetAt(7)))
 	require.True(t, genval.Long(999).Equal(b.GetAt(9)))
 	require.False(t, genval.Long(0).Equal(b.GetAt(0)))
+
+	// Replace
+
+	b.PutAt(9, genval.Utf8("*"))
+	require.True(t, genval.Utf8("*").Equal(b.GetAt(9)))
 
 	require.Equal(t, []int{5, 7, 9}, b.Indexes())
 	require.True(t,  b.Sorted())
 	require.Equal(t, []string{"5", "7", "9"}, b.Keys())
 	require.Equal(t, 3, b.Size())
 
+	// Remove
+
 	b.RemoveAt(7)
 	require.False(t,  b.Sorted())
-	require.Equal(t, 4, b.Len())
+	require.Equal(t, 5, b.Len())
 	require.Equal(t, 2, b.Size())
 	require.Equal(t, []int{5, 9}, b.Indexes())
 	require.Equal(t, []string{"5", "9"}, b.Keys())
 
 	b.RemoveAt(9)
 	require.Equal(t,  9, b.MaxIndex())
+	require.Equal(t, 6, b.Len())
+	require.Equal(t, 1, b.Size())
+
+	// Test Map
+	expectedMap := map[string]genval.Value {
+		"5": genval.Long(555),
+	}
+	require.True(t, reflect.DeepEqual(expectedMap, b.Map()))
+
+	// Test List
+	expectedList := []genval.Value {
+		genval.Long(555),
+	}
+	require.True(t, reflect.DeepEqual(expectedList, b.List()))
+
+}
+
+func TestTablePut(t *testing.T) {
+
+	b := genval.Map()
+
+	b.Put("name", genval.Utf8("alex"))
+	b.Put("state", genval.Utf8("CA"))
+	b.Put("age", genval.Long(38))
+	b.Put("33", genval.Long(33))
+	require.False(t,  b.Sorted())
+
+	require.Equal(t, 4, b.Len())
+	require.Equal(t, 4, b.Size())
+
+	// Get
+
+	require.True(t, genval.Utf8("alex").Equal(b.Get("name")))
+	require.True(t, genval.Utf8("CA").Equal(b.Get("state")))
+	require.True(t, genval.Long(38).Equal(b.Get("age")))
+	require.True(t, genval.Long(33).Equal(b.Get("33")))
+	require.True(t, genval.Long(33).Equal(b.GetAt(33)))
+
+	// Remove
+
+	b.Remove("age")
+	require.Equal(t, 5, b.Len())
+	require.Equal(t, 3, b.Size())
+
+	require.Equal(t, []int{33}, b.Indexes())
+	require.Equal(t, []string{"33", "name", "state"}, b.Keys())
+	require.Equal(t,  33, b.MaxIndex())
+
+	// Remove
+	b.Remove("state")
+	require.Equal(t, 6, b.Len())
+	require.Equal(t, 2, b.Size())
+
+	// Test Map
+	expectedMap := map[string]genval.Value {
+		"33": genval.Long(33),
+		"name": genval.Utf8("alex"),
+	}
+	require.True(t, reflect.DeepEqual(expectedMap, b.Map()))
+
+	// Test List
+	expectedList := []genval.Value {
+		genval.Long(33),
+		genval.Utf8("alex"),
+	}
+	require.True(t, reflect.DeepEqual(expectedList, b.List()))
 
 }
