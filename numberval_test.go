@@ -182,7 +182,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, "1.2345678912345679e+08", b.String())
 
 	c := genval.ParseNumber("1.2345678912345679e+08")
-	require.Equal(t, b.Double(), c.Double())
+	DoubleEqual(t, b.Double(), c.Double())
 
 	b = genval.ParseNumber("-123456789.123456789")
 
@@ -194,7 +194,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, "-1.2345678912345679e+08", b.String())
 
 	c = genval.ParseNumber("-1.2345678912345679e+08")
-	require.Equal(t, b.Double(), c.Double())
+	DoubleEqual(t, b.Double(), c.Double())
 
 }
 
@@ -211,4 +211,136 @@ func TestParseNaN(t *testing.T) {
 	require.Equal(t, "null", b.Json())
 	require.Equal(t, "NaN", b.String())
 
+}
+
+func TestAddNumber(t *testing.T) {
+
+	a := genval.ParseNumber("3")
+	b := genval.ParseNumber("2")
+
+	c := a.Add(b)
+
+	require.Equal(t, genval.NUMBER, c.Kind())
+	require.Equal(t, genval.LONG, c.Type())
+
+	require.Equal(t, int64(3), a.Long())
+	require.Equal(t, int64(2), b.Long())
+	require.Equal(t, int64(5), c.Long())
+
+}
+
+func TestSubtractNumber(t *testing.T) {
+
+	a := genval.ParseNumber("3")
+	b := genval.ParseNumber("2")
+
+	c := a.Subtract(b)
+
+	require.Equal(t, genval.NUMBER, c.Kind())
+	require.Equal(t, genval.LONG, c.Type())
+
+	require.Equal(t, int64(3), a.Long())
+	require.Equal(t, int64(2), b.Long())
+	require.Equal(t, int64(1), c.Long())
+
+}
+
+func TestAddFloatNumber(t *testing.T) {
+
+	a := genval.ParseNumber("3.3")
+	b := genval.ParseNumber("2.2")
+
+	c := a.Add(b)
+
+	require.Equal(t, genval.NUMBER, c.Kind())
+	require.Equal(t, genval.DOUBLE, c.Type())
+
+	DoubleEqual(t, float64(3.3), a.Double())
+	DoubleEqual(t, float64(2.2), b.Double())
+	DoubleEqual(t, float64(5.5), c.Double())
+
+}
+
+func TestSubtractFloatNumber(t *testing.T) {
+
+	a := genval.ParseNumber("3.3")
+	b := genval.ParseNumber("2.2")
+
+	c := a.Subtract(b)
+
+	require.Equal(t, genval.NUMBER, c.Kind())
+	require.Equal(t, genval.DOUBLE, c.Type())
+
+	DoubleEqual(t, float64(3.3), a.Double())
+	DoubleEqual(t, float64(2.2), b.Double())
+	DoubleEqual(t, float64(1.1), c.Double())
+
+}
+
+func TestAddNaN(t *testing.T) {
+
+	a := genval.ParseNumber("3.3")
+	b := genval.ParseNumber("NaN")
+
+	c := a.Add(b)
+
+	require.Equal(t, genval.NUMBER, c.Kind())
+	require.Equal(t, genval.DOUBLE, c.Type())
+
+	DoubleEqual(t, float64(3.3), a.Double())
+	require.True(t, math.IsNaN(b.Double()))
+	require.True(t, math.IsNaN(c.Double()))
+
+}
+
+func TestSubtractNaN(t *testing.T) {
+
+	a := genval.ParseNumber("3.3")
+	b := genval.ParseNumber("NaN")
+
+	c := a.Subtract(b)
+
+	require.Equal(t, genval.NUMBER, c.Kind())
+	require.Equal(t, genval.DOUBLE, c.Type())
+
+	DoubleEqual(t, float64(3.3), a.Double())
+	require.True(t, math.IsNaN(b.Double()))
+	require.True(t, math.IsNaN(c.Double()))
+
+}
+
+func TestAddNaNBoth(t *testing.T) {
+
+	a := genval.ParseNumber("NaN")
+	b := genval.ParseNumber("NaN")
+
+	c := a.Add(b)
+
+	require.Equal(t, genval.NUMBER, c.Kind())
+	require.Equal(t, genval.DOUBLE, c.Type())
+
+	require.True(t, math.IsNaN(a.Double()))
+	require.True(t, math.IsNaN(b.Double()))
+	require.True(t, math.IsNaN(c.Double()))
+
+}
+
+func TestSubtractNaNBoth(t *testing.T) {
+
+	a := genval.ParseNumber("NaN")
+	b := genval.ParseNumber("NaN")
+
+	c := a.Subtract(b)
+
+	require.Equal(t, genval.NUMBER, c.Kind())
+	require.Equal(t, genval.DOUBLE, c.Type())
+
+	require.True(t, math.IsNaN(a.Double()))
+	require.True(t, math.IsNaN(b.Double()))
+	require.True(t, math.IsNaN(c.Double()))
+
+}
+
+func DoubleEqual(t *testing.T, left, right float64) {
+	require.True(t, math.Abs(left - right) < 0.00001)
 }
