@@ -117,6 +117,7 @@ type tableValue struct {
 	version     uint64
 	sorted      bool
 	compacted   bool
+	locked      bool
 }
 
 func (t *tableValue) Equal(val Value) bool {
@@ -177,7 +178,24 @@ func (t *tableValue) String() string {
 	return t.Json()
 }
 
+func (t *tableValue) tryLock() bool {
+	if t.locked {
+		return false
+	}
+	t.locked = true
+	return true
+}
+
+func (t *tableValue) unlock() {
+	t.locked = false
+}
+
 func (t *tableValue) Json() string {
+
+	if !t.tryLock() {
+		return "{}"
+	}
+	defer t.unlock()
 
 	var b strings.Builder
 
@@ -213,6 +231,12 @@ func (t *tableValue) Json() string {
 
 
 func (t *tableValue) Pack(p Packer) {
+
+	if !t.tryLock() {
+		p.PackNil()
+		return
+	}
+	defer t.unlock()
 
 	// this call will compact table
 	if t.isSequenceList() {

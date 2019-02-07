@@ -252,4 +252,25 @@ func TestJsonMapTable(t *testing.T) {
 	require.Equal(t, "{\"1\": true,\"2\": 123,\"3\": -12.34,\"4\": \"text\",\"5\": \"base64,AAEC\"}", b.Json())
 	require.Equal(t, "8501c3027b03cbc028ae147ae147ae04a47465787405c403000102", genval.Hex(b))
 
+	b = genval.Map()
+
+	c := genval.Map()
+	c.Put("5", genval.Long(5))
+
+	b.Put("name", genval.Utf8("name"))
+	b.Put("123", genval.Long(123))
+	b.Put("map", c)
+
+	require.Equal(t,  "{\"123\": 123,\"map\": {\"5\": 5},\"name\": \"name\"}", b.Json())
+	require.Equal(t, "837b7ba36d6170810505a46e616d65a46e616d65", genval.Hex(b))
+
+}
+
+func TestCycleTable(t *testing.T) {
+
+	b := genval.Map()
+	b.Put("map", b)
+
+	require.Equal(t,  "{\"map\": {}}", b.Json())
+	require.Equal(t, "81a36d6170c0", genval.Hex(b))
 }
