@@ -233,6 +233,11 @@ func (t *tableValue) PrintJSON(out *strings.Builder) {
 
 }
 
+func (t *tableValue) MarshalJSON() ([]byte, error) {
+	var out strings.Builder
+	t.PrintJSON(&out)
+	return []byte(out.String()), nil
+}
 
 func (t *tableValue) Pack(p Packer) {
 

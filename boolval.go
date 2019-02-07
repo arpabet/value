@@ -55,6 +55,10 @@ func (b boolValue) String() string {
 	return strconv.FormatBool(bool(b))
 }
 
+func (b boolValue) Boolean() bool {
+	return bool(b)
+}
+
 func (b boolValue) Pack(p Packer) {
 	p.PackBool(bool(b))
 }
@@ -63,8 +67,7 @@ func (b boolValue) PrintJSON(out *strings.Builder) {
 	out.WriteString(b.String())
 }
 
-func (b boolValue) Boolean() bool {
-	return bool(b)
+func (b boolValue) MarshalJSON() ([]byte, error) {
+	return []byte(b.String()), nil
 }
-
 

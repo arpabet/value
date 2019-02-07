@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -139,6 +140,21 @@ func (n numberValue) PrintJSON(out *strings.Builder) {
 		}
 	default:
 		out.WriteString("null")
+	}
+}
+
+func (n numberValue) MarshalJSON() ([]byte, error) {
+	switch n.dt {
+	case LONG:
+		return []byte(strconv.FormatInt(n.long, 10)), nil
+	case DOUBLE:
+		if math.IsNaN(n.double) {
+			return []byte("null"), nil
+		} else {
+			return []byte(fmt.Sprint(n.double)), nil
+		}
+	default:
+		return nil, errors.New("unknown data type")
 	}
 }
 

@@ -24,6 +24,7 @@ import (
 	"strings"
 	"strconv"
 	"bytes"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -132,6 +133,22 @@ func (s stringValue) PrintJSON(out *strings.Builder) {
 	default:
 		out.WriteRune(jsonQuote)
 		out.WriteRune(jsonQuote)
+	}
+}
+
+func (s stringValue) MarshalJSON() ([]byte, error) {
+	switch s.dt {
+	case UTF8:
+		return []byte(strconv.Quote(s.utf8)), nil
+	case RAW:
+		var out strings.Builder
+		out.WriteRune(jsonQuote)
+		out.WriteString(Base64Prefix)
+		out.WriteString(base64.RawStdEncoding.EncodeToString(s.bytes))
+		out.WriteRune(jsonQuote)
+		return []byte(out.String()), nil
+	default:
+		return nil, errors.New("unknown string type")
 	}
 }
 

@@ -21,6 +21,7 @@ package genval
 import (
 	"reflect"
 	"strings"
+	"encoding/json"
 )
 
 /**
@@ -41,6 +42,7 @@ const (
 )
 
 type Value interface {
+	json.Marshaler
 
 	/**
 		Gets value kind type for easy reflection
