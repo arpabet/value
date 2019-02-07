@@ -21,6 +21,7 @@ package genval
 import (
 	"bytes"
 	"encoding/hex"
+	"strings"
 )
 
 func Pack(val Value) []byte {
@@ -32,7 +33,12 @@ func Pack(val Value) []byte {
 	return buf.Bytes()
 }
 
-
 func Hex(val Value) string {
 	return hex.EncodeToString(Pack(val))
+}
+
+func Json(val Value) string {
+	var out strings.Builder
+	val.PrintJSON(&out)
+	return out.String()
 }

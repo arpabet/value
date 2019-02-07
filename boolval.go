@@ -21,6 +21,7 @@ package genval
 import (
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 type boolValue bool
@@ -58,8 +59,8 @@ func (b boolValue) Pack(p Packer) {
 	p.PackBool(bool(b))
 }
 
-func (b boolValue) Json() string {
-	return b.String()
+func (b boolValue) PrintJSON(out *strings.Builder) {
+	out.WriteString(b.String())
 }
 
 func (b boolValue) Boolean() bool {

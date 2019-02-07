@@ -43,7 +43,7 @@ func TestUtf8String(t *testing.T) {
 		require.Equal(t, genval.UTF8, b.Type())
 		require.Equal(t, "genval.stringValue", b.Class().String())
 		require.Equal(t, hex, genval.Hex(b))
-		require.Equal(t, "\""+ str + "\"", b.Json())
+		require.Equal(t, "\""+ str + "\"", genval.Json(b))
 		require.Equal(t, str, b.String())
 
 	}
@@ -57,9 +57,9 @@ func TestJsonString(t *testing.T) {
 	s := genval.Utf8(src)
 
 	require.Equal(t, src, s.String())
-	require.Equal(t, "\"json\\\"val\\\"json\"", s.Json())
+	require.Equal(t, "\"json\\\"val\\\"json\"", genval.Json(s))
 
-	actual, _ := strconv.Unquote(s.Json())
+	actual, _ := strconv.Unquote(genval.Json(s))
 	require.Equal(t, src, actual)
 
 }
@@ -72,7 +72,7 @@ func TestRawString(t *testing.T) {
 	require.Equal(t, genval.STRING, s.Kind())
 	require.Equal(t, genval.RAW, s.Type())
 	require.Equal(t, genval.Base64Prefix + "AAECAwQF", s.String())
-	require.Equal(t, "\"" + genval.Base64Prefix + "AAECAwQF\"", s.Json())
+	require.Equal(t, "\"" + genval.Base64Prefix + "AAECAwQF\"", genval.Json(s))
 	require.Equal(t, "c406000102030405", genval.Hex(s))
 	require.Equal(t, 0, bytes.Compare(raw, s.Raw()))
 

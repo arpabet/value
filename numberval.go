@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"fmt"
 	"math"
+	"strings"
 )
 
 const (
@@ -126,18 +127,19 @@ func (n numberValue) Pack(p Packer) {
 	}
 }
 
-func (n numberValue) Json() string {
+func (n numberValue) PrintJSON(out *strings.Builder) {
 	switch n.dt {
 	case LONG:
-		return strconv.FormatInt(n.long, 10)
+		out.WriteString(strconv.FormatInt(n.long, 10))
 	case DOUBLE:
 		if math.IsNaN(n.double) {
-			return "null"
+			out.WriteString("null")
 		} else {
-			return fmt.Sprint(n.double)
+			out.WriteString(fmt.Sprint(n.double))
 		}
+	default:
+		out.WriteString("null")
 	}
-	return "null"
 }
 
 func (n numberValue) Type() NumberType {

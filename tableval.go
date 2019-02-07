@@ -91,8 +91,14 @@ func (k tableKey) String() string {
 	}
 }
 
-func (k tableKey) Json() string {
-	return strconv.Quote(k.String())
+func (k tableKey) PrintJSON(out *strings.Builder) {
+	if k.typ == INDEX {
+		out.WriteRune(jsonQuote)
+		out.WriteString(strconv.Itoa(k.index))
+		out.WriteRune(jsonQuote)
+	} else {
+		out.WriteString(strconv.Quote(k.key))
+	}
 }
 
 func (k tableKey) Describe() string {
@@ -175,7 +181,7 @@ func (t tableValue) Class() reflect.Type {
 }
 
 func (t *tableValue) String() string {
-	return t.Json()
+	return Json(t)
 }
 
 func (t *tableValue) tryLock() bool {
@@ -190,43 +196,41 @@ func (t *tableValue) unlock() {
 	t.locked = false
 }
 
-func (t *tableValue) Json() string {
+func (t *tableValue) PrintJSON(out *strings.Builder) {
 
 	if !t.tryLock() {
-		return "{}"
+		out.WriteString("null")
+		return
 	}
 	defer t.unlock()
 
-	var b strings.Builder
-
 	// this call will compact table
 	if t.isSequenceList() {
-		b.WriteRune('[')
+		out.WriteRune('[')
 
 		for i, e := range t.entries {
 			if i != 0 {
-				b.WriteRune(',')
+				out.WriteRune(',')
 			}
-			b.WriteString(e.value.Json())
+			e.value.PrintJSON(out)
 		}
 
-		b.WriteRune(']')
+		out.WriteRune(']')
 	} else {
-		b.WriteRune('{')
+		out.WriteRune('{')
 
 		for i, e := range t.entries {
 			if i != 0 {
-				b.WriteRune(',')
+				out.WriteRune(',')
 			}
-			b.WriteString(e.key.Json())
-			b.WriteString(": ")
-			b.WriteString(e.value.Json())
+			e.key.PrintJSON(out)
+			out.WriteString(": ")
+			e.value.PrintJSON(out)
 		}
 
-		b.WriteRune('}')
+		out.WriteRune('}')
 	}
 
-	return b.String()
 }
 
 

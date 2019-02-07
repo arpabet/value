@@ -83,7 +83,7 @@ func TestLongNumber(t *testing.T) {
 	require.Equal(t, genval.LONG, b.Type())
 	require.Equal(t, "genval.numberValue", b.Class().String())
 	require.Equal(t, "00", genval.Hex(b))
-	require.Equal(t, "0", b.Json())
+	require.Equal(t, "0", genval.Json(b))
 	require.Equal(t, "0", b.String())
 
 	b = genval.Long(1)
@@ -92,7 +92,7 @@ func TestLongNumber(t *testing.T) {
 	require.Equal(t, genval.LONG, b.Type())
 	require.Equal(t, "genval.numberValue", b.Class().String())
 	require.Equal(t, "01", genval.Hex(b))
-	require.Equal(t, "1", b.Json())
+	require.Equal(t, "1", genval.Json(b))
 	require.Equal(t, "1", b.String())
 
 	for num, hex := range testLongMap {
@@ -110,7 +110,7 @@ func TestDoubleNumber(t *testing.T) {
 	require.Equal(t, genval.DOUBLE, b.Type())
 	require.Equal(t, "genval.numberValue", b.Class().String())
 	require.Equal(t, "cb0000000000000000", genval.Hex(b))
-	require.Equal(t, "0", b.Json())
+	require.Equal(t, "0", genval.Json(b))
 	require.Equal(t, "0", b.String())
 	require.Equal(t, int64(0), b.Long())
 
@@ -119,7 +119,7 @@ func TestDoubleNumber(t *testing.T) {
 	require.Equal(t, genval.DOUBLE, b.Type())
 	require.Equal(t, "genval.numberValue", b.Class().String())
 	require.Equal(t, "cb3ff0000000000000", genval.Hex(b))
-	require.Equal(t, "1", b.Json())
+	require.Equal(t, "1", genval.Json(b))
 	require.Equal(t, "1", b.String())
 	require.Equal(t, int64(1), b.Long())
 
@@ -128,7 +128,7 @@ func TestDoubleNumber(t *testing.T) {
 	require.Equal(t, genval.DOUBLE, b.Type())
 	require.Equal(t, "genval.numberValue", b.Class().String())
 	require.Equal(t, "cb419d6f3454000000", genval.Hex(b))
-	require.Equal(t, "1.23456789e+08", b.Json())
+	require.Equal(t, "1.23456789e+08", genval.Json(b))
 	require.Equal(t, "1.23456789e+08", b.String())
 	require.Equal(t, int64(123456789), b.Long())
 
@@ -137,7 +137,7 @@ func TestDoubleNumber(t *testing.T) {
 	require.Equal(t, genval.DOUBLE, b.Type())
 	require.Equal(t, "genval.numberValue", b.Class().String())
 	require.Equal(t, "cbc19d6f3454000000", genval.Hex(b))
-	require.Equal(t, "-1.23456789e+08", b.Json())
+	require.Equal(t, "-1.23456789e+08", genval.Json(b))
 	require.Equal(t, "-1.23456789e+08", b.String())
 	require.Equal(t, int64(-123456789), b.Long())
 
@@ -151,7 +151,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, genval.LONG, b.Type())
 	require.Equal(t, "genval.numberValue", b.Class().String())
 	require.Equal(t, "00", genval.Hex(b))
-	require.Equal(t, "0", b.Json())
+	require.Equal(t, "0", genval.Json(b))
 	require.Equal(t, "0", b.String())
 
 	b = genval.ParseNumber("123")
@@ -160,7 +160,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, genval.LONG, b.Type())
 	require.Equal(t, "genval.numberValue", b.Class().String())
 	require.Equal(t, "7b", genval.Hex(b))
-	require.Equal(t, "123", b.Json())
+	require.Equal(t, "123", genval.Json(b))
 	require.Equal(t, "123", b.String())
 
 	b = genval.ParseNumber("-123")
@@ -169,7 +169,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, genval.LONG, b.Type())
 	require.Equal(t, "genval.numberValue", b.Class().String())
 	require.Equal(t, "d085", genval.Hex(b))
-	require.Equal(t, "-123", b.Json())
+	require.Equal(t, "-123", genval.Json(b))
 	require.Equal(t, "-123", b.String())
 
 	b = genval.ParseNumber("123.45")
@@ -178,7 +178,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, genval.DOUBLE, b.Type())
 	require.Equal(t, "genval.numberValue", b.Class().String())
 	require.Equal(t, "cb405edccccccccccd", genval.Hex(b))
-	require.Equal(t, "123.45", b.Json())
+	require.Equal(t, "123.45", genval.Json(b))
 	require.Equal(t, "123.45", b.String())
 
 	b = genval.ParseNumber("-123.45")
@@ -187,7 +187,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, genval.DOUBLE, b.Type())
 	require.Equal(t, "genval.numberValue", b.Class().String())
 	require.Equal(t, "cbc05edccccccccccd", genval.Hex(b))
-	require.Equal(t, "-123.45", b.Json())
+	require.Equal(t, "-123.45", genval.Json(b))
 	require.Equal(t, "-123.45", b.String())
 
 	b = genval.ParseNumber("123456789.123456789")
@@ -196,7 +196,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, genval.DOUBLE, b.Type())
 	require.Equal(t, "genval.numberValue", b.Class().String())
 	require.Equal(t, "cb419d6f34547e6b75", genval.Hex(b))
-	require.Equal(t, "1.2345678912345679e+08", b.Json())
+	require.Equal(t, "1.2345678912345679e+08", genval.Json(b))
 	require.Equal(t, "1.2345678912345679e+08", b.String())
 
 	c := genval.ParseNumber("1.2345678912345679e+08")
@@ -208,7 +208,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, genval.DOUBLE, b.Type())
 	require.Equal(t, "genval.numberValue", b.Class().String())
 	require.Equal(t, "cbc19d6f34547e6b75", genval.Hex(b))
-	require.Equal(t, "-1.2345678912345679e+08", b.Json())
+	require.Equal(t, "-1.2345678912345679e+08", genval.Json(b))
 	require.Equal(t, "-1.2345678912345679e+08", b.String())
 
 	c = genval.ParseNumber("-1.2345678912345679e+08")
@@ -226,7 +226,7 @@ func TestParseNaN(t *testing.T) {
 	require.Equal(t, int64(0), b.Long())
 	require.Equal(t, "genval.numberValue", b.Class().String())
 	require.Equal(t, "cb7ff8000000000001", genval.Hex(b))
-	require.Equal(t, "null", b.Json())
+	require.Equal(t, "null", genval.Json(b))
 	require.Equal(t, "NaN", b.String())
 
 }

@@ -27,10 +27,8 @@ import (
 )
 
 const (
-	jsonQuote = "\""
+	jsonQuote = '"'
 )
-
-var jsonQuoteByte = byte(jsonQuote[0])
 
 var Base64Prefix = "base64,"
 
@@ -122,14 +120,18 @@ func (s stringValue) Pack(p Packer) {
 	}
 }
 
-func (s stringValue) Json() string {
+func (s stringValue) PrintJSON(out *strings.Builder) {
 	switch s.dt {
 	case UTF8:
-		return strconv.Quote(s.utf8)
+		out.WriteString(strconv.Quote(s.utf8))
 	case RAW:
-		return jsonQuote + Base64Prefix + base64.RawStdEncoding.EncodeToString(s.bytes) + jsonQuote
+		out.WriteRune(jsonQuote)
+		out.WriteString(Base64Prefix)
+		out.WriteString(base64.RawStdEncoding.EncodeToString(s.bytes))
+		out.WriteRune(jsonQuote)
 	default:
-		return jsonQuote + jsonQuote
+		out.WriteRune(jsonQuote)
+		out.WriteRune(jsonQuote)
 	}
 }
 

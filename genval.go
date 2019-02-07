@@ -20,6 +20,7 @@ package genval
 
 import (
 	"reflect"
+	"strings"
 )
 
 /**
@@ -69,7 +70,7 @@ type Value interface {
 		Converts Generic Value to JSON
 	 */
 
-	Json() string
+	PrintJSON(out *strings.Builder)
 
 	/**
 		Check if values are equal, nil friendly function
