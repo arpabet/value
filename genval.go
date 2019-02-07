@@ -266,90 +266,120 @@ type Table interface {
 
 	/**
 		Gets value by the key
+
+	    return value or nil
 	 */
 
 	Get(string) Value
 
 	/**
 		Gets table by the key
+
+	    return value or nil
 	 */
 
 	GetTable(string) Table
 
 	/**
 		Gets boolean value by the key
+
+	    return value or nil
 	 */
 
 	GetBool(string) Bool
 
 	/**
 		Gets number value by the key
+
+	    return value or nil
 	 */
 
 	GetNumber(string) Number
 
 	/**
 		Gets string value by the key
+
+		return value or nil
 	 */
 
 	GetString(string) String
 
 	/**
 		Gets value by the index
+
+	    return value or nil
  	*/
 
 	GetAt(int) Value
 
 	/**
 		Gets table by the index
+
+	    return value or nil
 	 */
 
 	GetTableAt(int) Table
 
 	/**
 		Gets boolean value by the index
+
+	    return value or nil
 	 */
 
 	GetBoolAt(int) Bool
 
 	/**
 		Gets number value by the index
+
+	    return value or nil
 	 */
 
 	GetNumberAt(int) Number
 
 	/**
 		Gets string value by the index
+
+	    return value or nil
 	 */
 
 	GetStringAt(int) String
 
 	/**
 		Gets value by the expression
+
+	    return value or nil
  	*/
 
 	GetExp(Expr) Value
 
 	/**
 		Gets table by the expression
+
+	    return value or nil
 	 */
 
 	GetTableExp(Expr) Table
 
 	/**
 		Gets boolean value by the expression
+
+	    return value or nil
 	 */
 
 	GetBoolExp(Expr) Bool
 
 	/**
 		Gets number value by the expression
+
+	    return value or nil
 	 */
 
 	GetNumberExp(Expr) Number
 
 	/**
 		Gets string value by the expression
+
+	    return value or nil
 	 */
 
 	GetStringExp(Expr) String
@@ -361,37 +391,37 @@ type Table interface {
 	Insert(Value)
 
 	/**
-		Puts value by the key and returns old one
+		Puts value by the key
 	 */
 
 	Put(key string, value Value)
 
 	/**
-		Puts value by the index and returns old one
+		Puts value by the index
  	*/
 
 	PutAt(index int, value Value)
 
 	/**
-		Puts value by the expression and returns old one
+		Puts value by the expression
  	*/
 
 	PutExp(exp Expr, value Value)
 
 	/**
-		Removes value by the key and returns old one
+		Removes value by the key
  	*/
 
 	Remove(string)
 
 	/**
-		Removes value by the index and returns old one
+		Removes value by the index
  	*/
 
 	RemoveAt(int)
 
 	/**
-		Removes value by the expression and returns old one
+		Removes value by the expression
  	*/
 
 	RemoveExp(Expr)
@@ -449,6 +479,18 @@ type Table interface {
  	*/
 
 	Sort()
+
+	/**
+		Gets version of the table (external and optional)
+	 */
+
+	Version() uint64
+
+	/**
+		Sets version of the table (expernal and optional)
+	 */
+
+	SetVersion(uint64)
 
 }
 

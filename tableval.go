@@ -91,6 +91,7 @@ type tableValue struct {
 	entries  	[]*tableEntry
 	revision 	int         // the same as the last operation revision
 	maxIndex 	int
+	version     uint64
 	sorted      bool
 	compacted   bool
 }
@@ -459,35 +460,65 @@ func (t *tableValue) RemoveExp(exp Expr) {
 
 func (t *tableValue) Map() map[string]Value {
 	m := make(map[string]Value)
-	t.entryProcessor(func (e *tableEntry) {
-		m[e.key.String()] = e.value
-	})
+
+	if t.compacted {
+		for _, e := range t.entries {
+			m[e.key.String()] = e.value
+		}
+	} else {
+		t.entryProcessor(func(e *tableEntry) {
+			m[e.key.String()] = e.value
+		})
+	}
 	return m
 }
 
 func (t *tableValue) List() []Value {
 	list := make([]Value, 0, len(t.entries))
-	t.entryProcessor(func (e *tableEntry) {
-		list = append(list, e.value)
-	})
+
+	if t.compacted {
+		for _, e := range t.entries {
+			list = append(list, e.value)
+		}
+	} else {
+		t.entryProcessor(func(e *tableEntry) {
+			list = append(list, e.value)
+		})
+	}
 	return list
 }
 
 func (t *tableValue) Keys() []string {
 	list := make([]string, 0, len(t.entries))
-	t.entryProcessor(func (e *tableEntry) {
-		list = append(list, e.key.String())
-	})
+
+	if t.compacted {
+		for _, e := range t.entries {
+			list = append(list, e.key.String())
+		}
+	} else {
+		t.entryProcessor(func(e *tableEntry) {
+			list = append(list, e.key.String())
+		})
+	}
 	return list
 }
 
 func (t *tableValue) Indexes() []int {
 	list := make([]int, 0, len(t.entries))
-	t.entryProcessor(func (e *tableEntry) {
-		if e.key.typ == INDEX {
-			list = append(list, e.key.index)
+
+	if t.compacted {
+		for _, e := range t.entries {
+			if e.key.typ == INDEX {
+				list = append(list, e.key.index)
+			}
 		}
-	})
+	} else {
+		t.entryProcessor(func(e *tableEntry) {
+			if e.key.typ == INDEX {
+				list = append(list, e.key.index)
+			}
+		})
+	}
 	return list
 }
 
@@ -541,6 +572,14 @@ func (t *tableValue) Sort() {
 		sort.Sort(t)
 		t.sorted = true
 	}
+}
+
+func (t tableValue) Version() uint64 {
+	return t.version
+}
+
+func (t *tableValue) SetVersion(ver uint64) {
+	t.version = ver
 }
 
 func (t *tableValue) nextRevision() int {
