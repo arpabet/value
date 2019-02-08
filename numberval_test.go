@@ -23,6 +23,7 @@ import (
 	"github.com/shvid/genval"
 	"github.com/stretchr/testify/require"
 	"math"
+	"encoding/json"
 )
 
 var testLongMap = map[int64]string {
@@ -361,4 +362,33 @@ func TestSubtractNaNBoth(t *testing.T) {
 
 func DoubleEqual(t *testing.T, left, right float64) {
 	require.True(t, math.Abs(left - right) < 0.00001)
+}
+
+type testNumberStruct struct {
+	N genval.Number
+}
+
+func TestNumberMarshal(t *testing.T) {
+
+	b := genval.Long(123)
+
+	j, _ := b.MarshalJSON()
+	require.Equal(t, "123", string(j))
+
+	bin, _ := b.MarshalBinary()
+	require.Equal(t, []byte{0x7b}, bin)
+
+	b = genval.Double(1.23)
+
+	j, _ = b.MarshalJSON()
+	require.Equal(t, "1.23", string(j))
+
+	bin, _ = b.MarshalBinary()
+	require.Equal(t, []byte{0xcb, 0x3f, 0xf3, 0xae, 0x14, 0x7a, 0xe1, 0x47, 0xae}, bin)
+
+	s := &testNumberStruct{genval.Long(123)}
+
+	j, _ = json.Marshal(s)
+	require.Equal(t, "{\"N\":123}", string(j))
+
 }

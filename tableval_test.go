@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/shvid/genval"
 	"reflect"
+	"encoding/json"
 )
 
 func TestEmptyTable(t *testing.T) {
@@ -273,4 +274,35 @@ func TestCycleTable(t *testing.T) {
 
 	require.Equal(t,  "{\"map\": null}", genval.Json(b))
 	require.Equal(t, "81a36d6170c0", genval.Hex(b))
+}
+
+type testTableStruct struct {
+	T genval.Table
+}
+
+func TestTableMarshal(t *testing.T) {
+
+	b := genval.List()
+	b.Insert(genval.Long(100))
+
+	j, _ := b.MarshalJSON()
+	require.Equal(t, "[100]", string(j))
+
+	bin, _ := b.MarshalBinary()
+	require.Equal(t, []byte{0x91, 0x64}, bin)
+
+	b = genval.Map()
+	b.Put("a", genval.Boolean(true))
+
+	j, _ = b.MarshalJSON()
+	require.Equal(t, "{\"a\": true}", string(j))
+
+	bin, _ = b.MarshalBinary()
+	require.Equal(t,  []byte{0x81, 0xa1, 0x61, 0xc3}, bin)
+
+	s := &testTableStruct{b}
+
+	j, _ = json.Marshal(s)
+	require.Equal(t, "{\"T\":{\"a\":true}}", string(j))
+
 }

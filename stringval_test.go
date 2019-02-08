@@ -24,6 +24,7 @@ import (
 	"github.com/shvid/genval"
 	"bytes"
 	"strconv"
+	"encoding/json"
 )
 
 var testStrings = map[string]string {
@@ -79,4 +80,33 @@ func TestRawString(t *testing.T) {
 	actual := genval.ParseString(s.String())
 	//equire.Equal(t, 0, bytes.Compare(s.Raw(), actual.Raw()))
 	require.Equal(t, s.Raw(), actual.Raw())
+}
+
+type testStringStruct struct {
+	S genval.String
+}
+
+func TestStringMarshal(t *testing.T) {
+
+	b := genval.Utf8("a")
+
+	j, _ := b.MarshalJSON()
+	require.Equal(t, "\"a\"", string(j))
+
+	bin, _ := b.MarshalBinary()
+	require.Equal(t, []byte{0xa1, 0x61}, bin)
+
+	b = genval.Raw([]byte{0, 1}, false)
+
+	j, _ = b.MarshalJSON()
+	require.Equal(t, "\"base64,AAE\"", string(j))
+
+	bin, _ = b.MarshalBinary()
+	require.Equal(t, []byte{0xc4, 0x2, 0x0, 0x1}, bin)
+
+	s := &testStringStruct{genval.Utf8("b")}
+
+	j, _ = json.Marshal(s)
+	require.Equal(t, "{\"S\":\"b\"}", string(j))
+
 }

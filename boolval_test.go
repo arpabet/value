@@ -22,6 +22,7 @@ import (
 	"testing"
 	"github.com/stretchr/testify/require"
 	"github.com/shvid/genval"
+	"encoding/json"
 )
 
 func TestBool(t *testing.T) {
@@ -48,5 +49,34 @@ func TestBool(t *testing.T) {
 	require.Equal(t, false, genval.ParseBoolean("False").Boolean())
 	require.Equal(t, false, genval.ParseBoolean("").Boolean())
 	require.Equal(t, false, genval.ParseBoolean("any_value").Boolean())
+
+}
+
+type testBoolStruct struct {
+	B genval.Bool
+}
+
+func TestBoolMarshal(t *testing.T) {
+
+	b := genval.Boolean(true)
+
+	j, _ := b.MarshalJSON()
+	require.Equal(t, []byte("true"), j)
+
+	bin, _ := b.MarshalBinary()
+	require.Equal(t, []byte{0xc3}, bin)
+
+	b = genval.Boolean(false)
+
+	j, _ = b.MarshalJSON()
+	require.Equal(t, []byte("false"), j)
+
+	bin, _ = b.MarshalBinary()
+	require.Equal(t, []byte{0xc2}, bin)
+
+	s := &testBoolStruct{genval.Boolean(true)}
+
+	j, _ = json.Marshal(s)
+	require.Equal(t, "{\"B\":true}", string(j))
 
 }
