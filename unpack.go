@@ -45,6 +45,12 @@ func Read(r io.Reader) (Value, error) {
 	return Parse(unpacker, parser)
 }
 
+func Write(w io.Writer, val Value) error {
+	p := MessagePacker(w)
+	val.Pack(p)
+	return p.Error()
+}
+
 func Hex(val Value) string {
 	mp, _ := Pack(val)
 	return hex.EncodeToString(mp)
@@ -60,7 +66,25 @@ func Parse(unpacker Unpacker, parser Parser) (Value, error) {
 	return doParse(unpacker, parser)
 }
 
-func Stream(r io.Reader, out chan<- Value) error {
+func WriteStream(w io.Writer, valueC <-chan Value) error {
+
+	p := MessagePacker(w)
+
+	for p.Error() == nil {
+		val, ok := <- valueC
+
+		if !ok {
+			break
+		}
+
+		val.Pack(p)
+
+	}
+
+	return p.Error()
+}
+
+func ReadStream(r io.Reader, out chan<- Value) error {
 
 	defer close(out)
 
