@@ -1,2 +1,2 @@
-# genval
-Generic Value in GO
+# val
+Value in GO
