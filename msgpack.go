@@ -22,9 +22,19 @@ import (
 	"io"
 	"math"
 	"encoding/binary"
+	"github.com/pkg/errors"
 )
 
 const (
+
+	mpPosFixIntMin 		byte = 0x00
+	mpPosFixIntMax      byte = 0x7f
+	mpFixMapMin         byte = 0x80
+	mpFixMapMax         byte = 0x8f
+	mpFixArrayMin       byte = 0x90
+	mpFixArrayMax       byte = 0x9f
+	mpFixStrMin         byte = 0xa0
+	mpFixStrMax         byte = 0xbf
 
 	mpPosFixIntMask 	byte = 0x80
 	mpFixMapPrefix  	byte = 0x80
@@ -72,22 +82,120 @@ const (
 	mpMap16 			byte = 0xde
 	mpMap32 			byte = 0xdf
 
+	mpNegFixIntMin 		byte = 0xe0
+	mpNegFixIntMax 		byte = 0xff
+
 	mpNegFixIntPrefix 	byte = 0xe0
 
-	defBufSize = 16
+	defWriteBufSize 	= 16
+	defReadBufSize 		= 24
+
+	mpCodeMin 			= mpNil
+	mpCodeMax 			= mpMap32
 )
 
+
 var (
+
+	mpCodeFormat = []Format {
+
+		NilToken, 	// mpNil        0xc0
+		NilToken,     // mpNeverUsed  0xc1
+		BoolToken, 	// mpFalse      0xc2
+		BoolToken, 	// mpTrue       0xc3
+
+		BinHeader,  // mpBin8		0xc4
+		BinHeader,  // mpBin16		0xc5
+		BinHeader,  // mpBin32		0xc6
+		ExtHeader,  // mpExt8		0xc7
+		ExtHeader,  // mpExt16		0xc8
+		ExtHeader,  // mpExt32		0xc9
+
+		DoubleToken,  // mpFloat32	0xca
+		DoubleToken,  // mpFloat64	0xcb
+
+		LongToken,  // mpUint8		0xcc
+		LongToken,  // mpUint16		0xcd
+		LongToken,  // mpUint32		0xce
+		LongToken,  // mpUint64  	0xcf
+
+		LongToken,  // mpInt8 		0xd0
+		LongToken,  // mpInt16	 	0xd1
+		LongToken,  // mpInt32   	0xd2
+		LongToken,  // mpInt64  	0xd3
+
+		FixExtToken,  // mpFixExt1  	0xd4
+		FixExtToken,  // mpFixExt2  	0xd5
+		FixExtToken,  // mpFixExt4  	0xd6
+		FixExtToken,  // mpFixExt8  	0xd7
+		FixExtToken, // mpFixExt16 	0xd8
+
+		StrHeader,  // mpStr8  		0xd9
+		StrHeader,  // mpStr16 	 	0xda
+		StrHeader,  // mpStr32 		0xdb
+
+		ListHeader,  // mpArray16 	0xdc
+		ListHeader,  // mpArray32 	0xdd
+
+		MapHeader,  // mpMap16 	 	0xde
+		MapHeader,  // mpMap32 		0xdf
+
+	}
+
+	mpCodeSize = []int {
+
+		0, 	// mpNil        0xc0
+		0, 	// mpNeverUsed  0xc1
+		0, 	// mpFalse      0xc2
+		0, 	// mpTrue       0xc3
+
+		1,  // mpBin8		0xc4
+		2,  // mpBin16		0xc5
+		4,  // mpBin32		0xc6
+		1,  // mpExt8		0xc7
+		2,  // mpExt16		0xc8
+		4,  // mpExt32		0xc9
+
+		4,  // mpFloat32	0xca
+		8,  // mpFloat64	0xcb
+
+		1,  // mpUint8		0xcc
+		2,  // mpUint16		0xcd
+		4,  // mpUint32		0xce
+		8,  // mpUint64  	0xcf
+
+		1,  // mpInt8 		0xd0
+		2,  // mpInt16	 	0xd1
+		4,  // mpInt32   	0xd2
+		8,  // mpInt64  	0xd3
+
+		1,  // mpFixExt1  	0xd4
+		2,  // mpFixExt2  	0xd5
+		4,  // mpFixExt4  	0xd6
+		8,  // mpFixExt8  	0xd7
+		16, // mpFixExt16 	0xd8
+
+		1,  // mpStr8  		0xd9
+		2,  // mpStr16 	 	0xda
+		4,  // mpStr32 		0xdb
+
+		2,  // mpArray16 	0xdc
+		4,  // mpArray32 	0xdd
+
+		2,  // mpMap16 	 	0xde
+		4,  // mpMap32 		0xdf
+
+	}
+
 	mpNilBin 	=  []byte { mpNil }
 	mpTrueBin 	=  []byte { mpTrue }
 	mpFalseBin 	=  []byte { mpFalse }
 )
 
-
 type messagePacker struct {
-	buf 	[defBufSize]byte
-	w 		io.Writer
-	err     error
+	m   messageWriter
+	w   io.Writer
+	err error
 }
 
 func MessagePacker(w io.Writer) *messagePacker {
@@ -96,41 +204,41 @@ func MessagePacker(w io.Writer) *messagePacker {
 
 func (p messagePacker) PackNil()  {
 	if p.err == nil {
-		_, p.err = p.w.Write(p.writeNil())
+		_, p.err = p.w.Write(p.m.WriteNil())
 	}
 }
 
 func (p messagePacker) PackBool(val bool) {
 	if p.err == nil {
-		_, p.err = p.w.Write(p.writeBool(val))
+		_, p.err = p.w.Write(p.m.WriteBool(val))
 	}
 }
 
 func (p messagePacker) PackLong(val int64) {
 	if p.err == nil {
-		_, p.err = p.w.Write(p.writeVLong(val))
+		_, p.err = p.w.Write(p.m.WriteLong(val))
 	}
 }
 
 func (p messagePacker) PackDouble(val float64) {
 	if p.err == nil {
-		_, p.err = p.w.Write(p.writeDouble(val))
+		_, p.err = p.w.Write(p.m.WriteDouble(val))
 	}
 }
 
-func (p messagePacker) PackString(str string) {
+func (p messagePacker) PackStr(str string) {
 	b := []byte(str)
 	if p.err == nil {
-		_, p.err = p.w.Write(p.writeStrHeader(len(b)))
+		_, p.err = p.w.Write(p.m.WriteStrHeader(len(b)))
 	}
 	if p.err == nil {
 		_, p.err = p.w.Write(b)
 	}
 }
 
-func (p messagePacker) PackBytes(b []byte) {
+func (p messagePacker) PackBin(b []byte) {
 	if p.err == nil {
-		_, p.err = p.w.Write(p.writeBinHeader(len(b)))
+		_, p.err = p.w.Write(p.m.WriteBinHeader(len(b)))
 	}
 	if p.err == nil {
 		_, p.err = p.w.Write(b)
@@ -142,7 +250,7 @@ func (p messagePacker) PackList(size int) {
 		size = 0
 	}
 	if p.err == nil {
-		_, p.err = p.w.Write(p.writeArrayHeader(size))
+		_, p.err = p.w.Write(p.m.WriteArrayHeader(size))
 	}
 }
 
@@ -151,7 +259,13 @@ func (p messagePacker) PackMap(size int) {
 		size = 0
 	}
 	if p.err == nil {
-		_, p.err = p.w.Write(p.writeMapHeader(size))
+		_, p.err = p.w.Write(p.m.WriteMapHeader(size))
+	}
+}
+
+func (p messagePacker) PackUnknown(b []byte) {
+	if p.err == nil {
+		_, p.err = p.w.Write(b)
 	}
 }
 
@@ -159,11 +273,15 @@ func (p messagePacker) Error() error {
 	return p.err
 }
 
-func (p messagePacker) writeNil() []byte {
+type messageWriter struct {
+	buf 	[defWriteBufSize]byte
+}
+
+func (p messageWriter) WriteNil() []byte {
 	return mpNilBin
 }
 
-func (p messagePacker) writeBool(val bool) []byte {
+func (p messageWriter) WriteBool(val bool) []byte {
 	if val {
 		return mpTrueBin
 	} else {
@@ -171,7 +289,7 @@ func (p messagePacker) writeBool(val bool) []byte {
 	}
 }
 
-func (p messagePacker) writeVLong(val int64) []byte {
+func (p messageWriter) WriteLong(val int64) []byte {
 
 	switch {
 		case val >= 0:
@@ -199,7 +317,7 @@ func (p messagePacker) writeVLong(val int64) []byte {
 
 }
 
-func (p messagePacker) writeVULong(val uint64) []byte {
+func (p messageWriter) writeVULong(val uint64) []byte {
 	switch {
 	case val <= math.MaxInt8:
 		p.buf[0] = byte(val)
@@ -223,13 +341,13 @@ func (p messagePacker) writeVULong(val uint64) []byte {
 	}
 }
 
-func (p messagePacker) writeDouble(val float64) []byte {
+func (p messageWriter) WriteDouble(val float64) []byte {
 	p.buf[0] = mpFloat64
 	binary.BigEndian.PutUint64(p.buf[1:9], math.Float64bits(val))
 	return p.buf[:9]
 }
 
-func (p messagePacker) writeBinHeader(len int) []byte {
+func (p messageWriter) WriteBinHeader(len int) []byte {
 	switch {
 	case len <= math.MaxUint8:
 		p.buf[0] = mpBin8
@@ -246,7 +364,7 @@ func (p messagePacker) writeBinHeader(len int) []byte {
 	}
 }
 
-func (p messagePacker) writeStrHeader(len int) []byte {
+func (p messageWriter) WriteStrHeader(len int) []byte {
 	switch {
 	case len < 32:
 		p.buf[0] = mpFixStrPrefix | byte(len)
@@ -266,7 +384,7 @@ func (p messagePacker) writeStrHeader(len int) []byte {
 	}
 }
 
-func (p messagePacker) writeArrayHeader(len int) []byte {
+func (p messageWriter) WriteArrayHeader(len int) []byte {
 	switch {
 	case len < 16:
 		p.buf[0] = mpFixArrayPrefix | byte(len)
@@ -282,7 +400,7 @@ func (p messagePacker) writeArrayHeader(len int) []byte {
 	}
 }
 
-func (p messagePacker) writeMapHeader(len int) []byte {
+func (p messageWriter) WriteMapHeader(len int) []byte {
 	switch {
 	case len < 16:
 		p.buf[0] = mpFixMapPrefix | byte(len)
@@ -296,4 +414,288 @@ func (p messagePacker) writeMapHeader(len int) []byte {
 		binary.BigEndian.PutUint32(p.buf[1:5], uint32(len))
 		return p.buf[:5]
 	}
+}
+
+type messageParser struct {
+	err  error
+}
+
+func MessageParser() *messageParser {
+	return &messageParser{}
+}
+
+func (r *messageParser) ParseBool(b []byte) bool {
+	switch b[0] {
+	case mpTrue:
+		return true
+	case mpFalse:
+		return false
+	default:
+		r.err = errors.Errorf("bool: invalid code %v", b[0])
+		return false
+	}
+}
+
+func (r *messageParser) ParseLong(b []byte) int64 {
+	code := b[0]
+
+	switch code {
+	case mpUint8:
+		return int64(b[1])
+	case mpUint16:
+		return int64(binary.BigEndian.Uint16(b[1:]))
+	case mpUint32:
+		return int64(binary.BigEndian.Uint32(b[1:]))
+	case mpUint64:
+		return int64(binary.BigEndian.Uint64(b[1:]))
+	case mpInt8:
+		return int64(int8(b[1]))
+	case mpInt16:
+		return int64(int16(binary.BigEndian.Uint16(b[1:])))
+	case mpInt32:
+		return int64(int16(binary.BigEndian.Uint32(b[1:])))
+	case mpInt64:
+		return int64(int16(binary.BigEndian.Uint64(b[1:])))
+	}
+
+	switch {
+	case code >= mpPosFixIntMin && code <= mpPosFixIntMax:
+		return int64(b[1])
+	case code >= mpNegFixIntMin && code <= mpNegFixIntMax:
+		return int64(int8(b[1]))
+	default:
+		r.err = errors.Errorf("long: invalid code %v", b[0])
+		return 0
+	}
+}
+
+func (r *messageParser) ParseDouble(b []byte) float64 {
+	switch b[0] {
+	case mpFloat32:
+		val32 := binary.BigEndian.Uint32(b[1:])
+		return float64(math.Float32frombits(val32))
+	case mpFloat64:
+		val64 := binary.BigEndian.Uint64(b[1:])
+		return math.Float64frombits(val64)
+	default:
+		r.err = errors.Errorf("double: invalid code %v", b[0])
+		return 0
+	}
+}
+
+func (r *messageParser) ParseBin(b []byte) int {
+	code := b[0]
+
+	switch code {
+	case mpBin8:
+		return int(b[1])
+	case mpBin16:
+		return int(binary.BigEndian.Uint16(b[1:]))
+	case mpBin32:
+		return int(binary.BigEndian.Uint32(b[1:]))
+	default:
+		r.err = errors.Errorf("bin: invalid code %v", b[0])
+		return 0
+	}
+}
+
+func (r *messageParser) ParseStr(b []byte) int {
+	code := b[0]
+
+	if code >= mpFixStrMin && code <= mpFixStrMax {
+		return int(code - mpFixStrMin)
+	}
+
+	switch code {
+	case mpStr8:
+		return int(b[1])
+	case mpStr16:
+		return int(binary.BigEndian.Uint16(b[1:]))
+	case mpStr32:
+		return int(binary.BigEndian.Uint32(b[1:]))
+	default:
+		r.err = errors.Errorf("str: invalid code %v", b[0])
+		return 0
+	}
+}
+
+func (r *messageParser) ParseList(b []byte) int {
+
+	code := b[0]
+
+	if code >= mpFixArrayMin && code <= mpFixArrayMax {
+		return int(code - mpFixArrayMin)
+	}
+
+	switch code {
+	case mpArray16:
+		return int(binary.BigEndian.Uint16(b[1:]))
+	case mpArray32:
+		return int(binary.BigEndian.Uint32(b[1:]))
+	default:
+		r.err = errors.Errorf("list: invalid code %v", b[0])
+		return 0
+	}
+
+}
+
+func (r *messageParser) ParseMap(b []byte) int {
+
+	code := b[0]
+
+	if code >= mpFixMapMin && code <= mpFixMapMax {
+		return int(code - mpFixMapMin)
+	}
+
+	switch code {
+	case mpMap16:
+		return int(binary.BigEndian.Uint16(b[1:]))
+	case mpMap32:
+		return int(binary.BigEndian.Uint32(b[1:]))
+	default:
+		r.err = errors.Errorf("map: invalid code %v", b[0])
+		return 0
+	}
+}
+
+func (r *messageParser) ParseExt(b []byte) int {
+
+	code := b[0]
+
+	switch code {
+	case mpExt8:
+		return int(b[1])
+	case mpExt16:
+		return int(binary.BigEndian.Uint16(b[1:]))
+	case mpExt32:
+		return int(binary.BigEndian.Uint32(b[1:]))
+	default:
+		r.err = errors.Errorf("ext: invalid code %v", b[0])
+		return 0
+	}
+}
+
+func (r messageParser) Error() error {
+	return r.err
+}
+
+type messageBufUnpacker struct {
+	buf  []byte
+	off  int
+	copy bool
+}
+
+func MessageUnpacker(buf []byte, copy bool) *messageBufUnpacker {
+	return &messageBufUnpacker{buf: buf, copy: copy}
+}
+
+func (p messageBufUnpacker) remaining() int {
+	return len(p.buf) - p.off
+}
+
+func (p *messageBufUnpacker) Next() (Format, []byte) {
+	remaining := p.remaining()
+	if remaining <= 0 {
+		return EOF, nil
+	}
+	b := p.buf[p.off:]
+	format, len := nextFormat(b[0])
+	n := 1 + len
+	if n > remaining {
+		return UnexpectedEOF, nil
+	} else {
+		p.off += n
+		return format, b[:n]
+	}
+}
+
+func (p *messageBufUnpacker) Read(n int) ([]byte, error) {
+
+	if p.remaining() < n {
+		return nil, io.ErrUnexpectedEOF
+	}
+
+	b := p.buf[p.off:]
+	p.off += n
+
+	if p.copy {
+		c := make([]byte, n)
+		copy(c, b)
+		return c, nil
+	} else {
+		return b[:n], nil
+	}
+}
+
+type messageIOUnpacker struct {
+	buf 	[defReadBufSize]byte
+	r       io.Reader
+	br      io.ByteReader  // can be null
+	s		io.Seeker      // can be null
+}
+
+func MessageReader(r io.Reader) *messageIOUnpacker {
+	return &messageIOUnpacker{r: r, br: r.(io.ByteReader), s: r.(io.Seeker)}
+}
+
+func (p *messageIOUnpacker) Next() (Format, []byte) {
+
+	if p.br != nil {
+		code, err := p.br.ReadByte()
+		if err != nil {
+			return EOF, nil
+		}
+		p.buf[0] = code
+	}  else {
+		n, _ := p.r.Read(p.buf[:1])
+		if n == 0 {
+			return EOF, nil
+		}
+	}
+
+	format, len := nextFormat(p.buf[0])
+	n := 1 + len
+
+	m, _ := p.r.Read(p.buf[1:n])
+	if m != len {
+		return UnexpectedEOF, nil
+	}
+
+	return format, p.buf[0:n]
+}
+
+func (p *messageIOUnpacker) Read(n int) (b []byte, err error) {
+	b = make([]byte, n)
+	m, err := p.r.Read(b)
+	if m != n {
+		if err == nil {
+			err = io.ErrUnexpectedEOF
+		}
+	}
+	return b, err
+}
+
+func nextFormat(code byte) (Format, int) {
+
+	switch {
+		case code <= mpPosFixIntMax:
+			return LongToken, 0
+
+		case code <= mpFixMapMax:
+			return MapHeader, 0
+
+		case code <= mpFixArrayMax:
+			return ListHeader, 0
+
+		case code <= mpFixStrMax:
+			return StrHeader, 0
+
+		case code <= mpCodeMax:
+			i := int(code - mpCodeMin)
+			return mpCodeFormat[i], mpCodeSize[i]
+
+		default:
+			return LongToken, 0
+	}
+
 }

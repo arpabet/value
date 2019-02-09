@@ -24,6 +24,7 @@ import (
 	"sort"
 	"fmt"
 	"strings"
+	"bytes"
 )
 
 //
@@ -240,7 +241,10 @@ func (t *tableValue) MarshalJSON() ([]byte, error) {
 }
 
 func (t *tableValue) MarshalBinary() ([]byte, error) {
-	return Pack(t), nil
+	buf := bytes.Buffer{}
+	p := MessagePacker(&buf)
+	t.Pack(p)
+	return buf.Bytes(), p.Error()
 }
 
 func (t *tableValue) Pack(p Packer) {
@@ -270,7 +274,7 @@ func (t *tableValue) Pack(p Packer) {
 			case INDEX:
 				p.PackLong(int64(e.key.index))
 			case KEY:
-				p.PackString(e.key.key)
+				p.PackStr(e.key.key)
 			}
 
 			// after Compact all ops are PUT

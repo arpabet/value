@@ -113,9 +113,9 @@ func (s stringValue) String() string {
 func (s stringValue) Pack(p Packer) {
 	switch s.dt {
 	case UTF8:
-		p.PackString(s.utf8)
+		p.PackStr(s.utf8)
 	case RAW:
-		p.PackBytes(s.bytes)
+		p.PackBin(s.bytes)
 	default:
 		p.PackNil()
 	}
@@ -153,7 +153,10 @@ func (s stringValue) MarshalJSON() ([]byte, error) {
 }
 
 func (s stringValue) MarshalBinary() ([]byte, error) {
-	return Pack(s), nil
+	buf := bytes.Buffer{}
+	p := MessagePacker(&buf)
+	s.Pack(p)
+	return buf.Bytes(), p.Error()
 }
 
 func (s stringValue) Type() StringType {

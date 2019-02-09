@@ -40,6 +40,7 @@ const (
 	NUMBER
 	STRING
 	TABLE
+	UNKNOWN
 )
 
 type Value interface {
@@ -81,32 +82,6 @@ type Value interface {
 	 */
 
 	Equal(Value) bool
-}
-
-/**
-	Base interface for the packing values
- */
-
-type Packer interface {
-
-	PackNil()
-
-	PackBool(bool)
-
-	PackLong(int64)
-
-	PackDouble(float64)
-
-	PackString(string)
-
-	PackBytes([]byte)
-
-	PackList(int)
-
-	PackMap(int)
-
-	Error() error
-
 }
 
 /**

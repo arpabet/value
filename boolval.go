@@ -72,6 +72,6 @@ func (b boolValue) MarshalJSON() ([]byte, error) {
 }
 
 func (b boolValue) MarshalBinary() ([]byte, error) {
-	var mp messagePacker
-	return mp.writeBool(bool(b)), nil
+	var m messageWriter
+	return m.WriteBool(bool(b)), nil
 }

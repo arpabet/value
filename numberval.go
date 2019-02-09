@@ -159,12 +159,12 @@ func (n numberValue) MarshalJSON() ([]byte, error) {
 }
 
 func (n numberValue) MarshalBinary() ([]byte, error) {
-	mp := &messagePacker{}
+	m := new(messageWriter)  // must be in heap
 	switch n.dt {
 	case LONG:
-		return mp.writeVLong(n.long), nil
+		return m.WriteLong(n.long), nil
 	case DOUBLE:
-		return mp.writeDouble(n.double), nil
+		return m.WriteDouble(n.double), nil
 	default:
 		return nil, errors.New("unknown data type")
 	}
