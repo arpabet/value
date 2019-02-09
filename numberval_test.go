@@ -16,11 +16,11 @@
  *
  */
 
-package genval_test
+package val_test
 
 import (
 	"testing"
-	"github.com/shvid/genval"
+	"github.com/shvid/val"
 	"github.com/stretchr/testify/require"
 	"math"
 	"encoding/json"
@@ -78,67 +78,67 @@ var testLongMap = map[int64]string {
 
 func TestLongNumber(t *testing.T) {
 
-	b := genval.Long(0)
+	b := val.Long(0)
 
-	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.LONG, b.Type())
-	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "00", genval.Hex(b))
-	require.Equal(t, "0", genval.Json(b))
+	require.Equal(t, val.NUMBER, b.Kind())
+	require.Equal(t, val.LONG, b.Type())
+	require.Equal(t, "val.numberValue", b.Class().String())
+	require.Equal(t, "00", val.Hex(b))
+	require.Equal(t, "0", val.Json(b))
 	require.Equal(t, "0", b.String())
 
-	b = genval.Long(1)
+	b = val.Long(1)
 
-	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.LONG, b.Type())
-	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "01", genval.Hex(b))
-	require.Equal(t, "1", genval.Json(b))
+	require.Equal(t, val.NUMBER, b.Kind())
+	require.Equal(t, val.LONG, b.Type())
+	require.Equal(t, "val.numberValue", b.Class().String())
+	require.Equal(t, "01", val.Hex(b))
+	require.Equal(t, "1", val.Json(b))
 	require.Equal(t, "1", b.String())
 
 	for num, hex := range testLongMap {
-		b = genval.Long(num)
+		b = val.Long(num)
 		require.True(t, math.Abs(float64(num) - b.Double()) < 0.0001)
-		require.Equal(t, hex, genval.Hex(b))
+		require.Equal(t, hex, val.Hex(b))
 	}
 
 }
 
 func TestDoubleNumber(t *testing.T) {
 
-	b := genval.Double(0)
-	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.DOUBLE, b.Type())
-	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "cb0000000000000000", genval.Hex(b))
-	require.Equal(t, "0", genval.Json(b))
+	b := val.Double(0)
+	require.Equal(t, val.NUMBER, b.Kind())
+	require.Equal(t, val.DOUBLE, b.Type())
+	require.Equal(t, "val.numberValue", b.Class().String())
+	require.Equal(t, "cb0000000000000000", val.Hex(b))
+	require.Equal(t, "0", val.Json(b))
 	require.Equal(t, "0", b.String())
 	require.Equal(t, int64(0), b.Long())
 
-	b = genval.Double(1)
-	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.DOUBLE, b.Type())
-	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "cb3ff0000000000000", genval.Hex(b))
-	require.Equal(t, "1", genval.Json(b))
+	b = val.Double(1)
+	require.Equal(t, val.NUMBER, b.Kind())
+	require.Equal(t, val.DOUBLE, b.Type())
+	require.Equal(t, "val.numberValue", b.Class().String())
+	require.Equal(t, "cb3ff0000000000000", val.Hex(b))
+	require.Equal(t, "1", val.Json(b))
 	require.Equal(t, "1", b.String())
 	require.Equal(t, int64(1), b.Long())
 
-	b = genval.Double(123456789)
-	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.DOUBLE, b.Type())
-	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "cb419d6f3454000000", genval.Hex(b))
-	require.Equal(t, "1.23456789e+08", genval.Json(b))
+	b = val.Double(123456789)
+	require.Equal(t, val.NUMBER, b.Kind())
+	require.Equal(t, val.DOUBLE, b.Type())
+	require.Equal(t, "val.numberValue", b.Class().String())
+	require.Equal(t, "cb419d6f3454000000", val.Hex(b))
+	require.Equal(t, "1.23456789e+08", val.Json(b))
 	require.Equal(t, "1.23456789e+08", b.String())
 	require.Equal(t, int64(123456789), b.Long())
 
-	b = genval.Double(-123456789)
-	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.DOUBLE, b.Type())
-	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "cbc19d6f3454000000", genval.Hex(b))
-	require.Equal(t, "-1.23456789e+08", genval.Json(b))
+	b = val.Double(-123456789)
+	require.Equal(t, val.NUMBER, b.Kind())
+	require.Equal(t, val.DOUBLE, b.Type())
+	require.Equal(t, "val.numberValue", b.Class().String())
+	require.Equal(t, "cbc19d6f3454000000", val.Hex(b))
+	require.Equal(t, "-1.23456789e+08", val.Json(b))
 	require.Equal(t, "-1.23456789e+08", b.String())
 	require.Equal(t, int64(-123456789), b.Long())
 
@@ -146,101 +146,101 @@ func TestDoubleNumber(t *testing.T) {
 
 func TestParseNumber(t *testing.T) {
 
-	b := genval.ParseNumber("0")
+	b := val.ParseNumber("0")
 
-	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.LONG, b.Type())
-	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "00", genval.Hex(b))
-	require.Equal(t, "0", genval.Json(b))
+	require.Equal(t, val.NUMBER, b.Kind())
+	require.Equal(t, val.LONG, b.Type())
+	require.Equal(t, "val.numberValue", b.Class().String())
+	require.Equal(t, "00", val.Hex(b))
+	require.Equal(t, "0", val.Json(b))
 	require.Equal(t, "0", b.String())
 
-	b = genval.ParseNumber("123")
+	b = val.ParseNumber("123")
 
-	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.LONG, b.Type())
-	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "7b", genval.Hex(b))
-	require.Equal(t, "123", genval.Json(b))
+	require.Equal(t, val.NUMBER, b.Kind())
+	require.Equal(t, val.LONG, b.Type())
+	require.Equal(t, "val.numberValue", b.Class().String())
+	require.Equal(t, "7b", val.Hex(b))
+	require.Equal(t, "123", val.Json(b))
 	require.Equal(t, "123", b.String())
 
-	b = genval.ParseNumber("-123")
+	b = val.ParseNumber("-123")
 
-	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.LONG, b.Type())
-	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "d085", genval.Hex(b))
-	require.Equal(t, "-123", genval.Json(b))
+	require.Equal(t, val.NUMBER, b.Kind())
+	require.Equal(t, val.LONG, b.Type())
+	require.Equal(t, "val.numberValue", b.Class().String())
+	require.Equal(t, "d085", val.Hex(b))
+	require.Equal(t, "-123", val.Json(b))
 	require.Equal(t, "-123", b.String())
 
-	b = genval.ParseNumber("123.45")
+	b = val.ParseNumber("123.45")
 
-	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.DOUBLE, b.Type())
-	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "cb405edccccccccccd", genval.Hex(b))
-	require.Equal(t, "123.45", genval.Json(b))
+	require.Equal(t, val.NUMBER, b.Kind())
+	require.Equal(t, val.DOUBLE, b.Type())
+	require.Equal(t, "val.numberValue", b.Class().String())
+	require.Equal(t, "cb405edccccccccccd", val.Hex(b))
+	require.Equal(t, "123.45", val.Json(b))
 	require.Equal(t, "123.45", b.String())
 
-	b = genval.ParseNumber("-123.45")
+	b = val.ParseNumber("-123.45")
 
-	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.DOUBLE, b.Type())
-	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "cbc05edccccccccccd", genval.Hex(b))
-	require.Equal(t, "-123.45", genval.Json(b))
+	require.Equal(t, val.NUMBER, b.Kind())
+	require.Equal(t, val.DOUBLE, b.Type())
+	require.Equal(t, "val.numberValue", b.Class().String())
+	require.Equal(t, "cbc05edccccccccccd", val.Hex(b))
+	require.Equal(t, "-123.45", val.Json(b))
 	require.Equal(t, "-123.45", b.String())
 
-	b = genval.ParseNumber("123456789.123456789")
+	b = val.ParseNumber("123456789.123456789")
 
-	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.DOUBLE, b.Type())
-	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "cb419d6f34547e6b75", genval.Hex(b))
-	require.Equal(t, "1.2345678912345679e+08", genval.Json(b))
+	require.Equal(t, val.NUMBER, b.Kind())
+	require.Equal(t, val.DOUBLE, b.Type())
+	require.Equal(t, "val.numberValue", b.Class().String())
+	require.Equal(t, "cb419d6f34547e6b75", val.Hex(b))
+	require.Equal(t, "1.2345678912345679e+08", val.Json(b))
 	require.Equal(t, "1.2345678912345679e+08", b.String())
 
-	c := genval.ParseNumber("1.2345678912345679e+08")
+	c := val.ParseNumber("1.2345678912345679e+08")
 	DoubleEqual(t, b.Double(), c.Double())
 
-	b = genval.ParseNumber("-123456789.123456789")
+	b = val.ParseNumber("-123456789.123456789")
 
-	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.DOUBLE, b.Type())
-	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "cbc19d6f34547e6b75", genval.Hex(b))
-	require.Equal(t, "-1.2345678912345679e+08", genval.Json(b))
+	require.Equal(t, val.NUMBER, b.Kind())
+	require.Equal(t, val.DOUBLE, b.Type())
+	require.Equal(t, "val.numberValue", b.Class().String())
+	require.Equal(t, "cbc19d6f34547e6b75", val.Hex(b))
+	require.Equal(t, "-1.2345678912345679e+08", val.Json(b))
 	require.Equal(t, "-1.2345678912345679e+08", b.String())
 
-	c = genval.ParseNumber("-1.2345678912345679e+08")
+	c = val.ParseNumber("-1.2345678912345679e+08")
 	DoubleEqual(t, b.Double(), c.Double())
 
 }
 
 func TestParseNaN(t *testing.T) {
 
-	b := genval.ParseNumber("not a number")
+	b := val.ParseNumber("not a number")
 
-	require.Equal(t, genval.NUMBER, b.Kind())
-	require.Equal(t, genval.DOUBLE, b.Type())
+	require.Equal(t, val.NUMBER, b.Kind())
+	require.Equal(t, val.DOUBLE, b.Type())
 	require.True(t, math.IsNaN(b.Double()))
 	require.Equal(t, int64(0), b.Long())
-	require.Equal(t, "genval.numberValue", b.Class().String())
-	require.Equal(t, "cb7ff8000000000001", genval.Hex(b))
-	require.Equal(t, "null", genval.Json(b))
+	require.Equal(t, "val.numberValue", b.Class().String())
+	require.Equal(t, "cb7ff8000000000001", val.Hex(b))
+	require.Equal(t, "null", val.Json(b))
 	require.Equal(t, "NaN", b.String())
 
 }
 
 func TestAddNumber(t *testing.T) {
 
-	a := genval.ParseNumber("3")
-	b := genval.ParseNumber("2")
+	a := val.ParseNumber("3")
+	b := val.ParseNumber("2")
 
 	c := a.Add(b)
 
-	require.Equal(t, genval.NUMBER, c.Kind())
-	require.Equal(t, genval.LONG, c.Type())
+	require.Equal(t, val.NUMBER, c.Kind())
+	require.Equal(t, val.LONG, c.Type())
 
 	require.Equal(t, int64(3), a.Long())
 	require.Equal(t, int64(2), b.Long())
@@ -250,13 +250,13 @@ func TestAddNumber(t *testing.T) {
 
 func TestSubtractNumber(t *testing.T) {
 
-	a := genval.ParseNumber("3")
-	b := genval.ParseNumber("2")
+	a := val.ParseNumber("3")
+	b := val.ParseNumber("2")
 
 	c := a.Subtract(b)
 
-	require.Equal(t, genval.NUMBER, c.Kind())
-	require.Equal(t, genval.LONG, c.Type())
+	require.Equal(t, val.NUMBER, c.Kind())
+	require.Equal(t, val.LONG, c.Type())
 
 	require.Equal(t, int64(3), a.Long())
 	require.Equal(t, int64(2), b.Long())
@@ -266,13 +266,13 @@ func TestSubtractNumber(t *testing.T) {
 
 func TestAddFloatNumber(t *testing.T) {
 
-	a := genval.ParseNumber("3.3")
-	b := genval.ParseNumber("2.2")
+	a := val.ParseNumber("3.3")
+	b := val.ParseNumber("2.2")
 
 	c := a.Add(b)
 
-	require.Equal(t, genval.NUMBER, c.Kind())
-	require.Equal(t, genval.DOUBLE, c.Type())
+	require.Equal(t, val.NUMBER, c.Kind())
+	require.Equal(t, val.DOUBLE, c.Type())
 
 	DoubleEqual(t, float64(3.3), a.Double())
 	DoubleEqual(t, float64(2.2), b.Double())
@@ -282,13 +282,13 @@ func TestAddFloatNumber(t *testing.T) {
 
 func TestSubtractFloatNumber(t *testing.T) {
 
-	a := genval.ParseNumber("3.3")
-	b := genval.ParseNumber("2.2")
+	a := val.ParseNumber("3.3")
+	b := val.ParseNumber("2.2")
 
 	c := a.Subtract(b)
 
-	require.Equal(t, genval.NUMBER, c.Kind())
-	require.Equal(t, genval.DOUBLE, c.Type())
+	require.Equal(t, val.NUMBER, c.Kind())
+	require.Equal(t, val.DOUBLE, c.Type())
 
 	DoubleEqual(t, float64(3.3), a.Double())
 	DoubleEqual(t, float64(2.2), b.Double())
@@ -298,13 +298,13 @@ func TestSubtractFloatNumber(t *testing.T) {
 
 func TestAddNaN(t *testing.T) {
 
-	a := genval.ParseNumber("3.3")
-	b := genval.ParseNumber("NaN")
+	a := val.ParseNumber("3.3")
+	b := val.ParseNumber("NaN")
 
 	c := a.Add(b)
 
-	require.Equal(t, genval.NUMBER, c.Kind())
-	require.Equal(t, genval.DOUBLE, c.Type())
+	require.Equal(t, val.NUMBER, c.Kind())
+	require.Equal(t, val.DOUBLE, c.Type())
 
 	DoubleEqual(t, float64(3.3), a.Double())
 	require.True(t, math.IsNaN(b.Double()))
@@ -314,13 +314,13 @@ func TestAddNaN(t *testing.T) {
 
 func TestSubtractNaN(t *testing.T) {
 
-	a := genval.ParseNumber("3.3")
-	b := genval.ParseNumber("NaN")
+	a := val.ParseNumber("3.3")
+	b := val.ParseNumber("NaN")
 
 	c := a.Subtract(b)
 
-	require.Equal(t, genval.NUMBER, c.Kind())
-	require.Equal(t, genval.DOUBLE, c.Type())
+	require.Equal(t, val.NUMBER, c.Kind())
+	require.Equal(t, val.DOUBLE, c.Type())
 
 	DoubleEqual(t, float64(3.3), a.Double())
 	require.True(t, math.IsNaN(b.Double()))
@@ -330,13 +330,13 @@ func TestSubtractNaN(t *testing.T) {
 
 func TestAddNaNBoth(t *testing.T) {
 
-	a := genval.ParseNumber("NaN")
-	b := genval.ParseNumber("NaN")
+	a := val.ParseNumber("NaN")
+	b := val.ParseNumber("NaN")
 
 	c := a.Add(b)
 
-	require.Equal(t, genval.NUMBER, c.Kind())
-	require.Equal(t, genval.DOUBLE, c.Type())
+	require.Equal(t, val.NUMBER, c.Kind())
+	require.Equal(t, val.DOUBLE, c.Type())
 
 	require.True(t, math.IsNaN(a.Double()))
 	require.True(t, math.IsNaN(b.Double()))
@@ -346,13 +346,13 @@ func TestAddNaNBoth(t *testing.T) {
 
 func TestSubtractNaNBoth(t *testing.T) {
 
-	a := genval.ParseNumber("NaN")
-	b := genval.ParseNumber("NaN")
+	a := val.ParseNumber("NaN")
+	b := val.ParseNumber("NaN")
 
 	c := a.Subtract(b)
 
-	require.Equal(t, genval.NUMBER, c.Kind())
-	require.Equal(t, genval.DOUBLE, c.Type())
+	require.Equal(t, val.NUMBER, c.Kind())
+	require.Equal(t, val.DOUBLE, c.Type())
 
 	require.True(t, math.IsNaN(a.Double()))
 	require.True(t, math.IsNaN(b.Double()))
@@ -365,12 +365,12 @@ func DoubleEqual(t *testing.T, left, right float64) {
 }
 
 type testNumberStruct struct {
-	N genval.Number
+	N val.Number
 }
 
 func TestNumberMarshal(t *testing.T) {
 
-	b := genval.Long(123)
+	b := val.Long(123)
 
 	j, _ := b.MarshalJSON()
 	require.Equal(t, "123", string(j))
@@ -378,7 +378,7 @@ func TestNumberMarshal(t *testing.T) {
 	bin, _ := b.MarshalBinary()
 	require.Equal(t, []byte{0x7b}, bin)
 
-	b = genval.Double(1.23)
+	b = val.Double(1.23)
 
 	j, _ = b.MarshalJSON()
 	require.Equal(t, "1.23", string(j))
@@ -386,7 +386,7 @@ func TestNumberMarshal(t *testing.T) {
 	bin, _ = b.MarshalBinary()
 	require.Equal(t, []byte{0xcb, 0x3f, 0xf3, 0xae, 0x14, 0x7a, 0xe1, 0x47, 0xae}, bin)
 
-	s := &testNumberStruct{genval.Long(123)}
+	s := &testNumberStruct{val.Long(123)}
 
 	j, _ = json.Marshal(s)
 	require.Equal(t, "{\"N\":123}", string(j))
@@ -397,13 +397,13 @@ func TestPackLong(t *testing.T) {
 
 	for num, _ := range testLongMap {
 
-		b := genval.Long(num)
+		b := val.Long(num)
 
-		mp, err := genval.Pack(b)
+		mp, err := val.Pack(b)
 		if err != nil {
 			t.Errorf("pack fail %v", err)
 		}
-		c, err := genval.Unpack(mp, false)
+		c, err := val.Unpack(mp, false)
 		if err != nil {
 			t.Errorf("unpack fail %v", err)
 		}

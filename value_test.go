@@ -16,7 +16,7 @@
  *
  */
 
-package genval_test
+package val_test
 
 import "testing"
 

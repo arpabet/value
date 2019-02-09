@@ -16,12 +16,12 @@
  *
  */
 
-package genval_test
+package val_test
 
 import (
 	"testing"
 	"github.com/stretchr/testify/require"
-	"github.com/shvid/genval"
+	"github.com/shvid/val"
 	"bytes"
 )
 
@@ -29,24 +29,24 @@ func TestUnknown(t *testing.T) {
 
 	mp := []byte { 0xd4,  1 }
 
-	v := genval.Unknown(mp, nil)
+	v := val.Unknown(mp, nil)
 
-	require.Equal(t, genval.UNKNOWN, v.Kind())
-	require.Equal(t, genval.DataPrefix + genval.Base64Prefix + "1AE", v.String())
-	require.Equal(t, "\"" + v.String() + "\"", genval.Json(v))
-	require.Equal(t, "d401", genval.Hex(v))
+	require.Equal(t, val.UNKNOWN, v.Kind())
+	require.Equal(t, val.DataPrefix + val.Base64Prefix + "1AE", v.String())
+	require.Equal(t, "\"" + v.String() + "\"", val.Json(v))
+	require.Equal(t, "d401", val.Hex(v))
 	require.Equal(t, 0, bytes.Compare(mp, v.Packed()))
 
 
 	mp = []byte { 0xc7 }
 	p := []byte { 0, 1 }
 
-	v = genval.Unknown(mp, p)
+	v = val.Unknown(mp, p)
 
-	require.Equal(t, genval.UNKNOWN, v.Kind())
-	require.Equal(t, genval.DataPrefix + genval.Base64Prefix + "xwAB", v.String())
-	require.Equal(t, "\"" + v.String() + "\"", genval.Json(v))
-	require.Equal(t, "c70001", genval.Hex(v))
+	require.Equal(t, val.UNKNOWN, v.Kind())
+	require.Equal(t, val.DataPrefix + val.Base64Prefix + "xwAB", v.String())
+	require.Equal(t, "\"" + v.String() + "\"", val.Json(v))
+	require.Equal(t, "c70001", val.Hex(v))
 	require.Equal(t, 0, bytes.Compare([]byte { 0xc7, 0, 1 }, v.Packed()))
 
 }

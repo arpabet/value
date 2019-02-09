@@ -16,12 +16,12 @@
  *
  */
 
-package genval_test
+package val_test
 
 import (
 	"testing"
 	"github.com/stretchr/testify/require"
-	"github.com/shvid/genval"
+	"github.com/shvid/val"
 	"bytes"
 	"strconv"
 	"encoding/json"
@@ -38,13 +38,13 @@ func TestUtf8String(t *testing.T) {
 
 	for str, hex := range testStrings {
 
-		b := genval.Utf8(str)
+		b := val.Utf8(str)
 
-		require.Equal(t, genval.STRING, b.Kind())
-		require.Equal(t, genval.UTF8, b.Type())
-		require.Equal(t, "genval.stringValue", b.Class().String())
-		require.Equal(t, hex, genval.Hex(b))
-		require.Equal(t, "\""+ str + "\"", genval.Json(b))
+		require.Equal(t, val.STRING, b.Kind())
+		require.Equal(t, val.UTF8, b.Type())
+		require.Equal(t, "val.stringValue", b.Class().String())
+		require.Equal(t, hex, val.Hex(b))
+		require.Equal(t, "\""+ str + "\"", val.Json(b))
 		require.Equal(t, str, b.String())
 
 	}
@@ -55,12 +55,12 @@ func TestJsonString(t *testing.T) {
 
 	src := "json\"val\"json"
 
-	s := genval.Utf8(src)
+	s := val.Utf8(src)
 
 	require.Equal(t, src, s.String())
-	require.Equal(t, "\"json\\\"val\\\"json\"", genval.Json(s))
+	require.Equal(t, "\"json\\\"val\\\"json\"", val.Json(s))
 
-	actual, _ := strconv.Unquote(genval.Json(s))
+	actual, _ := strconv.Unquote(val.Json(s))
 	require.Equal(t, src, actual)
 
 }
@@ -68,27 +68,27 @@ func TestJsonString(t *testing.T) {
 func TestRawString(t *testing.T) {
 
 	raw := []byte { 0, 1, 2, 3, 4, 5 }
-	s := genval.Raw(raw, false)
+	s := val.Raw(raw, false)
 
-	require.Equal(t, genval.STRING, s.Kind())
-	require.Equal(t, genval.RAW, s.Type())
-	require.Equal(t, genval.Base64Prefix + "AAECAwQF", s.String())
-	require.Equal(t, "\"" + genval.Base64Prefix + "AAECAwQF\"", genval.Json(s))
-	require.Equal(t, "c406000102030405", genval.Hex(s))
+	require.Equal(t, val.STRING, s.Kind())
+	require.Equal(t, val.RAW, s.Type())
+	require.Equal(t, val.Base64Prefix + "AAECAwQF", s.String())
+	require.Equal(t, "\"" + val.Base64Prefix + "AAECAwQF\"", val.Json(s))
+	require.Equal(t, "c406000102030405", val.Hex(s))
 	require.Equal(t, 0, bytes.Compare(raw, s.Raw()))
 
-	actual := genval.ParseString(s.String())
+	actual := val.ParseString(s.String())
 	//equire.Equal(t, 0, bytes.Compare(s.Raw(), actual.Raw()))
 	require.Equal(t, s.Raw(), actual.Raw())
 }
 
 type testStringStruct struct {
-	S genval.String
+	S val.String
 }
 
 func TestStringMarshal(t *testing.T) {
 
-	b := genval.Utf8("a")
+	b := val.Utf8("a")
 
 	j, _ := b.MarshalJSON()
 	require.Equal(t, "\"a\"", string(j))
@@ -96,7 +96,7 @@ func TestStringMarshal(t *testing.T) {
 	bin, _ := b.MarshalBinary()
 	require.Equal(t, []byte{0xa1, 0x61}, bin)
 
-	b = genval.Raw([]byte{0, 1}, false)
+	b = val.Raw([]byte{0, 1}, false)
 
 	j, _ = b.MarshalJSON()
 	require.Equal(t, "\"base64,AAE\"", string(j))
@@ -104,7 +104,7 @@ func TestStringMarshal(t *testing.T) {
 	bin, _ = b.MarshalBinary()
 	require.Equal(t, []byte{0xc4, 0x2, 0x0, 0x1}, bin)
 
-	s := &testStringStruct{genval.Utf8("b")}
+	s := &testStringStruct{val.Utf8("b")}
 
 	j, _ = json.Marshal(s)
 	require.Equal(t, "{\"S\":\"b\"}", string(j))

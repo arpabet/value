@@ -16,7 +16,7 @@
  *
  */
 
-package genval
+package val
 
 /**
 	Base interface for the packing values

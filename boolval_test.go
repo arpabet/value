@@ -16,49 +16,49 @@
  *
  */
 
-package genval_test
+package val_test
 
 import (
 	"testing"
 	"github.com/stretchr/testify/require"
-	"github.com/shvid/genval"
+	"github.com/shvid/val"
 	"encoding/json"
 )
 
 func TestBool(t *testing.T) {
 
-	b := genval.Boolean(true)
+	b := val.Boolean(true)
 
-	require.Equal(t, genval.BOOL, b.Kind())
-	require.Equal(t, "genval.boolValue", b.Class().String())
-	require.Equal(t, "c3", genval.Hex(b))
-	require.Equal(t, "true", genval.Json(b))
+	require.Equal(t, val.BOOL, b.Kind())
+	require.Equal(t, "val.boolValue", b.Class().String())
+	require.Equal(t, "c3", val.Hex(b))
+	require.Equal(t, "true", val.Json(b))
 	require.Equal(t, "true", b.String())
 
-	require.Equal(t, true, genval.ParseBoolean("t").Boolean())
-	require.Equal(t, true, genval.ParseBoolean("true").Boolean())
-	require.Equal(t, true, genval.ParseBoolean("True").Boolean())
+	require.Equal(t, true, val.ParseBoolean("t").Boolean())
+	require.Equal(t, true, val.ParseBoolean("true").Boolean())
+	require.Equal(t, true, val.ParseBoolean("True").Boolean())
 
-	b = genval.Boolean(false)
-	require.Equal(t, "c2", genval.Hex(b))
-	require.Equal(t, "false", genval.Json(b))
+	b = val.Boolean(false)
+	require.Equal(t, "c2", val.Hex(b))
+	require.Equal(t, "false", val.Json(b))
 	require.Equal(t, "false", b.String())
 
-	require.Equal(t, false, genval.ParseBoolean("f").Boolean())
-	require.Equal(t, false, genval.ParseBoolean("false").Boolean())
-	require.Equal(t, false, genval.ParseBoolean("False").Boolean())
-	require.Equal(t, false, genval.ParseBoolean("").Boolean())
-	require.Equal(t, false, genval.ParseBoolean("any_value").Boolean())
+	require.Equal(t, false, val.ParseBoolean("f").Boolean())
+	require.Equal(t, false, val.ParseBoolean("false").Boolean())
+	require.Equal(t, false, val.ParseBoolean("False").Boolean())
+	require.Equal(t, false, val.ParseBoolean("").Boolean())
+	require.Equal(t, false, val.ParseBoolean("any_value").Boolean())
 
 }
 
 type testBoolStruct struct {
-	B genval.Bool
+	B val.Bool
 }
 
 func TestBoolMarshal(t *testing.T) {
 
-	b := genval.Boolean(true)
+	b := val.Boolean(true)
 
 	j, _ := b.MarshalJSON()
 	require.Equal(t, []byte("true"), j)
@@ -66,7 +66,7 @@ func TestBoolMarshal(t *testing.T) {
 	bin, _ := b.MarshalBinary()
 	require.Equal(t, []byte{0xc3}, bin)
 
-	b = genval.Boolean(false)
+	b = val.Boolean(false)
 
 	j, _ = b.MarshalJSON()
 	require.Equal(t, []byte("false"), j)
@@ -74,7 +74,7 @@ func TestBoolMarshal(t *testing.T) {
 	bin, _ = b.MarshalBinary()
 	require.Equal(t, []byte{0xc2}, bin)
 
-	s := &testBoolStruct{genval.Boolean(true)}
+	s := &testBoolStruct{val.Boolean(true)}
 
 	j, _ = json.Marshal(s)
 	require.Equal(t, "{\"B\":true}", string(j))
@@ -83,11 +83,11 @@ func TestBoolMarshal(t *testing.T) {
 
 func TestPackBool(t *testing.T) {
 
-	b := genval.Boolean(true)
+	b := val.Boolean(true)
 
-	mp, _ := genval.Pack(b)
+	mp, _ := val.Pack(b)
 
-	c, err := genval.Unpack(mp, false)
+	c, err := val.Unpack(mp, false)
 	if err != nil {
 		t.Errorf("unpack fail %v", err)
 	}

@@ -16,23 +16,23 @@
  *
  */
 
-package genval_test
+package val_test
 
 import (
 	"testing"
 	"github.com/stretchr/testify/require"
-	"github.com/shvid/genval"
+	"github.com/shvid/val"
 )
 
 func TestExpr(t *testing.T) {
 
-	b := genval.Expression("")
+	b := val.Expression("")
 
 	require.Equal(t, 1, b.Size())
 	require.Equal(t, "", b.GetAt(0))
 	require.Equal(t, "", b.String())
 
-	b = genval.Expression("name")
+	b = val.Expression("name")
 
 	require.Equal(t, 1, b.Size())
 	require.Equal(t, "name", b.GetAt(0))
@@ -40,7 +40,7 @@ func TestExpr(t *testing.T) {
 	require.Equal(t, "", b.GetAt(1))
 	require.Equal(t, "name", b.String())
 
-	b = genval.Expression("name.first")
+	b = val.Expression("name.first")
 
 	require.Equal(t, 2, b.Size())
 	require.Equal(t, "name", b.GetAt(0))

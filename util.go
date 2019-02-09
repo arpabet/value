@@ -16,7 +16,7 @@
  *
  */
 
-package genval
+package val
 
 import (
 	"bytes"
