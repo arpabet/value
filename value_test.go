@@ -18,11 +18,21 @@
 
 package val_test
 
-import "testing"
+import (
+	"testing"
+	"github.com/shvid/val"
+	"github.com/stretchr/testify/require"
+)
 
-func TestParseBool(t *testing.T) {
+func testPackUnpack(t *testing.T, v val.Value) {
 
+	mp, _ := val.Pack(v)
 
+	c, err := val.Unpack(mp, false)
+	if err != nil {
+		t.Errorf("unpack fail %v", err)
+	}
 
+	require.True(t, v.Equal(c))
 
 }

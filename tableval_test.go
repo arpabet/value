@@ -238,6 +238,7 @@ func TestJsonListTable(t *testing.T) {
 	require.Equal(t, "[true,123,-12.34,\"text\",\"base64,AAEC\"]", val.Json(b))
 	require.Equal(t, "95c37bcbc028ae147ae147aea474657874c403000102", val.Hex(b))
 
+	testPackUnpack(t, b)
 }
 
 func TestJsonMapTable(t *testing.T) {
@@ -265,6 +266,7 @@ func TestJsonMapTable(t *testing.T) {
 	require.Equal(t,  "{\"123\": 123,\"map\": {\"5\": 5},\"name\": \"name\"}", val.Json(b))
 	require.Equal(t, "837b7ba36d6170810505a46e616d65a46e616d65", val.Hex(b))
 
+	testPackUnpack(t, b)
 }
 
 func TestCycleTable(t *testing.T) {

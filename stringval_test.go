@@ -47,6 +47,8 @@ func TestUtf8String(t *testing.T) {
 		require.Equal(t, "\""+ str + "\"", val.Json(b))
 		require.Equal(t, str, b.String())
 
+		testPackUnpack(t, b)
+
 	}
 
 }
@@ -78,8 +80,10 @@ func TestRawString(t *testing.T) {
 	require.Equal(t, 0, bytes.Compare(raw, s.Raw()))
 
 	actual := val.ParseString(s.String())
-	//equire.Equal(t, 0, bytes.Compare(s.Raw(), actual.Raw()))
 	require.Equal(t, s.Raw(), actual.Raw())
+
+	testPackUnpack(t, s)
+
 }
 
 type testStringStruct struct {

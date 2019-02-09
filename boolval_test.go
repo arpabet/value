@@ -84,14 +84,9 @@ func TestBoolMarshal(t *testing.T) {
 func TestPackBool(t *testing.T) {
 
 	b := val.Boolean(true)
+	testPackUnpack(t, b)
 
-	mp, _ := val.Pack(b)
-
-	c, err := val.Unpack(mp, false)
-	if err != nil {
-		t.Errorf("unpack fail %v", err)
-	}
-
-	require.True(t, b.Equal(c))
+	b = val.Boolean(false)
+	testPackUnpack(t, b)
 
 }

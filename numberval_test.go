@@ -76,6 +76,19 @@ var testLongMap = map[int64]string {
 
 }
 
+type testDoubleExpect struct {
+	hex string
+	str string
+}
+
+var testDoubleMap = map[float64]testDoubleExpect {
+	0: 				{"cb0000000000000000", "0"},
+	1: 				{"cb3ff0000000000000", "1"},
+	123456789: 		{"cb419d6f3454000000", "1.23456789e+08"},
+	-123456789:		{"cbc19d6f3454000000", "-1.23456789e+08"},
+}
+
+
 func TestLongNumber(t *testing.T) {
 
 	b := val.Long(0)
@@ -106,41 +119,18 @@ func TestLongNumber(t *testing.T) {
 
 func TestDoubleNumber(t *testing.T) {
 
-	b := val.Double(0)
-	require.Equal(t, val.NUMBER, b.Kind())
-	require.Equal(t, val.DOUBLE, b.Type())
-	require.Equal(t, "val.numberValue", b.Class().String())
-	require.Equal(t, "cb0000000000000000", val.Hex(b))
-	require.Equal(t, "0", val.Json(b))
-	require.Equal(t, "0", b.String())
-	require.Equal(t, int64(0), b.Long())
+	for num, e := range testDoubleMap {
 
-	b = val.Double(1)
-	require.Equal(t, val.NUMBER, b.Kind())
-	require.Equal(t, val.DOUBLE, b.Type())
-	require.Equal(t, "val.numberValue", b.Class().String())
-	require.Equal(t, "cb3ff0000000000000", val.Hex(b))
-	require.Equal(t, "1", val.Json(b))
-	require.Equal(t, "1", b.String())
-	require.Equal(t, int64(1), b.Long())
+		b := val.Double(num)
+		require.Equal(t, val.NUMBER, b.Kind())
+		require.Equal(t, val.DOUBLE, b.Type())
+		require.Equal(t, "val.numberValue", b.Class().String())
+		require.Equal(t, e.hex, val.Hex(b))
+		require.Equal(t, e.str, val.Json(b))
+		require.Equal(t, e.str, b.String())
+		require.Equal(t, int64(num), b.Long())
 
-	b = val.Double(123456789)
-	require.Equal(t, val.NUMBER, b.Kind())
-	require.Equal(t, val.DOUBLE, b.Type())
-	require.Equal(t, "val.numberValue", b.Class().String())
-	require.Equal(t, "cb419d6f3454000000", val.Hex(b))
-	require.Equal(t, "1.23456789e+08", val.Json(b))
-	require.Equal(t, "1.23456789e+08", b.String())
-	require.Equal(t, int64(123456789), b.Long())
-
-	b = val.Double(-123456789)
-	require.Equal(t, val.NUMBER, b.Kind())
-	require.Equal(t, val.DOUBLE, b.Type())
-	require.Equal(t, "val.numberValue", b.Class().String())
-	require.Equal(t, "cbc19d6f3454000000", val.Hex(b))
-	require.Equal(t, "-1.23456789e+08", val.Json(b))
-	require.Equal(t, "-1.23456789e+08", b.String())
-	require.Equal(t, int64(-123456789), b.Long())
+	}
 
 }
 
@@ -398,17 +388,19 @@ func TestPackLong(t *testing.T) {
 	for num, _ := range testLongMap {
 
 		b := val.Long(num)
+		testPackUnpack(t, b)
 
-		mp, err := val.Pack(b)
-		if err != nil {
-			t.Errorf("pack fail %v", err)
-		}
-		c, err := val.Unpack(mp, false)
-		if err != nil {
-			t.Errorf("unpack fail %v", err)
-		}
+	}
 
-		require.Truef(t, b.Equal(c), "expected: %v, actual: %v", b, c)
+}
+
+func TestPackDouble(t *testing.T) {
+
+	for num, _ := range testDoubleMap {
+
+		b := val.Double(num)
+		testPackUnpack(t, b)
+
 	}
 
 }
