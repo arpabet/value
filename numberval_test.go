@@ -392,3 +392,23 @@ func TestNumberMarshal(t *testing.T) {
 	require.Equal(t, "{\"N\":123}", string(j))
 
 }
+
+func TestPackLong(t *testing.T) {
+
+	for num, _ := range testLongMap {
+
+		b := genval.Long(num)
+
+		mp, err := genval.Pack(b)
+		if err != nil {
+			t.Errorf("pack fail %v", err)
+		}
+		c, err := genval.Unpack(mp, false)
+		if err != nil {
+			t.Errorf("unpack fail %v", err)
+		}
+
+		require.Truef(t, b.Equal(c), "expected: %v, actual: %v", b, c)
+	}
+
+}

@@ -20,7 +20,9 @@ package genval_test
 
 import "testing"
 
-func TestValue(t *testing.T) {
+func TestParseBool(t *testing.T) {
+
+
 
 
 }

@@ -425,18 +425,22 @@ func MessageParser() *messageParser {
 }
 
 func (r *messageParser) ParseBool(b []byte) bool {
-	switch b[0] {
+
+	code := b[0]
+
+	switch code {
 	case mpTrue:
 		return true
 	case mpFalse:
 		return false
 	default:
-		r.err = errors.Errorf("bool: invalid code %v", b[0])
+		r.err = errors.Errorf("bool: invalid code %v", code)
 		return false
 	}
 }
 
 func (r *messageParser) ParseLong(b []byte) int64 {
+
 	code := b[0]
 
 	switch code {
@@ -453,24 +457,27 @@ func (r *messageParser) ParseLong(b []byte) int64 {
 	case mpInt16:
 		return int64(int16(binary.BigEndian.Uint16(b[1:])))
 	case mpInt32:
-		return int64(int16(binary.BigEndian.Uint32(b[1:])))
+		return int64(int32(binary.BigEndian.Uint32(b[1:])))
 	case mpInt64:
-		return int64(int16(binary.BigEndian.Uint64(b[1:])))
+		return int64(int64(binary.BigEndian.Uint64(b[1:])))
 	}
 
 	switch {
 	case code >= mpPosFixIntMin && code <= mpPosFixIntMax:
-		return int64(b[1])
+		return int64(code)
 	case code >= mpNegFixIntMin && code <= mpNegFixIntMax:
-		return int64(int8(b[1]))
+		return int64(int8(code))
 	default:
-		r.err = errors.Errorf("long: invalid code %v", b[0])
+		r.err = errors.Errorf("long: invalid code %v", code)
 		return 0
 	}
 }
 
 func (r *messageParser) ParseDouble(b []byte) float64 {
-	switch b[0] {
+
+	code := b[0]
+
+	switch code {
 	case mpFloat32:
 		val32 := binary.BigEndian.Uint32(b[1:])
 		return float64(math.Float32frombits(val32))
@@ -478,12 +485,13 @@ func (r *messageParser) ParseDouble(b []byte) float64 {
 		val64 := binary.BigEndian.Uint64(b[1:])
 		return math.Float64frombits(val64)
 	default:
-		r.err = errors.Errorf("double: invalid code %v", b[0])
+		r.err = errors.Errorf("double: invalid code %v", code)
 		return 0
 	}
 }
 
 func (r *messageParser) ParseBin(b []byte) int {
+
 	code := b[0]
 
 	switch code {
@@ -494,12 +502,13 @@ func (r *messageParser) ParseBin(b []byte) int {
 	case mpBin32:
 		return int(binary.BigEndian.Uint32(b[1:]))
 	default:
-		r.err = errors.Errorf("bin: invalid code %v", b[0])
+		r.err = errors.Errorf("bin: invalid code %v", code)
 		return 0
 	}
 }
 
 func (r *messageParser) ParseStr(b []byte) int {
+
 	code := b[0]
 
 	if code >= mpFixStrMin && code <= mpFixStrMax {
@@ -514,7 +523,7 @@ func (r *messageParser) ParseStr(b []byte) int {
 	case mpStr32:
 		return int(binary.BigEndian.Uint32(b[1:]))
 	default:
-		r.err = errors.Errorf("str: invalid code %v", b[0])
+		r.err = errors.Errorf("str: invalid code %v", code)
 		return 0
 	}
 }
@@ -533,7 +542,7 @@ func (r *messageParser) ParseList(b []byte) int {
 	case mpArray32:
 		return int(binary.BigEndian.Uint32(b[1:]))
 	default:
-		r.err = errors.Errorf("list: invalid code %v", b[0])
+		r.err = errors.Errorf("list: invalid code %v", code)
 		return 0
 	}
 
@@ -553,7 +562,7 @@ func (r *messageParser) ParseMap(b []byte) int {
 	case mpMap32:
 		return int(binary.BigEndian.Uint32(b[1:]))
 	default:
-		r.err = errors.Errorf("map: invalid code %v", b[0])
+		r.err = errors.Errorf("map: invalid code %v", code)
 		return 0
 	}
 }
@@ -570,7 +579,7 @@ func (r *messageParser) ParseExt(b []byte) int {
 	case mpExt32:
 		return int(binary.BigEndian.Uint32(b[1:]))
 	default:
-		r.err = errors.Errorf("ext: invalid code %v", b[0])
+		r.err = errors.Errorf("ext: invalid code %v", code)
 		return 0
 	}
 }

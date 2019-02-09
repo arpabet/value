@@ -80,3 +80,18 @@ func TestBoolMarshal(t *testing.T) {
 	require.Equal(t, "{\"B\":true}", string(j))
 
 }
+
+func TestPackBool(t *testing.T) {
+
+	b := genval.Boolean(true)
+
+	mp, _ := genval.Pack(b)
+
+	c, err := genval.Unpack(mp, false)
+	if err != nil {
+		t.Errorf("unpack fail %v", err)
+	}
+
+	require.True(t, b.Equal(c))
+
+}

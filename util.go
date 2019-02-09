@@ -26,13 +26,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-func Pack(val Value) []byte {
-
+func Pack(val Value) ([]byte, error) {
 	buf := bytes.Buffer{}
 	p := MessagePacker(&buf)
 	val.Pack(p)
-
-	return buf.Bytes()
+	return buf.Bytes(), p.Error()
 }
 
 func Unpack(buf []byte, copy bool) (Value, error) {
@@ -48,7 +46,8 @@ func Read(r io.Reader) (Value, error) {
 }
 
 func Hex(val Value) string {
-	return hex.EncodeToString(Pack(val))
+	mp, _ := Pack(val)
+	return hex.EncodeToString(mp)
 }
 
 func Json(val Value) string {
