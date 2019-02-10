@@ -640,11 +640,10 @@ type messageIOUnpacker struct {
 	buf 	[defReadBufSize]byte
 	r       io.Reader
 	br      io.ByteReader  // can be null
-	s		io.Seeker      // can be null
 }
 
 func MessageReader(r io.Reader) *messageIOUnpacker {
-	return &messageIOUnpacker{r: r, br: r.(io.ByteReader), s: r.(io.Seeker)}
+	return &messageIOUnpacker{r: r, br: r.(io.ByteReader)}
 }
 
 func (p *messageIOUnpacker) Next() (Format, []byte) {

@@ -110,7 +110,7 @@ func doParse(unpacker Unpacker, parser Parser) (Value, error) {
 
 	switch format {
 	case EOF:
-		return nil, nil
+		return nil, io.EOF
 	case UnexpectedEOF:
 		return nil, io.ErrUnexpectedEOF
 	case NilToken:

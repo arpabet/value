@@ -22,7 +22,11 @@ import (
 	"testing"
 	"github.com/shvid/val"
 	"github.com/stretchr/testify/require"
+	"bytes"
+	"time"
 )
+
+const numIterations = 10
 
 func testPackUnpack(t *testing.T, v val.Value) {
 
@@ -34,5 +38,42 @@ func testPackUnpack(t *testing.T, v val.Value) {
 	}
 
 	require.True(t, v.Equal(c))
+
+}
+
+func TestStream(t *testing.T) {
+
+	m := val.Utf8("value")
+
+	buf := bytes.Buffer{}
+
+	valueC := make(chan val.Value)
+	go val.WriteStream(&buf, valueC)
+
+	for i:=0; i!=numIterations; i++ {
+		valueC <- m
+	}
+
+	close(valueC)
+	time.Sleep(time.Millisecond)
+
+	valueC = make(chan val.Value)
+	go val.ReadStream(&buf, valueC)
+
+	cnt := 0
+	for {
+		val, ok := <- valueC
+
+		if !ok {
+			break
+		}
+
+		require.True(t, m.Equal(val))
+
+		cnt = cnt + 1
+	}
+
+	require.Equal(t, numIterations, cnt)
+
 
 }
