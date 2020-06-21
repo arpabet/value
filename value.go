@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2019-present Alexander Shvid
+ * Copyright 2020-present Arpabet, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  *
  */
 
-package val
+package value
 
 import (
 	"reflect"
@@ -26,7 +26,7 @@ import (
 )
 
 /**
-	Base interface for all Generic Values
+	Base interface for all values
 
     Author: Alex Shvid
  */
@@ -155,6 +155,7 @@ const (
 	InvalidNumber 	NumberType = iota
 	LONG
 	DOUBLE
+	//TODO: BIGINT
 )
 
 type Number interface {
