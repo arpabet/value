@@ -1,4 +1,4 @@
-# val
+# value
 Value in GO
 
 ### List
