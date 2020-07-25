@@ -122,7 +122,8 @@ func doParse(unpacker Unpacker, parser Parser) (Value, error) {
 	case DoubleToken:
 		return Double(parser.ParseDouble(header)), parser.Error()
 	case FixExtToken:
-		return Unknown(header, nil), nil
+		_, tagAndData := parser.ParseExt(header)
+		return doParseExt(tagAndData)
 	case BinHeader:
 		size := parser.ParseBin(header)
 		if parser.Error() != nil {
@@ -186,18 +187,33 @@ func doParse(unpacker Unpacker, parser Parser) (Value, error) {
 		}
 		return m, nil
 	case ExtHeader:
-		size := parser.ParseExt(header)
+		n, _ := parser.ParseExt(header)
 		if parser.Error() != nil {
 			return nil, parser.Error()
 		}
-		size += 1  // add tag
-		ext, err := unpacker.Read(size)
+		tagAndData, err := unpacker.Read(n+1)
 		if err != nil {
 			return nil, err
 		}
-		return Unknown(header, ext), nil
+		return doParseExt(tagAndData)
 	default:
 		return nil, errors.Errorf("parse: invalid format %v", format)
 	}
 
+}
+
+func doParseExt(tagAndData []byte) (Value, error) {
+	xtag := Ext(tagAndData[0])
+	ext := tagAndData[1:]
+	switch xtag {
+
+	case BigIntExt:
+		v, err := UnpackBigInt(ext)
+		return BigInt(v), err
+	case DecimalExt:
+		v, err := UnpackDecimal(ext)
+		return Decimal(v), err
+
+	}
+	return Unknown(tagAndData), nil
 }

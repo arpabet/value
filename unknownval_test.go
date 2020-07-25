@@ -27,26 +27,23 @@ import (
 
 func TestUnknown(t *testing.T) {
 
-	mp := []byte { 0xd4,  1 }
+	tagAndData := []byte { byte(val.MaxExt),  1 }
 
-	v := val.Unknown(mp, nil)
-
-	require.Equal(t, val.UNKNOWN, v.Kind())
-	require.Equal(t, val.DataPrefix + val.Base64Prefix + "1AE", v.String())
-	require.Equal(t, "\"" + v.String() + "\"", val.Json(v))
-	require.Equal(t, "d401", val.Hex(v))
-	require.Equal(t, 0, bytes.Compare(mp, v.Packed()))
-
-
-	mp = []byte { 0xc7 }
-	p := []byte { 0, 1 }
-
-	v = val.Unknown(mp, p)
+	v := val.Unknown(tagAndData)
 
 	require.Equal(t, val.UNKNOWN, v.Kind())
-	require.Equal(t, val.DataPrefix + val.Base64Prefix + "xwAB", v.String())
+	require.Equal(t, val.UnknownPrefix+ val.Base64Prefix + "AwE", v.String())
 	require.Equal(t, "\"" + v.String() + "\"", val.Json(v))
-	require.Equal(t, "c70001", val.Hex(v))
-	require.Equal(t, 0, bytes.Compare([]byte { 0xc7, 0, 1 }, v.Packed()))
+	require.Equal(t, "d40301", val.Hex(v))
+	require.Equal(t, 0, bytes.Compare(tagAndData, v.Native()))
+
+	mp, err := val.Pack(v)
+	require.Nil(t, err)
+
+	a, err := val.Unpack(mp, false)
+	require.Nil(t, err)
+
+	require.Equal(t, val.UNKNOWN, v.Kind())
+	require.Equal(t, 0, bytes.Compare(tagAndData, a.(val.Extension).Native()))
 
 }

@@ -30,7 +30,7 @@ func TestBool(t *testing.T) {
 	b := val.Boolean(true)
 
 	require.Equal(t, val.BOOL, b.Kind())
-	require.Equal(t, "val.boolValue", b.Class().String())
+	require.Equal(t, "value.boolValue", b.Class().String())
 	require.Equal(t, "c3", val.Hex(b))
 	require.Equal(t, "true", val.Json(b))
 	require.Equal(t, "true", b.String())

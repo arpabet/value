@@ -19,10 +19,12 @@
 package value
 
 import (
+	"encoding"
+	"encoding/json"
+	"github.com/shopspring/decimal"
+	"math/big"
 	"reflect"
 	"strings"
-	"encoding/json"
-	"encoding"
 )
 
 /**
@@ -64,6 +66,12 @@ type Value interface {
 	 */
 
 	String() string
+
+	/**
+		Gets underline object
+	 */
+
+	Object() interface{}
 
 	/**
 		Pack generic value by using packer, must not be nil
@@ -155,8 +163,26 @@ const (
 	InvalidNumber 	NumberType = iota
 	LONG
 	DOUBLE
-	//TODO: BIGINT
+	BIGINT
+	DECIMAL
 )
+
+func (t NumberType) String() string {
+	switch t {
+	case InvalidNumber:
+		return "invalid"
+	case LONG:
+		return "long"
+	case DOUBLE:
+		return "double"
+	case BIGINT:
+		return "bigint"
+	case DECIMAL:
+		return "decimal"
+	default:
+		return "unknown"
+	}
+}
 
 type Number interface {
 	Value
@@ -166,6 +192,12 @@ type Number interface {
 	 */
 
 	Type() NumberType
+
+	/**
+		Check if number is not a number
+	 */
+
+	IsNaN() bool
 
 	/**
 		Gets number as long
@@ -178,6 +210,18 @@ type Number interface {
 	 */
 
 	Double() float64
+
+	/**
+		Gets number as BigInt
+	 */
+
+	BigInt() *big.Int
+
+	/**
+		Gets number as Decimal
+	 */
+
+	Decimal() decimal.Decimal
 
 	/**
 		Adds this number and other one and return a new one
@@ -209,6 +253,19 @@ const (
 	RAW
 )
 
+func (t StringType) String() string {
+	switch t {
+	case InvalidString:
+		return "invalid"
+	case UTF8:
+		return "utf8"
+	case RAW:
+		return "raw"
+	default:
+		return "unknown"
+	}
+}
+
 type String interface {
 	Value
 
@@ -236,6 +293,12 @@ type String interface {
 
 	Raw() []byte
 
+}
+
+type Extension interface {
+	Value
+
+	Native() []byte
 }
 
 /**

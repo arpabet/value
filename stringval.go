@@ -19,12 +19,11 @@
 package value
 
 import (
-	"reflect"
-	"encoding/base64"
-	"strings"
-	"strconv"
 	"bytes"
-	"github.com/pkg/errors"
+	"encoding/base64"
+	"reflect"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -33,44 +32,149 @@ const (
 
 var Base64Prefix = "base64,"
 
-type stringValue struct {
-	dt 		StringType
-	utf8 	string
-	bytes 	[]byte
+type uft8String string
+type rawString []byte
+
+func Utf8(val string) String {
+	return uft8String(val)
 }
 
-func (s stringValue) Equal(val Value) bool {
+func (s uft8String) Type() StringType {
+	return UTF8
+}
+
+func (s uft8String) Kind() Kind {
+	return STRING
+}
+
+func (s uft8String) Class() reflect.Type {
+	return reflect.TypeOf((*uft8String)(nil)).Elem()
+}
+
+func (s uft8String) Object() interface{} {
+	return string(s)
+}
+
+func (s uft8String) String() string {
+	return string(s)
+}
+
+func (s uft8String) Pack(p Packer) {
+	p.PackStr(string(s))
+}
+
+func (s uft8String) PrintJSON(out *strings.Builder) {
+	out.WriteString(strconv.Quote(string(s)))
+}
+
+func (s uft8String) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Quote(string(s))), nil
+}
+
+func (s uft8String) MarshalBinary() ([]byte, error) {
+	buf := bytes.Buffer{}
+	p := MessagePacker(&buf)
+	s.Pack(p)
+	return buf.Bytes(), p.Error()
+}
+
+func (s uft8String) Equal(val Value) bool {
 	if val == nil || val.Kind() != STRING {
 		return false
 	}
-	o := val.(*stringValue)
-	if s.dt != o.dt {
+	return string(s) == val.String()
+}
+
+func (s uft8String) Len() int {
+	return len(s)
+}
+
+func (s uft8String) Utf8() string {
+	return string(s)
+}
+
+func (s uft8String) Raw() []byte {
+	return []byte(s)
+}
+
+func Raw(val []byte, copyFlag bool) String {
+	if copyFlag {
+		dst := make([]byte, len(val))
+		copy(dst, val)
+		return rawString(dst)
+	} else {
+		return rawString(val)
+	}
+}
+
+func (s rawString) Type() StringType {
+	return RAW
+}
+
+func (s rawString) Kind() Kind {
+	return STRING
+}
+
+func (s rawString) Class() reflect.Type {
+	return reflect.TypeOf((*rawString)(nil)).Elem()
+}
+
+func (s rawString) Object() interface{} {
+	return []byte(s)
+}
+
+func (s rawString) String() string {
+	return Base64Prefix + base64.RawStdEncoding.EncodeToString(s)
+}
+
+func (s rawString) Pack(p Packer) {
+	p.PackBin(s)
+}
+
+func (s rawString) PrintJSON(out *strings.Builder) {
+	out.WriteRune(jsonQuote)
+	out.WriteString(Base64Prefix)
+	out.WriteString(base64.RawStdEncoding.EncodeToString(s))
+	out.WriteRune(jsonQuote)
+}
+
+func (s rawString) MarshalJSON() ([]byte, error) {
+	var out strings.Builder
+	out.WriteRune(jsonQuote)
+	out.WriteString(Base64Prefix)
+	out.WriteString(base64.RawStdEncoding.EncodeToString(s))
+	out.WriteRune(jsonQuote)
+	return []byte(out.String()), nil
+}
+
+func (s rawString) MarshalBinary() ([]byte, error) {
+	buf := bytes.Buffer{}
+	p := MessagePacker(&buf)
+	s.Pack(p)
+	return buf.Bytes(), p.Error()
+}
+
+func (s rawString) Equal(val Value) bool {
+	if val == nil || val.Kind() != STRING {
 		return false
 	}
-	switch s.dt {
-	case UTF8:
-		return s.utf8 == o.utf8
-	case RAW:
-		return bytes.Compare(s.bytes, o.bytes) == 0
-	}
-	return false
+	o := val.(String)
+	return bytes.Compare(s, o.Raw()) == 0
 }
 
-func Utf8(val string) *stringValue {
-	return &stringValue{
-		dt: UTF8,
-		utf8: val,
-	}
+func (s rawString) Len() int {
+	return len(s)
 }
 
-func Raw(val []byte, copy bool) *stringValue {
-	return &stringValue{
-		dt: RAW,
-		bytes: val,
-	}
+func (s rawString) Utf8() string {
+	return string(s)
 }
 
-func ParseString(str string) *stringValue {
+func (s rawString) Raw() []byte {
+	return s
+}
+
+func ParseString(str string) String {
 	if strings.HasPrefix(str, Base64Prefix) {
 		raw, err := base64.RawStdEncoding.DecodeString(str[len(Base64Prefix):])
 		if err == nil {
@@ -78,109 +182,4 @@ func ParseString(str string) *stringValue {
 		}
 	}
 	return Utf8(str)
-}
-
-func (s stringValue) Kind() Kind {
-	return STRING
-}
-
-func (s stringValue) Class() reflect.Type {
-	return reflect.TypeOf((*stringValue)(nil)).Elem()
-}
-
-func (s stringValue) Len() int {
-	switch s.dt {
-	case UTF8:
-		return len(s.utf8)
-	case RAW:
-		return len(s.bytes)
-	default:
-		return 0
-	}
-}
-
-func (s stringValue) String() string {
-	switch s.dt {
-	case UTF8:
-		return s.utf8
-	case RAW:
-		return Base64Prefix + base64.RawStdEncoding.EncodeToString(s.bytes)
-	default:
-		return ""
-	}
-}
-
-func (s stringValue) Pack(p Packer) {
-	switch s.dt {
-	case UTF8:
-		p.PackStr(s.utf8)
-	case RAW:
-		p.PackBin(s.bytes)
-	default:
-		p.PackNil()
-	}
-}
-
-func (s stringValue) PrintJSON(out *strings.Builder) {
-	switch s.dt {
-	case UTF8:
-		out.WriteString(strconv.Quote(s.utf8))
-	case RAW:
-		out.WriteRune(jsonQuote)
-		out.WriteString(Base64Prefix)
-		out.WriteString(base64.RawStdEncoding.EncodeToString(s.bytes))
-		out.WriteRune(jsonQuote)
-	default:
-		out.WriteRune(jsonQuote)
-		out.WriteRune(jsonQuote)
-	}
-}
-
-func (s stringValue) MarshalJSON() ([]byte, error) {
-	switch s.dt {
-	case UTF8:
-		return []byte(strconv.Quote(s.utf8)), nil
-	case RAW:
-		var out strings.Builder
-		out.WriteRune(jsonQuote)
-		out.WriteString(Base64Prefix)
-		out.WriteString(base64.RawStdEncoding.EncodeToString(s.bytes))
-		out.WriteRune(jsonQuote)
-		return []byte(out.String()), nil
-	default:
-		return nil, errors.New("unknown string type")
-	}
-}
-
-func (s stringValue) MarshalBinary() ([]byte, error) {
-	buf := bytes.Buffer{}
-	p := MessagePacker(&buf)
-	s.Pack(p)
-	return buf.Bytes(), p.Error()
-}
-
-func (s stringValue) Type() StringType {
-	return s.dt
-}
-
-func (s stringValue) Utf8() string {
-	switch s.dt {
-	case UTF8:
-		return s.utf8
-	case RAW:
-		return string(s.bytes)
-	default:
-		return ""
-	}
-}
-
-func (s stringValue) Raw() []byte {
-	switch s.dt {
-	case UTF8:
-		return []byte(s.utf8)
-	case RAW:
-		return s.bytes
-	default:
-		return []byte{}
-	}
 }

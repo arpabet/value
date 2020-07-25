@@ -169,11 +169,11 @@ var (
 		4,  // mpInt32   	0xd2
 		8,  // mpInt64  	0xd3
 
-		1,  // mpFixExt1  	0xd4
-		2,  // mpFixExt2  	0xd5
-		4,  // mpFixExt4  	0xd6
-		8,  // mpFixExt8  	0xd7
-		16, // mpFixExt16 	0xd8
+		2,  // mpFixExt1  	0xd4
+		3,  // mpFixExt2  	0xd5
+		5,  // mpFixExt4  	0xd6
+		9,  // mpFixExt8  	0xd7
+		17, // mpFixExt16 	0xd8
 
 		1,  // mpStr8  		0xd9
 		2,  // mpStr16 	 	0xda
@@ -245,6 +245,15 @@ func (p messagePacker) PackBin(b []byte) {
 	}
 }
 
+func (p *messagePacker) PackExt(xtag Ext, data []byte) {
+	if p.err == nil {
+		_, p.err = p.w.Write(p.m.WriteExtHeader(len(data), byte(xtag)))
+	}
+	if p.err == nil {
+		_, p.err = p.w.Write(data)
+	}
+}
+
 func (p messagePacker) PackList(size int) {
 	if size < 0 {
 		size = 0
@@ -263,7 +272,7 @@ func (p messagePacker) PackMap(size int) {
 	}
 }
 
-func (p messagePacker) PackUnknown(b []byte) {
+func (p messagePacker) PackRaw(b []byte) {
 	if p.err == nil {
 		_, p.err = p.w.Write(b)
 	}
@@ -381,6 +390,48 @@ func (p messageWriter) WriteStrHeader(len int) []byte {
 		p.buf[0] = mpStr32
 		binary.BigEndian.PutUint32(p.buf[1:5], uint32(len))
 		return p.buf[:5]
+	}
+}
+
+func (p messageWriter) WriteExtHeader(len int, xtag byte) []byte {
+	switch len {
+	case 1:
+		p.buf[0] = mpFixExt1
+		p.buf[1] = xtag
+		return p.buf[:2]
+	case 2:
+		p.buf[0] = mpFixExt2
+		p.buf[1] = xtag
+		return p.buf[:2]
+	case 4:
+		p.buf[0] = mpFixExt4
+		p.buf[1] = xtag
+		return p.buf[:2]
+	case 8:
+		p.buf[0] = mpFixExt8
+		p.buf[1] = xtag
+		return p.buf[:2]
+	case 16:
+		p.buf[0] = mpFixExt16
+		p.buf[1] = xtag
+		return p.buf[:2]
+	default:
+		if len < 256 {
+			p.buf[0] = mpExt8
+			p.buf[1] = byte(len)
+			p.buf[2] = xtag
+			return p.buf[:3]
+		} else if len < 65536 {
+			p.buf[0] = mpExt16
+			binary.BigEndian.PutUint16(p.buf[1:], uint16(len))
+			p.buf[3] = xtag
+			return p.buf[:4]
+		} else {
+			p.buf[0] = mpExt32
+			binary.BigEndian.PutUint32(p.buf[1:], uint32(len))
+			p.buf[5] = xtag
+			return p.buf[:6]
+		}
 	}
 }
 
@@ -567,20 +618,30 @@ func (r *messageParser) ParseMap(b []byte) int {
 	}
 }
 
-func (r *messageParser) ParseExt(b []byte) int {
+func (r *messageParser) ParseExt(b []byte) (len int, tagAndData []byte) {
 
 	code := b[0]
 
 	switch code {
+	case mpFixExt1:
+		return 1, b[1:]
+	case mpFixExt2:
+		return 2, b[1:]
+	case mpFixExt4:
+		return 4, b[1:]
+	case mpFixExt8:
+		return 8, b[1:]
+	case mpFixExt16:
+		return 16, b[1:]
 	case mpExt8:
-		return int(b[1])
+		return int(b[1]), b[2:]
 	case mpExt16:
-		return int(binary.BigEndian.Uint16(b[1:]))
+		return int(binary.BigEndian.Uint16(b[1:])), b[3:]
 	case mpExt32:
-		return int(binary.BigEndian.Uint32(b[1:]))
+		return int(binary.BigEndian.Uint32(b[1:])), b[5:]
 	default:
 		r.err = errors.Errorf("ext: invalid code %v", code)
-		return 0
+		return 0, b
 	}
 }
 

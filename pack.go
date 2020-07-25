@@ -24,6 +24,18 @@ package value
     @author Alex Shvid
  */
 
+type Ext byte
+
+const (
+	UnknownExt Ext = iota
+
+	BigIntExt
+	DecimalExt
+
+	MaxExt
+)
+
+
 type Packer interface {
 
 	PackNil()
@@ -38,11 +50,13 @@ type Packer interface {
 
 	PackBin([]byte)
 
+	PackExt(xtag Ext, data []byte)
+
 	PackList(int)
 
 	PackMap(int)
 
-	PackUnknown([]byte)
+	PackRaw([]byte)
 
 	Error() error
 
@@ -67,6 +81,8 @@ type Writer interface {
 	WriteBinHeader(len int) []byte
 
 	WriteStrHeader(len int) []byte
+
+	WriteExtHeader(len int, xtag byte) []byte
 
 	WriteArrayHeader(len int) []byte
 
@@ -133,7 +149,7 @@ type Parser interface {
 
 	ParseMap([]byte) int
 
-	ParseExt([]byte) int
+	ParseExt([]byte) (int, []byte)
 
 	Error() error
 

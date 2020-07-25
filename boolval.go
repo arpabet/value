@@ -26,14 +26,6 @@ import (
 
 type boolValue bool
 
-func (b boolValue) Equal(val Value) bool {
-	if val == nil || val.Kind() != BOOL {
-		return false
-	}
-	o := val.(boolValue)
-	return b == o
-}
-
 func Boolean(b bool) Bool {
 	return boolValue(b)
 }
@@ -49,6 +41,10 @@ func (b boolValue) Kind() Kind {
 
 func (b boolValue) Class() reflect.Type {
 	return reflect.TypeOf(boolValue(false))
+}
+
+func (b boolValue) Object() interface{} {
+	return bool(b)
 }
 
 func (b boolValue) String() string {
@@ -74,4 +70,12 @@ func (b boolValue) MarshalJSON() ([]byte, error) {
 func (b boolValue) MarshalBinary() ([]byte, error) {
 	var m messageWriter
 	return m.WriteBool(bool(b)), nil
+}
+
+func (b boolValue) Equal(val Value) bool {
+	if val == nil || val.Kind() != BOOL {
+		return false
+	}
+	o := val.(Bool)
+	return b.Boolean() == o.Boolean()
 }

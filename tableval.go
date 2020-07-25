@@ -181,6 +181,10 @@ func (t tableValue) Class() reflect.Type {
 	return reflect.TypeOf((*tableValue)(nil)).Elem()
 }
 
+func (t tableValue) Object() interface{} {
+	return t
+}
+
 func (t *tableValue) String() string {
 	return Json(t)
 }

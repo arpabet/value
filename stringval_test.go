@@ -42,7 +42,7 @@ func TestUtf8String(t *testing.T) {
 
 		require.Equal(t, val.STRING, b.Kind())
 		require.Equal(t, val.UTF8, b.Type())
-		require.Equal(t, "val.stringValue", b.Class().String())
+		require.Equal(t, "value.uft8String", b.Class().String())
 		require.Equal(t, hex, val.Hex(b))
 		require.Equal(t, "\""+ str + "\"", val.Json(b))
 		require.Equal(t, str, b.String())
@@ -74,6 +74,7 @@ func TestRawString(t *testing.T) {
 
 	require.Equal(t, val.STRING, s.Kind())
 	require.Equal(t, val.RAW, s.Type())
+	require.Equal(t, "value.rawString", s.Class().String())
 	require.Equal(t, val.Base64Prefix + "AAECAwQF", s.String())
 	require.Equal(t, "\"" + val.Base64Prefix + "AAECAwQF\"", val.Json(s))
 	require.Equal(t, "c406000102030405", val.Hex(s))
