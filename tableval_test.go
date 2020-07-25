@@ -32,7 +32,7 @@ func TestEmptyTable(t *testing.T) {
 
 	require.Equal(t, val.TABLE, b.Kind())
 	require.Equal(t, val.LIST, b.Type())
-	require.Equal(t, "val.tableValue", b.Class().String())
+	require.Equal(t, "value.tableValue", b.Class().String())
 	require.Equal(t, 0, b.Len())
 	require.Equal(t, 0, b.Size())
 	require.Equal(t, "90", val.Hex(b))
@@ -43,7 +43,7 @@ func TestEmptyTable(t *testing.T) {
 
 	require.Equal(t, val.TABLE, b.Kind())
 	require.Equal(t, val.MAP, b.Type())
-	require.Equal(t, "val.tableValue", b.Class().String())
+	require.Equal(t, "value.tableValue", b.Class().String())
 	require.Equal(t, 0, b.Len())
 	require.Equal(t, 0, b.Size())
 	require.Equal(t, "80", val.Hex(b))
