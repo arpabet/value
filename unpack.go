@@ -29,7 +29,11 @@ import (
 func Pack(val Value) ([]byte, error) {
 	buf := bytes.Buffer{}
 	p := MessagePacker(&buf)
-	val.Pack(p)
+	if val != nil {
+		val.Pack(p)
+	} else {
+		p.PackNil()
+	}
 	return buf.Bytes(), p.Error()
 }
 

@@ -138,3 +138,17 @@ func testCreateMap() val.Table {
 
 	return b
 }
+
+func TestPackNil(t *testing.T) {
+
+	data, err := val.Pack(nil)
+	require.Nil(t, err)
+
+	require.Equal(t, []byte{0xc0}, data)
+
+	actual, err := val.Unpack(data, false)
+	require.Nil(t, err)
+	require.Nil(t, actual)
+
+
+}
