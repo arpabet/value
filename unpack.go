@@ -170,7 +170,7 @@ func doParse(unpacker Unpacker, parser Parser) (Value, error) {
 		if parser.Error() != nil {
 			return nil, parser.Error()
 		}
-		m := Map()
+		m := List()
 		for i:=0; i<cnt; i++ {
 			key, err := doParse(unpacker, parser)
 			if err != nil {

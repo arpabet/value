@@ -19,11 +19,11 @@
 package value_test
 
 import (
-	"testing"
-	"github.com/stretchr/testify/require"
-	val "github.com/consensusdb/value"
-	"reflect"
 	"encoding/json"
+	val "github.com/consensusdb/value"
+	"github.com/stretchr/testify/require"
+	"reflect"
+	"testing"
 )
 
 func TestEmptyTable(t *testing.T) {
@@ -267,6 +267,7 @@ func TestJsonMapTable(t *testing.T) {
 	require.Equal(t, "837b7ba36d6170810505a46e616d65a46e616d65", val.Hex(b))
 
 	testPackUnpack(t, b)
+
 }
 
 func TestCycleTable(t *testing.T) {
@@ -307,4 +308,22 @@ func TestTableMarshal(t *testing.T) {
 	j, _ = json.Marshal(s)
 	require.Equal(t, "{\"T\":{\"a\":true}}", string(j))
 
+}
+
+func TestTableNil(t *testing.T) {
+
+	b := val.Map()
+	b.Put("null", nil)
+
+	data, err := val.Pack(b)
+	require.Nil(t, err)
+
+	actual, err := val.Unpack(data, false)
+	require.Nil(t, err)
+	require.Equal(t, val.TABLE, actual.Kind())
+
+	tbl := actual.(val.Table)
+	require.Equal(t, 0, tbl.Size())
+
+	testPackUnpack(t, b)
 }

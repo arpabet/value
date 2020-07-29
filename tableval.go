@@ -132,7 +132,26 @@ func (t *tableValue) Equal(val Value) bool {
 		return false
 	}
 	o := val.(*tableValue)
-	return reflect.DeepEqual(t.Map(), o.Map())
+	t.Compact()
+	o.Compact()
+	if t.Size() != o.Size() {
+		return false
+	}
+	n := t.Size()
+	for i := 0; i != n; i++ {
+		entry := t.entries[i]
+		other := o.entries[i]
+		if entry.key.Compare(other.key) != 0 {
+			return false
+		}
+		if entry.op != other.op {
+			return false
+		}
+		if !entry.value.Equal(other.value) {
+			return false
+		}
+	}
+	return true
 }
 
 func (t tableValue) Len() int {
@@ -209,8 +228,9 @@ func (t *tableValue) PrintJSON(out *strings.Builder) {
 	}
 	defer t.unlock()
 
-	// this call will compact table
-	if t.isSequenceList() {
+	t.Compact()
+
+	if t.typ == LIST {
 		out.WriteRune('[')
 
 		for i, e := range t.entries {
@@ -259,8 +279,9 @@ func (t *tableValue) Pack(p Packer) {
 	}
 	defer t.unlock()
 
-	// this call will compact table
-	if t.isSequenceList() {
+	t.Compact()
+
+	if t.typ == LIST {
 
 		p.PackList(len(t.entries))
 
@@ -289,28 +310,8 @@ func (t *tableValue) Pack(p Packer) {
 
 }
 
-/**
-	Check if List starts from FirstIndex and a sequence of numbers
- */
-
-func (t tableValue) isSequenceList() bool {
-	t.Compact()
-	if t.typ == LIST {
-		l := len(t.entries)
-		if l <= 1 {
-			return true
-		}
-		return t.entries[0].key.index == FirstIndex && t.entries[l-1].key.index == FirstIndex + l - 1
-	}
-	return false
-}
-
 func (t *tableValue) Type() TableType {
-	if t.typ == LIST && t.isSequenceList() {
-		return LIST
-	} else {
-		return MAP
-	}
+	return t.typ
 }
 
 func (t *tableValue) Get(key string) Value {
@@ -597,6 +598,7 @@ func (t *tableValue) Map() map[string]Value {
 			m[e.key.String()] = e.value
 		}
 	} else {
+		t.Sort()
 		t.entryProcessor(func(e *tableEntry) {
 			m[e.key.String()] = e.value
 		})
@@ -612,6 +614,7 @@ func (t *tableValue) List() []Value {
 			list = append(list, e.value)
 		}
 	} else {
+		t.Sort()
 		t.entryProcessor(func(e *tableEntry) {
 			list = append(list, e.value)
 		})
@@ -627,6 +630,7 @@ func (t *tableValue) Keys() []string {
 			list = append(list, e.key.String())
 		}
 	} else {
+		t.Sort()
 		t.entryProcessor(func(e *tableEntry) {
 			list = append(list, e.key.String())
 		})
@@ -644,6 +648,7 @@ func (t *tableValue) Indexes() []int {
 			}
 		}
 	} else {
+		t.Sort()
 		t.entryProcessor(func(e *tableEntry) {
 			if e.key.typ == INDEX {
 				list = append(list, e.key.index)
@@ -689,14 +694,11 @@ func (t tableValue) Compacted() bool {
 
 func (t *tableValue) Compact() {
 	if !t.compacted {
+		t.Sort()
 		list := make([]*tableEntry, 0, len(t.entries))
 		t.entryProcessor(func(e *tableEntry) {
 			list = append(list, e)
 		})
-		if len(list) == 0 {
-			t.typ = LIST
-			t.maxIndex = 0
-		}
 		t.entries = list
 		t.compacted = true
 	}
@@ -724,8 +726,7 @@ func (t *tableValue) nextRevision() int {
 
 type entryCallback = func (*tableEntry)
 
-func (t *tableValue) entryProcessor(cb entryCallback) {
-	t.Sort()
+func (t tableValue) entryProcessor(cb entryCallback) {
 	var k *tableKey
 	for _, e := range t.entries {
 		if k != nil && e.key.Compare(*k) == 0 {
