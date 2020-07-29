@@ -21,6 +21,7 @@ package value
 import (
 	"encoding"
 	"encoding/json"
+	"fmt"
 	"github.com/shopspring/decimal"
 	"math/big"
 	"reflect"
@@ -46,6 +47,7 @@ const (
 )
 
 type Value interface {
+	fmt.Stringer
 	json.Marshaler
 	encoding.BinaryMarshaler
 
@@ -60,12 +62,6 @@ type Value interface {
  	*/
 
 	Class() reflect.Type
-
-	/**
-		Converts Generic Value to String
-	 */
-
-	String() string
 
 	/**
 		Gets underline object
