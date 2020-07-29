@@ -21,6 +21,7 @@ package value
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -37,6 +38,10 @@ type rawString []byte
 
 func Utf8(val string) String {
 	return uft8String(val)
+}
+
+func Stringf(format string, args... interface{}) String {
+	return uft8String(fmt.Sprintf(format, args...))
 }
 
 func (s uft8String) Type() StringType {
