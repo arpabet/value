@@ -2,9 +2,9 @@
 
 Value in GO
 
-All instances are immutable and good for multi-threading or go-routing.
-
-Deterministic serialization that guarantee consistent results before hashing.
+* All instances are immutable and good for multi-threading or go-routing.
+* Deterministic serialization that guarantee consistent results before hashing.
+* No cycle pack deps, because all objects are immutable
 
 ### List
 ```

@@ -176,13 +176,3 @@ func TestSortedMapJson(t *testing.T) {
 
 }
 
-/*
-func TestCycleMap(t *testing.T) {
-
-	b := val.EmptyMap()
-	b.Put("map", b)
-
-	require.Equal(t,  "{\"map\": null}", val.Json(b))
-	require.Equal(t, "81a36d6170c0", val.Hex(b))
-}
-*/
