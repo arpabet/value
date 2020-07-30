@@ -176,3 +176,20 @@ func TestSortedMapJson(t *testing.T) {
 
 }
 
+
+func newHandshakeRequest(clientId int64) val.Map {
+	return val.EmptyMap().
+		Put("m", val.Utf8("vRPC")).
+		Put("v", val.Double(1.0)).
+		Put("t", val.Long(1)).
+		Put("rid", val.Long(123)).
+		Put("cid", val.Long(clientId))
+}
+
+func TestSortedMapProtocol(t *testing.T) {
+
+	req := newHandshakeRequest(555)
+	require.Equal(t,  5, req.Len())
+	require.Equal(t,  "{\"cid\": 555,\"m\": \"vRPC\",\"rid\": 123,\"t\": 1,\"v\": 1}", req.String())
+
+}

@@ -350,8 +350,13 @@ func (t sparseListValue) RemoveAt(key int) List {
 func (t sparseListValue) append(n int, item ListItem) List {
 	if n == 0 {
 		return sparseListValue([]ListItem{item})
-	} else {
+	} else if AllowFastAppends {  // fast appends are permitted w/o memory allocation
 		return append(t, item)
+	} else {
+		dst := make([]ListItem, n+1)
+		copy(dst, t)
+		dst[n] = item
+		return sparseListValue(dst)
 	}
 }
 
@@ -369,9 +374,21 @@ func (t sparseListValue) insertAt(i, n int, item ListItem) List {
 		dst[0] = item
 		return sparseListValue(dst)
 	} else if i+1 == n {
-		return append(t[:i], item, t[i])
+		if AllowFastAppends {  // fast appends are permitted w/o memory allocation
+			return append(t[:i], item, t[i])
+		} else {
+			dst := make([]ListItem, n+1)
+			copy(dst, t[:i])
+			dst[n-1] = item
+			dst[n] = t[i]
+			return sparseListValue(dst)
+		}
 	} else {
-		return append(append(t[:i], item), t[i:]...)
+		dst := make([]ListItem, n+1)
+		copy(dst, t[:i])
+		dst[i] = item
+		copy(dst[i+1:], t[i:])
+		return sparseListValue(dst)
 	}
 }
 

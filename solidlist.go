@@ -219,42 +219,97 @@ func (t solidListValue) GetMapAt(index int) Map {
 	return nil
 }
 
-func (t solidListValue) Append(v Value) List {
-	return append(t, v)
+func (t solidListValue) Append(val Value) List {
+	return t.append(len(t), val)
 }
 
-func (t solidListValue) PutAt(i int, value Value) List {
+func (t solidListValue) PutAt(i int, val Value) List {
 	n := len(t)
 	if i >= 0 {
 		if i == n {
-			return append(t, value)
+			return t.append(n, val)
+		} else {
+			return t.putAt(i, n, val)
 		}
-		j := i+1
-		if j < n {
-			j = n
-		}
-		dst := make([]Value, j)
-		copy(dst, t)
-		dst[i] = value
-		return solidListValue(dst)
 	}
 	return t
 }
 
-func (t solidListValue) InsertAt(i int, v Value) List {
+func (t solidListValue) InsertAt(i int, val Value) List {
 	if i >= 0 {
-		if i < len(t) {
-			return append(append(t[:i], v), t[i+1:]...)
+		n := len(t)
+		if i < n {
+			return t.insertAt(i, n, val)
 		} else {
-			return append(t, v)
+			return t.append(n, val)
 		}
 	}
 	return t
 }
 
 func (t solidListValue) RemoveAt(i int) List {
-	if i >= 0 && i < len(t) {
-		return append(t[:i], t[i+1:]...)
+	n := len(t)
+	if i >= 0 && i < n {
+		return t.removeAt(i, n)
 	}
 	return t
+}
+
+func (t solidListValue) append(n int, val Value) List {
+	if n == 0 {
+		return solidListValue([]Value{val})
+	} else if AllowFastAppends {
+		return append(t, val) // fast appends are permitted w/o memory allocation
+	} else {
+		dst := make([]Value, n+1)
+		copy(dst, t)
+		dst[n] = val
+		return solidListValue(dst)
+	}
+}
+
+func (t solidListValue) putAt(i, n int, val Value) List {
+	j := i+1
+	if j < n {
+		j = n
+	}
+	dst := make([]Value, j)
+	copy(dst, t)
+	dst[i] = val
+	return solidListValue(dst)
+}
+
+func (t solidListValue) insertAt(i, n int, val Value) List {
+	if i == 0 {
+		dst := make([]Value, n+1)
+		copy(dst[1:], t)
+		dst[0] = val
+		return solidListValue(dst)
+	} else if i+1 == n {
+		if AllowFastAppends {   // fast appends are permitted w/o memory allocation
+			return append(t[:i], val, t[i])
+		} else {
+			dst := make([]Value, n+1)
+			copy(dst, t[:i])
+			dst[n-1] = val
+			dst[n] = t[i]
+			return solidListValue(dst)
+		}
+	} else {
+		dst := make([]Value, n+1)
+		copy(dst, t[:i])
+		dst[i] = val
+		copy(dst[i+1:], t[i:])
+		return solidListValue(dst)
+	}
+}
+
+func (t solidListValue) removeAt(i, n int) List {
+	if i == 0 {
+		return t[1:]
+	} else if i+1 == n {
+		return t[:i]
+	} else {
+		return append(t[:i], t[i+1:]...)
+	}
 }

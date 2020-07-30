@@ -316,8 +316,13 @@ func (t sortedMapValue) Remove(key string) Map {
 func (t sortedMapValue) append(n int, entry MapEntry) Map {
 	if n == 0 {
 		return sortedMapValue([]MapEntry{entry})
-	} else {
+	} else if AllowFastAppends {   // fast appends are permitted w/o memory allocation
 		return append(t, entry)
+	} else {
+		dst := make([]MapEntry, n+1)
+		copy(dst, t)
+		dst[n] = entry
+		return sortedMapValue(dst)
 	}
 }
 
@@ -335,9 +340,21 @@ func (t sortedMapValue) insertAt(i, n int, entry MapEntry) Map {
 		dst[0] = entry
 		return sortedMapValue(dst)
 	} else if i+1 == n {
-		return append(t[:i], entry, t[i])
+		if AllowFastAppends {  // fast appends are permitted w/o memory allocation
+			return append(t[:i], entry, t[i])
+		} else {
+			dst := make([]MapEntry, n+1)
+			copy(dst, t[:i])
+			dst[n-1] = entry
+			dst[n] = t[i]
+			return sortedMapValue(dst)
+		}
 	} else {
-		return append(append(t[:i], entry), t[i:]...)
+		dst := make([]MapEntry, n+1)
+		copy(dst, t[:i])
+		dst[i] = entry
+		copy(dst[i+1:], t[i:])
+		return sortedMapValue(dst)
 	}
 }
 

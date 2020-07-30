@@ -35,6 +35,8 @@ import (
  */
 
 
+var AllowFastAppends = true
+
 type Kind int
 
 const (
