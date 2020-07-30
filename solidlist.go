@@ -46,8 +46,12 @@ func SolidList(list []Value) List {
 	return solidListValue(list)
 }
 
-func Sequence(values... Value) List {
+func Tuple(values... Value) List {
 	return solidListValue(values)
+}
+
+func Single(value Value) List {
+	return solidListValue([]Value{value})
 }
 
 func (t solidListValue) Kind() Kind {
