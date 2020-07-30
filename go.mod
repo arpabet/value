@@ -6,4 +6,7 @@ require github.com/pkg/errors v0.9.1
 
 require github.com/stretchr/testify v1.6.1
 
-require github.com/shopspring/decimal v1.2.0
+require (
+	github.com/shopspring/decimal v1.2.0
+	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
+)

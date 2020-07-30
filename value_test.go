@@ -18,6 +18,11 @@
 
 package value_test
 
+
+/**
+	@author Alex Shvid
+*/
+
 import (
 	"testing"
 	val "github.com/consensusdb/value"
@@ -119,24 +124,30 @@ func TestBenchmark(t *testing.T) {
 
 }
 
-func testCreateMap() val.Table {
+func testCreateMap() val.Map {
 
-	b := val.Map()
+	a := val.EmptySparseList()
+	a = a.InsertAt(1, val.Boolean(true))
+	a = a.InsertAt(0, val.Long(123))
+	a = a.InsertAt(3, val.Double(-12.34))
+	a = a.InsertAt(1, val.Utf8("text"))
+	a = a.InsertAt(5, val.Raw([]byte{0, 1, 2}, false))
 
-	b.Insert(val.Boolean(true))
-	b.Insert(val.Long(123))
-	b.Insert(val.Double(-12.34))
-	b.Insert(val.Utf8("text"))
-	b.Insert(val.Raw([]byte{0, 1, 2}, false))
+	b := val.EmptyList()
+	b = b.Append(val.Boolean(true))
+	b = b.Append(val.Long(123))
+	b = b.Append(val.Double(-12.34))
+	b = b.Append(val.Utf8("text"))
+	b = b.Append(val.Raw([]byte{0, 1, 2}, false))
 
-	c := val.Map()
-	c.Put("5", val.Long(5))
+	c := val.EmptyMap()
+	c = c.Put("5", val.Long(5))
 
-	b.Put("name", val.Utf8("name"))
-	b.Put("123", val.Long(123))
-	b.Put("map", c)
+	c = c.Put("name", val.Utf8("name"))
+	c = c.Put("123", val.Long(123))
+	c = c.Put("list", b)
 
-	return b
+	return c
 }
 
 func TestPackNil(t *testing.T) {

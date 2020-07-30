@@ -2,15 +2,19 @@
 
 Value in GO
 
+All instances are immutable and good for multi-threading or go-routing.
+
+Deterministic serialization that guarantee consistent results before hashing.
+
 ### List
 ```
-v := value.List()
+v := value.NewList()
 
-v.Insert(value.Boolean(true))
-v.Insert(value.Long(123))
-v.Insert(value.Double(-12.34))
-v.Insert(value.Utf8("text"))
-v.Insert(value.Raw([]byte{0, 1, 2}, false))
+v = v.Insert(value.Boolean(true))
+v = v.Insert(value.Long(123))
+v = v.Insert(value.Double(-12.34))
+v = v.Insert(value.Utf8("text"))
+v = v.Insert(value.Raw([]byte{0, 1, 2}, false))
 
 mp, _ := value.Pack(v)
 
@@ -24,9 +28,9 @@ require.True(t, v.Equal(c))
 
 ### Map
 ```
-b = value.Map()
+b = value.NewMap()
 
-c := value.Map()
+c := value.NewMap()
 c.Put("5", value.Long(5))
 
 b.Put("name", value.Utf8("name"))

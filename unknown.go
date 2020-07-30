@@ -18,6 +18,11 @@
 
 package value
 
+
+/**
+	@author Alex Shvid
+*/
+
 import (
 	"bytes"
 	"encoding/base64"

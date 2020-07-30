@@ -26,6 +26,11 @@ import (
 	"encoding/json"
 )
 
+
+/**
+	@author Alex Shvid
+*/
+
 var testLongMap = map[int64]string {
 
 	-9223372036854775808: "d38000000000000000",

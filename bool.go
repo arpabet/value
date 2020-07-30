@@ -18,6 +18,11 @@
 
 package value
 
+
+/**
+	@author Alex Shvid
+*/
+
 import (
 	"reflect"
 	"strconv"
@@ -25,6 +30,9 @@ import (
 )
 
 type boolValue bool
+
+var True = boolValue(true)
+var False = boolValue(false)
 
 func Boolean(b bool) Bool {
 	return boolValue(b)

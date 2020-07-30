@@ -27,6 +27,11 @@ import (
 	"strings"
 )
 
+
+/**
+	@author Alex Shvid
+*/
+
 const (
 	jsonQuote = '"'
 )

@@ -30,6 +30,11 @@ import (
 	"strings"
 )
 
+
+/**
+	@author Alex Shvid
+*/
+
 var DecimalExpDelim = byte('x')
 var DecimalExpDelimStr = "x"
 

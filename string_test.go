@@ -18,6 +18,11 @@
 
 package value_test
 
+
+/**
+	@author Alex Shvid
+*/
+
 import (
 	"testing"
 	"github.com/stretchr/testify/require"

@@ -19,94 +19,15 @@
 package value
 
 import (
-	"bytes"
-	"encoding/hex"
-	"strings"
 	"io"
 	"github.com/pkg/errors"
+	"strconv"
 )
 
-func Pack(val Value) ([]byte, error) {
-	buf := bytes.Buffer{}
-	p := MessagePacker(&buf)
-	if val != nil {
-		val.Pack(p)
-	} else {
-		p.PackNil()
-	}
-	return buf.Bytes(), p.Error()
-}
 
-func Unpack(buf []byte, copy bool) (Value, error) {
-	unpacker := MessageUnpacker(buf, copy)
-	parser := MessageParser()
-	return Parse(unpacker, parser)
-}
-
-func Read(r io.Reader) (Value, error) {
-	unpacker := MessageReader(r)
-	parser := MessageParser()
-	return Parse(unpacker, parser)
-}
-
-func Write(w io.Writer, val Value) error {
-	p := MessagePacker(w)
-	val.Pack(p)
-	return p.Error()
-}
-
-func Hex(val Value) string {
-	mp, _ := Pack(val)
-	return hex.EncodeToString(mp)
-}
-
-func Json(val Value) string {
-	var out strings.Builder
-	val.PrintJSON(&out)
-	return out.String()
-}
-
-func Parse(unpacker Unpacker, parser Parser) (Value, error) {
-	return doParse(unpacker, parser)
-}
-
-func WriteStream(w io.Writer, valueC <-chan Value) error {
-
-	p := MessagePacker(w)
-
-	for p.Error() == nil {
-		val, ok := <- valueC
-
-		if !ok {
-			break
-		}
-
-		val.Pack(p)
-
-	}
-
-	return p.Error()
-}
-
-func ReadStream(r io.Reader, out chan<- Value) error {
-
-	defer close(out)
-
-	unpacker := MessageReader(r)
-	parser := MessageParser()
-
-	for {
-
-		value, err := doParse(unpacker, parser)
-		if err != nil {
-			return err
-		}
-
-		out <- value
-	}
-
-	return nil
-}
+/**
+	@author Alex Shvid
+*/
 
 func doParse(unpacker Unpacker, parser Parser) (Value, error) {
 
@@ -149,47 +70,9 @@ func doParse(unpacker Unpacker, parser Parser) (Value, error) {
 		}
 		return Utf8(string(str)), nil
 	case ListHeader:
-		cnt := parser.ParseList(header)
-		if parser.Error() != nil {
-			return nil, parser.Error()
-		}
-		list := List()
-		for i:=0; i<cnt; i++ {
-			el, err := doParse(unpacker, parser)
-			if err != nil {
-				return nil, err
-			}
-			if el != nil {
-				// nil elements are not supported
-				list.Insert(el)
-			}
-		}
-		return list, nil
+		return doParseList(header, unpacker, parser)
 	case MapHeader:
-		cnt := parser.ParseMap(header)
-		if parser.Error() != nil {
-			return nil, parser.Error()
-		}
-		m := List()
-		for i:=0; i<cnt; i++ {
-			key, err := doParse(unpacker, parser)
-			if err != nil {
-				return nil, err
-			}
-			value, err := doParse(unpacker, parser)
-			if err != nil {
-				return nil, err
-			}
-			if key != nil && value != nil {
-				// only non-null key-value pairs are supported
-				if key.Kind() == NUMBER {
-					m.PutAt(int(key.(Number).Long()), value)
-				} else {
-					m.Put(key.String(), value)
-				}
-			}
-		}
-		return m, nil
+		return doParseMap(header, unpacker, parser)
 	case ExtHeader:
 		n, _ := parser.ParseExt(header)
 		if parser.Error() != nil {
@@ -202,6 +85,111 @@ func doParse(unpacker Unpacker, parser Parser) (Value, error) {
 		return doParseExt(tagAndData)
 	default:
 		return nil, errors.Errorf("parse: invalid format %v", format)
+	}
+
+}
+
+func doParseList(header []byte, unpacker Unpacker, parser Parser) (List, error) {
+	cnt := parser.ParseList(header)
+	if parser.Error() != nil {
+		return nil, parser.Error()
+	}
+	if cnt == 0 {
+		return EmptyList(), nil
+	}
+	list := make([]Value, cnt)
+	for i := 0; i < cnt; i++ {
+		el, err := doParse(unpacker, parser)
+		if err != nil {
+			return nil, err
+		}
+		list[i] = el
+	}
+	return SolidList(list), nil
+}
+
+func doParseMap(header []byte, unpacker Unpacker, parser Parser) (Value, error) {
+	cnt := parser.ParseMap(header)
+	if parser.Error() != nil {
+		return nil, parser.Error()
+	}
+	if cnt == 0 {
+		return EmptyMap(), nil
+	}
+	var sparseListItems []ListItem
+	mayBeList := false
+	var sortedMapEntries []MapEntry
+	sorted := true
+	var prevListKey int64
+	var prevMapKey string
+
+	for i := 0; i < cnt; i++ {
+		key, err := doParse(unpacker, parser)
+		if err != nil {
+			return nil, err
+		}
+		value, err := doParse(unpacker, parser)
+		if err != nil {
+			return nil, err
+		}
+
+		if key == nil {
+			// nothing to do with this
+			continue
+		}
+
+		// first element
+		if i == 0 {
+			if key.Kind() == NUMBER {
+				// try to build sparse list
+				mayBeList = true
+				sparseListItems = make([]ListItem, cnt)
+			} else {
+				mayBeList = false
+				sortedMapEntries = make([]MapEntry, cnt)
+			}
+		}
+
+		if mayBeList {
+
+			if key.Kind() == NUMBER {
+				k := key.(Number).Long()
+				if i > 0 && prevListKey > k {
+					sorted = false
+				}
+				sparseListItems[i] = Item(int(k), value)
+				prevListKey = k
+			} else {
+				// not a list
+				mayBeList = false
+				sortedMapEntries = make([]MapEntry, cnt)
+				for j := 0; j < i; j++ {
+					item := sparseListItems[i]
+					sortedMapEntries[i] = Entry(strconv.Itoa(item.Key()), item.Value())
+				}
+				k := key.String()
+				if i > 0 && prevMapKey > k {
+					sorted = false
+				}
+				sortedMapEntries[i] = Entry(k, value)
+				prevMapKey = k
+			}
+
+		} else {
+			k := key.String()
+			if i > 0 && prevMapKey > k {
+				sorted = false
+			}
+			sortedMapEntries[i] = Entry(k, value)
+			prevMapKey = k
+		}
+
+	}
+
+	if mayBeList {
+		return SparseList(sparseListItems, sorted), nil
+	} else {
+		return SortedMap(sortedMapEntries, sorted), nil
 	}
 
 }

@@ -25,6 +25,10 @@ import (
 	"encoding/json"
 )
 
+/**
+	@author Alex Shvid
+*/
+
 func TestBool(t *testing.T) {
 
 	b := val.Boolean(true)

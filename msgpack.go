@@ -25,6 +25,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+
+/**
+	@author Alex Shvid
+*/
+
 const (
 
 	mpPosFixIntMin 		byte = 0x00

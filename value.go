@@ -42,7 +42,8 @@ const (
 	BOOL
 	NUMBER
 	STRING
-	TABLE
+	LIST
+	MAP
 	UNKNOWN
 )
 
@@ -86,45 +87,6 @@ type Value interface {
 	 */
 
 	Equal(Value) bool
-}
-
-/**
-	Expression
-
-    Author: Alex Shvid
- */
-
-type Expr interface {
-
-	/**
-		Returns true if expression is empty
-	 */
-
-	Empty() bool
-
-	/**
-		Returns number of tokens in expression
-	 */
-
-	Size() int
-
-	/**
-		Gets token at the index
-	 */
-
-	GetAt(int) string
-
-	/**
-		Gets the whole path of the value
-	 */
-
-	GetPath() []string
-
-	/**
-		Outputs expression as a string
-	 */
-
-	String() string
 
 }
 
@@ -297,94 +259,76 @@ type Extension interface {
 	Native() []byte
 }
 
-/**
-	Table interface
 
-    Tables can be List or Map
+type ListItem interface {
 
-    For List indexes start from 1 and increase sequentially
+	/*
+		Index in the array where item is located
+	 */
+	Key() int
 
-    Author: Alex Shvid
- */
+	Value()  Value
 
-type TableType int
+	Equal(ListItem) bool
 
-const (
-	InvalidTable TableType = iota
-	LIST
-	MAP
-)
+}
 
-type Table interface {
+type MapEntry interface {
+
+	Key() string
+
+	Value() Value
+
+	Equal(MapEntry) bool
+
+}
+
+
+type Collection interface {
+
+	/**
+		Get entries of all element like in Map
+	*/
+
+	Entries()  []MapEntry
+
+}
+
+type List interface {
 	Value
+	Collection
 
 	/**
-		Gets type of the table
+		List items
 	 */
 
-	Type()  TableType
+	Items() []ListItem
 
 	/**
-		Gets value by the key
+		List values
+	*/
 
-	    return value or nil
-	 */
-
-	Get(string) Value
+	Values() []Value
 
 	/**
-		Gets table by the key
+		Length of the list
+	*/
 
-	    return value or nil
-	 */
-
-	GetTable(string) Table
-
-	/**
-		Gets boolean value by the key
-
-	    return value or nil
-	 */
-
-	GetBool(string) Bool
-
-	/**
-		Gets number value by the key
-
-	    return value or nil
-	 */
-
-	GetNumber(string) Number
-
-	/**
-		Gets string value by the key
-
-		return value or nil
-	 */
-
-	GetString(string) String
+	Len() int
 
 	/**
 		Gets value by the index
 
 	    return value or nil
- 	*/
+	*/
 
 	GetAt(int) Value
-
-	/**
-		Gets table by the index
-
-	    return value or nil
-	 */
-
-	GetTableAt(int) Table
 
 	/**
 		Gets boolean value by the index
 
 	    return value or nil
-	 */
+	*/
 
 	GetBoolAt(int) Bool
 
@@ -392,7 +336,7 @@ type Table interface {
 		Gets number value by the index
 
 	    return value or nil
-	 */
+	*/
 
 	GetNumberAt(int) Number
 
@@ -400,158 +344,151 @@ type Table interface {
 		Gets string value by the index
 
 	    return value or nil
-	 */
+	*/
 
 	GetStringAt(int) String
 
 	/**
-		Gets value by the expression
+		Gets list by the index
 
 	    return value or nil
- 	*/
+	*/
 
-	GetExp(Expr) Value
+	GetListAt(int) List
 
 	/**
-		Gets table by the expression
+		Gets map by the index
 
 	    return value or nil
-	 */
+	*/
 
-	GetTableExp(Expr) Table
-
-	/**
-		Gets boolean value by the expression
-
-	    return value or nil
-	 */
-
-	GetBoolExp(Expr) Bool
+	GetMapAt(int) Map
 
 	/**
-		Gets number value by the expression
+		Sets value to the list at position i
+	*/
 
-	    return value or nil
-	 */
-
-	GetNumberExp(Expr) Number
+	PutAt(int, Value) List
 
 	/**
-		Gets string value by the expression
+		Adds value to the list at position i by shifting to left
+	*/
 
-	    return value or nil
-	 */
-
-	GetStringExp(Expr) String
+	InsertAt(int, Value) List
 
 	/**
-		Adds value to table (list), equivalent of Put(MaxIndex()+1, value)
-	 */
+		Adds value to the list, same as Add or Insert
+	*/
 
-	Insert(Value)
-
-	/**
-		Puts value by the key
-	 */
-
-	Put(key string, value Value)
-
-	/**
-		Puts value by the index
- 	*/
-
-	PutAt(index int, value Value)
-
-	/**
-		Puts value by the expression
- 	*/
-
-	PutExp(exp Expr, value Value)
-
-	/**
-		Removes value by the key
- 	*/
-
-	Remove(string)
+	Append(Value) List
 
 	/**
 		Removes value by the index
- 	*/
+	*/
 
-	RemoveAt(int)
+	RemoveAt(int) List
+
+}
+
+
+type Map interface {
+	Value
+	Collection
 
 	/**
-		Removes value by the expression
- 	*/
-
-	RemoveExp(Expr)
-
-	/**
-		Returns key-value pairs in map
+		Construct standard Hash Map
 	 */
 
-	Map() map[string]Value
+	HashMap() map[string]Value
 
 	/**
-		Returns values as a slice
- 	*/
-
-	List() []Value
-
-	/**
-		Gets sorted indexes and keys
-	 */
+		List keys
+	*/
 
 	Keys() []string
 
 	/**
-		Gets sorted indexes only
-	 */
+		List values
+	*/
 
-	Indexes() []int
-
-	/**
-		Returns max index for list or 0
-	 */
-
-	MaxIndex() int
+	Values() []Value
 
 	/**
-		Returns size of the table (number of entries)
-	 */
+		Length of the map
+	*/
 
-	Size() int
-
-	/**
-		Erase all elements in the table
-	 */
-
-	Clear()
+	Len() int
 
 	/**
-		Trigger table compaction
-	 */
+		Gets value by the key
 
-	Compact()
+	    return (value or nil, true) or (nil, false)
+	*/
 
-	/**
-		Sort entries in table
- 	*/
+	Get(string) (Value, bool)
 
-	Sort()
 
 	/**
-		Gets version of the table (external and optional)
-	 */
+		Gets boolean value by the key
 
-	Version() uint64
+	    return value or nil
+	*/
+
+	GetBool(string) Bool
 
 	/**
-		Sets version of the table (expernal and optional)
-	 */
+		Gets number value by the key
 
-	SetVersion(uint64)
+	    return value or nil
+	*/
+
+	GetNumber(string) Number
+
+	/**
+		Gets string value by the key
+
+		return value or nil
+	*/
+
+	GetString(string) String
+
+	/**
+		Gets list by the key
+
+	    return value or nil
+	*/
+
+	GetList(string) List
+
+	/**
+		Gets list by the key
+
+	    return value or nil
+	*/
+
+	GetMap(string) Map
+
+	/**
+		Inserts value at specific key, do not remove doubles
+	*/
+
+	Insert(key string, value Value) Map
+
+	/**
+		Puts value by the key, replaces if it exist
+	*/
+
+	Put(key string, value Value) Map
+
+	/**
+		Removes value by the key
+	*/
+
+	Remove(string) Map
 
 }
+
+
+
 
 
