@@ -289,6 +289,12 @@ type MapEntry interface {
 type Collection interface {
 
 	/**
+		Length of the Collection
+	*/
+
+	Len() int
+
+	/**
 		Get entries of all element like in Map
 	*/
 
@@ -312,11 +318,6 @@ type List interface {
 
 	Values() []Value
 
-	/**
-		Length of the list
-	*/
-
-	Len() int
 
 	/**
 		Gets value by the index
@@ -415,11 +416,6 @@ type Map interface {
 
 	Values() []Value
 
-	/**
-		Length of the map
-	*/
-
-	Len() int
 
 	/**
 		Gets value by the key
