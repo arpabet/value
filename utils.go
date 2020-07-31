@@ -70,9 +70,13 @@ func Hex(val Value) string {
 	return hex.EncodeToString(mp)
 }
 
-func Json(val Value) string {
+func Jsonify(val Value) string {
 	var out strings.Builder
-	val.PrintJSON(&out)
+	if val != nil {
+		val.PrintJSON(&out)
+	} else {
+		out.WriteString("null")
+	}
 	return out.String()
 }
 

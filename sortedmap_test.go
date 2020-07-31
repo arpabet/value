@@ -56,7 +56,7 @@ func TestEmptySortedMap(t *testing.T) {
 	require.Equal(t, "value.sortedMapValue", b.Class().String())
 	require.Equal(t, 0, b.Len())
 	require.Equal(t, "80", val.Hex(b))
-	require.Equal(t, "{}", val.Json(b))
+	require.Equal(t, "{}", val.Jsonify(b))
 	require.Equal(t, "{}", b.String())
 
 }
@@ -169,7 +169,7 @@ func TestSortedMapJson(t *testing.T) {
 	d = d.Put("123", val.Long(123))
 	d = d.Put("map", c)
 
-	require.Equal(t,  "{\"123\": 123,\"map\": {\"5\": 5},\"name\": \"name\"}", val.Json(d))
+	require.Equal(t,  "{\"123\": 123,\"map\": {\"5\": 5},\"name\": \"name\"}", val.Jsonify(d))
 	require.Equal(t, "83a33132337ba36d617081a13505a46e616d65a46e616d65", val.Hex(d))
 
 	testPackUnpack(t, d)

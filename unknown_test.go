@@ -33,7 +33,7 @@ func TestUnknown(t *testing.T) {
 
 	require.Equal(t, val.UNKNOWN, v.Kind())
 	require.Equal(t, val.UnknownPrefix+ val.Base64Prefix + "AwE", v.String())
-	require.Equal(t, "\"" + v.String() + "\"", val.Json(v))
+	require.Equal(t, "\"" + v.String() + "\"", val.Jsonify(v))
 	require.Equal(t, "d40301", val.Hex(v))
 	require.Equal(t, 0, bytes.Compare(tagAndData, v.Native()))
 

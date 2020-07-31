@@ -49,7 +49,7 @@ func TestUtf8String(t *testing.T) {
 		require.Equal(t, val.UTF8, b.Type())
 		require.Equal(t, "value.uft8String", b.Class().String())
 		require.Equal(t, hex, val.Hex(b))
-		require.Equal(t, "\""+ str + "\"", val.Json(b))
+		require.Equal(t, "\""+ str + "\"", val.Jsonify(b))
 		require.Equal(t, str, b.String())
 
 		testPackUnpack(t, b)
@@ -65,9 +65,9 @@ func TestJsonString(t *testing.T) {
 	s := val.Utf8(src)
 
 	require.Equal(t, src, s.String())
-	require.Equal(t, "\"json\\\"val\\\"json\"", val.Json(s))
+	require.Equal(t, "\"json\\\"val\\\"json\"", val.Jsonify(s))
 
-	actual, _ := strconv.Unquote(val.Json(s))
+	actual, _ := strconv.Unquote(val.Jsonify(s))
 	require.Equal(t, src, actual)
 
 }
@@ -81,7 +81,7 @@ func TestRawString(t *testing.T) {
 	require.Equal(t, val.RAW, s.Type())
 	require.Equal(t, "value.rawString", s.Class().String())
 	require.Equal(t, val.Base64Prefix + "AAECAwQF", s.String())
-	require.Equal(t, "\"" + val.Base64Prefix + "AAECAwQF\"", val.Json(s))
+	require.Equal(t, "\"" + val.Base64Prefix + "AAECAwQF\"", val.Jsonify(s))
 	require.Equal(t, "c406000102030405", val.Hex(s))
 	require.Equal(t, 0, bytes.Compare(raw, s.Raw()))
 

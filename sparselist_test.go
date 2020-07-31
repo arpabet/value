@@ -55,7 +55,7 @@ func TestEmptySparseList(t *testing.T) {
 	require.Equal(t, "value.sparseListValue", b.Class().String())
 	require.Equal(t, 0, b.Len())
 	require.Equal(t, "80", val.Hex(b))
-	require.Equal(t, "{}", val.Json(b))
+	require.Equal(t, "{}", val.Jsonify(b))
 	require.Equal(t, "{}", b.String())
 
 }
@@ -137,7 +137,7 @@ func TestSparseListJson(t *testing.T) {
 	b = b.Append(val.Utf8("text"))
 	b = b.Append(val.Raw([]byte{0, 1, 2}, false))
 
-	require.Equal(t, "{\"0\": true,\"1\": 123,\"2\": -12.34,\"3\": \"text\",\"4\": \"base64,AAEC\"}", val.Json(b))
+	require.Equal(t, "{\"0\": true,\"1\": 123,\"2\": -12.34,\"3\": \"text\",\"4\": \"base64,AAEC\"}", val.Jsonify(b))
 	require.Equal(t, "8500c3017b02cbc028ae147ae147ae03a47465787404c403000102", val.Hex(b))
 
 	testPackUnpack(t, b)

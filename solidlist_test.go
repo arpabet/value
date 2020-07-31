@@ -54,7 +54,7 @@ func TestEmptySolidList(t *testing.T) {
 	require.Equal(t, "value.solidListValue", b.Class().String())
 	require.Equal(t, 0, b.Len())
 	require.Equal(t, "90", val.Hex(b))
-	require.Equal(t, "[]", val.Json(b))
+	require.Equal(t, "[]", val.Jsonify(b))
 	require.Equal(t, "[]", b.String())
 
 }
@@ -136,7 +136,7 @@ func TestSolidListJson(t *testing.T) {
 	b = b.Append(val.Utf8("text"))
 	b = b.Append(val.Raw([]byte{0, 1, 2}, false))
 
-	require.Equal(t, "[true,123,-12.34,\"text\",\"base64,AAEC\"]", val.Json(b))
+	require.Equal(t, "[true,123,-12.34,\"text\",\"base64,AAEC\"]", val.Jsonify(b))
 	require.Equal(t, "95c37bcbc028ae147ae147aea474657874c403000102", val.Hex(b))
 
 	testPackUnpack(t, b)

@@ -102,7 +102,7 @@ func TestLongNumber(t *testing.T) {
 	require.Equal(t, val.LONG, b.Type())
 	require.Equal(t, "value.longNumber", b.Class().String())
 	require.Equal(t, "00", val.Hex(b))
-	require.Equal(t, "0", val.Json(b))
+	require.Equal(t, "0", val.Jsonify(b))
 	require.Equal(t, "0", b.String())
 
 	b = val.Long(1)
@@ -111,7 +111,7 @@ func TestLongNumber(t *testing.T) {
 	require.Equal(t, val.LONG, b.Type())
 	require.Equal(t, "value.longNumber", b.Class().String())
 	require.Equal(t, "01", val.Hex(b))
-	require.Equal(t, "1", val.Json(b))
+	require.Equal(t, "1", val.Jsonify(b))
 	require.Equal(t, "1", b.String())
 
 	for num, hex := range testLongMap {
@@ -131,7 +131,7 @@ func TestDoubleNumber(t *testing.T) {
 		require.Equal(t, val.DOUBLE, b.Type())
 		require.Equal(t, "value.doubleNumber", b.Class().String())
 		require.Equal(t, e.hex, val.Hex(b))
-		require.Equal(t, e.str, val.Json(b))
+		require.Equal(t, e.str, val.Jsonify(b))
 		require.Equal(t, e.str, b.String())
 		require.Equal(t, int64(num), b.Long())
 
@@ -147,7 +147,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, val.LONG, b.Type())
 	require.Equal(t, "value.longNumber", b.Class().String())
 	require.Equal(t, "00", val.Hex(b))
-	require.Equal(t, "0", val.Json(b))
+	require.Equal(t, "0", val.Jsonify(b))
 	require.Equal(t, "0", b.String())
 
 	b = val.ParseNumber("123")
@@ -156,7 +156,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, val.LONG, b.Type())
 	require.Equal(t, "value.longNumber", b.Class().String())
 	require.Equal(t, "7b", val.Hex(b))
-	require.Equal(t, "123", val.Json(b))
+	require.Equal(t, "123", val.Jsonify(b))
 	require.Equal(t, "123", b.String())
 
 	b = val.ParseNumber("-123")
@@ -165,7 +165,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, val.LONG, b.Type())
 	require.Equal(t, "value.longNumber", b.Class().String())
 	require.Equal(t, "d085", val.Hex(b))
-	require.Equal(t, "-123", val.Json(b))
+	require.Equal(t, "-123", val.Jsonify(b))
 	require.Equal(t, "-123", b.String())
 
 	b = val.ParseNumber("123.45")
@@ -174,7 +174,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, val.DOUBLE, b.Type())
 	require.Equal(t, "value.doubleNumber", b.Class().String())
 	require.Equal(t, "cb405edccccccccccd", val.Hex(b))
-	require.Equal(t, "123.45", val.Json(b))
+	require.Equal(t, "123.45", val.Jsonify(b))
 	require.Equal(t, "123.45", b.String())
 
 	b = val.ParseNumber("-123.45")
@@ -183,7 +183,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, val.DOUBLE, b.Type())
 	require.Equal(t, "value.doubleNumber", b.Class().String())
 	require.Equal(t, "cbc05edccccccccccd", val.Hex(b))
-	require.Equal(t, "-123.45", val.Json(b))
+	require.Equal(t, "-123.45", val.Jsonify(b))
 	require.Equal(t, "-123.45", b.String())
 
 	b = val.ParseNumber("123456789.123456789")
@@ -192,7 +192,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, val.DOUBLE, b.Type())
 	require.Equal(t, "value.doubleNumber", b.Class().String())
 	require.Equal(t, "cb419d6f34547e6b75", val.Hex(b))
-	require.Equal(t, "123456789.12345679", val.Json(b))
+	require.Equal(t, "123456789.12345679", val.Jsonify(b))
 	require.Equal(t, "123456789.12345679", b.String())
 
 	c := val.ParseNumber("1.2345678912345679e+08")
@@ -204,7 +204,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, val.DOUBLE, b.Type())
 	require.Equal(t, "value.doubleNumber", b.Class().String())
 	require.Equal(t, "cbc19d6f34547e6b75", val.Hex(b))
-	require.Equal(t, "-123456789.12345679", val.Json(b))
+	require.Equal(t, "-123456789.12345679", val.Jsonify(b))
 	require.Equal(t, "-123456789.12345679", b.String())
 
 	c = val.ParseNumber("-1.2345678912345679e+08")
@@ -216,7 +216,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, "value.bigIntNumber", b.Class().String())
 	require.Equal(t, int64(0), b.Long())
 	require.Equal(t, "d40102", val.Hex(b))
-	require.Equal(t, "\"0x0\"", val.Json(b))
+	require.Equal(t, "\"0x0\"", val.Jsonify(b))
 	require.Equal(t, "0x0", b.String())
 
 	b = val.ParseNumber("-0x0")
@@ -225,7 +225,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, "value.bigIntNumber", b.Class().String())
 	require.Equal(t, int64(0), b.Long())
 	require.Equal(t, "d40102", val.Hex(b))
-	require.Equal(t, "\"0x0\"", val.Json(b))
+	require.Equal(t, "\"0x0\"", val.Jsonify(b))
 	require.Equal(t, "0x0", b.String())
 
 	b = val.ParseNumber("0x7b")
@@ -234,7 +234,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, "value.bigIntNumber", b.Class().String())
 	require.Equal(t, int64(123), b.Long())
 	require.Equal(t, "d501027b", val.Hex(b))
-	require.Equal(t, "\"0x7b\"", val.Json(b))
+	require.Equal(t, "\"0x7b\"", val.Jsonify(b))
 	require.Equal(t, "0x7b", b.String())
 
 	b = val.ParseNumber("-0x7b")
@@ -243,7 +243,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, "value.bigIntNumber", b.Class().String())
 	require.Equal(t, int64(-123), b.Long())
 	require.Equal(t, "d501037b", val.Hex(b))
-	require.Equal(t, "\"-0x7b\"", val.Json(b))
+	require.Equal(t, "\"-0x7b\"", val.Jsonify(b))
 	require.Equal(t, "-0x7b", b.String())
 
 	b = val.ParseNumber("0x01e2afx-03")
@@ -253,7 +253,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, int64(123), b.Long())
 	require.Equal(t, float64(123.567), b.Double())
 	require.Equal(t, "d702fffffffd0201e2af", val.Hex(b))
-	require.Equal(t, "\"0x01e2afx-03\"", val.Json(b))
+	require.Equal(t, "\"0x01e2afx-03\"", val.Jsonify(b))
 	require.Equal(t, "0x01e2afx-03", b.String())
 
 	b = val.ParseNumber("-0x01e2afx-03")
@@ -263,7 +263,7 @@ func TestParseNumber(t *testing.T) {
 	require.Equal(t, int64(-123), b.Long())
 	require.Equal(t, float64(-123.567), b.Double())
 	require.Equal(t, "d702fffffffd0301e2af", val.Hex(b))
-	require.Equal(t, "\"-0x01e2afx-03\"", val.Json(b))
+	require.Equal(t, "\"-0x01e2afx-03\"", val.Jsonify(b))
 	require.Equal(t, "-0x01e2afx-03", b.String())
 
 }
@@ -279,7 +279,7 @@ func TestParseNaN(t *testing.T) {
 	require.Equal(t, int64(0), b.Long())
 	require.Equal(t, "value.doubleNumber", b.Class().String())
 	require.Equal(t, "cb7ff8000000000001", val.Hex(b))
-	require.Equal(t, "null", val.Json(b))
+	require.Equal(t, "null", val.Jsonify(b))
 	require.Equal(t, "NaN", b.String())
 
 }
