@@ -49,6 +49,10 @@ type bigIntNumber struct {
 
 type decimalNumber decimal.Decimal
 
+var longNumberClass = reflect.TypeOf((*longNumber)(nil)).Elem()
+var doubleNumberClass = reflect.TypeOf((*doubleNumber)(nil)).Elem()
+var bigIntNumberClass = reflect.TypeOf((*bigIntNumber)(nil)).Elem()
+var decimalNumberClass =  reflect.TypeOf((*decimalNumber)(nil)).Elem()
 
 func Long(val int64) Number {
 	return longNumber(val)
@@ -194,19 +198,19 @@ func (n decimalNumber) Kind() Kind {
 }
 
 func (n longNumber) Class() reflect.Type {
-	return reflect.TypeOf((*longNumber)(nil)).Elem()
+	return longNumberClass
 }
 
 func (n doubleNumber) Class() reflect.Type {
-	return reflect.TypeOf((*doubleNumber)(nil)).Elem()
+	return doubleNumberClass
 }
 
 func (n bigIntNumber) Class() reflect.Type {
-	return reflect.TypeOf((*bigIntNumber)(nil)).Elem()
+	return bigIntNumberClass
 }
 
 func (n decimalNumber) Class() reflect.Type {
-	return reflect.TypeOf((*decimalNumber)(nil)).Elem()
+	return decimalNumberClass
 }
 
 func (n longNumber) String() string {

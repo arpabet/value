@@ -33,6 +33,7 @@ type boolValue bool
 
 var True = boolValue(true)
 var False = boolValue(false)
+var boolValueClass = reflect.TypeOf(False)
 
 func Boolean(b bool) Bool {
 	return boolValue(b)
@@ -48,7 +49,7 @@ func (b boolValue) Kind() Kind {
 }
 
 func (b boolValue) Class() reflect.Type {
-	return reflect.TypeOf(boolValue(false))
+	return boolValueClass
 }
 
 func (b boolValue) Object() interface{} {

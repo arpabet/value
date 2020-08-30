@@ -43,6 +43,22 @@ type sparseListItem struct {
 }
 
 type sparseListValue []ListItem
+var sparseListValueClass = reflect.TypeOf((*sparseListValue)(nil)).Elem()
+
+type sortableValues []ListItem
+
+func (t sortableValues) Len() int {
+	return len(t)
+}
+
+func (t sortableValues) Swap(i, j int) {
+	t[i], t[j] = t[j], t[i]
+}
+
+func (t sortableValues) Less(i, j int) bool {
+	return t[i].Key() < t[j].Key()
+}
+
 
 func Item(key int, value Value) ListItem {
 	return &sparseListItem{key, value}
@@ -61,17 +77,15 @@ func SparseListOf(list []Value) List {
 			items = append(items, Item(key, val))
 		}
 	}
-	t := sparseListValue(items)
-	sort.Sort(t)
-	return t
+	sort.Sort(sortableValues(items))
+	return sparseListValue(items)
 }
 
 func SparseList(items []ListItem, sortedItems bool) List {
-	t := sparseListValue(items)
 	if !sortedItems {
-		sort.Sort(t)
+		sort.Sort(sortableValues(items))
 	}
-	return t
+	return sparseListValue(items)
 }
 
 func SortedSparseList(items []ListItem) List {
@@ -95,7 +109,7 @@ func (t sparseListValue) Kind() Kind {
 }
 
 func (t sparseListValue) Class() reflect.Type {
-	return reflect.TypeOf((*sparseListValue)(nil)).Elem()
+	return sparseListValueClass
 }
 
 func (t sparseListValue) Object() interface{} {
@@ -145,14 +159,6 @@ func (t sparseListValue) Len() int {
 		maxKey := t[n-1].Key()
 		return maxKey+1
 	}
-}
-
-func (t sparseListValue) Swap(i, j int) {
-	t[i], t[j] = t[j], t[i]
-}
-
-func (t sparseListValue) Less(i, j int) bool {
-	return t[i].Key() < t[j].Key()
 }
 
 func (t sparseListValue) Pack(p Packer) {

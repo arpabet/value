@@ -41,6 +41,9 @@ var Base64Prefix = "base64,"
 type uft8String string
 type rawString []byte
 
+var uft8StringClass = reflect.TypeOf((*uft8String)(nil)).Elem()
+var rawStringClass = reflect.TypeOf((*rawString)(nil)).Elem()
+
 func Utf8(val string) String {
 	return uft8String(val)
 }
@@ -58,7 +61,7 @@ func (s uft8String) Kind() Kind {
 }
 
 func (s uft8String) Class() reflect.Type {
-	return reflect.TypeOf((*uft8String)(nil)).Elem()
+	return uft8StringClass
 }
 
 func (s uft8String) Object() interface{} {
@@ -126,7 +129,7 @@ func (s rawString) Kind() Kind {
 }
 
 func (s rawString) Class() reflect.Type {
-	return reflect.TypeOf((*rawString)(nil)).Elem()
+	return rawStringClass
 }
 
 func (s rawString) Object() interface{} {

@@ -39,6 +39,7 @@ type sortedMapEntry struct {
 }
 
 type sortedMapValue []MapEntry
+var sortedMapValueClass = reflect.TypeOf((*sortedMapValue)(nil)).Elem()
 
 func Entry(key string, value Value) MapEntry {
 	return &sortedMapEntry {
@@ -118,7 +119,7 @@ func (t sortedMapValue) Kind() Kind {
 }
 
 func (t sortedMapValue) Class() reflect.Type {
-	return reflect.TypeOf((*sortedMapValue)(nil)).Elem()
+	return sortedMapValueClass
 }
 
 func (t sortedMapValue) Object() interface{} {

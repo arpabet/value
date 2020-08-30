@@ -35,6 +35,7 @@ import (
 */
 
 type solidListValue []Value
+var solidListValueClass = reflect.TypeOf((*solidListValue)(nil)).Elem()
 
 var emptySolidList = solidListValue([]Value{})
 
@@ -59,7 +60,7 @@ func (t solidListValue) Kind() Kind {
 }
 
 func (t solidListValue) Class() reflect.Type {
-	return reflect.TypeOf((*solidListValue)(nil)).Elem()
+	return solidListValueClass
 }
 
 func (t solidListValue) Object() interface{} {

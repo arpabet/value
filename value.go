@@ -49,6 +49,28 @@ const (
 	UNKNOWN
 )
 
+func (k Kind) String() string {
+	switch k {
+	case INVALID:
+		return "INVALID"
+	case BOOL:
+		return "BOOL"
+	case NUMBER:
+		return "NUMBER"
+	case STRING:
+		return "STRING"
+	case LIST:
+		return "LIST"
+	case MAP:
+		return "MAP"
+	case UNKNOWN:
+		return "UNKNOWN"
+	default:
+		return "DEFAULT"
+	}
+}
+
+var ValueClass = reflect.TypeOf((*Value)(nil)).Elem()
 type Value interface {
 	fmt.Stringer
 	json.Marshaler

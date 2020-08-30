@@ -19,8 +19,8 @@
 package value
 
 import (
-	"io"
 	"github.com/pkg/errors"
+	"io"
 	"strconv"
 )
 
