@@ -403,7 +403,110 @@ func (t sparseListValue) removeAt(i, n int) List {
 		return t[1:]
 	} else if i+1 == n {
 		return t[:i]
-	} else {
+	} else if AllowFastAppends {
 		return append(t[:i], t[i+1:]...)
+	} else {
+		dst := make([]ListItem, n-1)
+		copy(dst, t[:i])
+		copy(dst[i:], t[i+1:])
+		return sparseListValue(dst)
+	}
+}
+
+func (t sparseListValue) Select(key int) []Value {
+	n := len(t)
+	i := sort.Search(n, func(i int) bool {
+		return t[i].Key() >= key
+	})
+	var list []Value
+	for j := i; j < n && t[j].Key() == key; j++ {
+		list = append(list, t[j].Value())
+	}
+	return list
+}
+
+func (t sparseListValue) InsertAll(key int, list []Value) List {
+
+	if len(list) == 0 {
+		return t
+	}
+
+	var slice []ListItem
+	for _, value := range list {
+		slice = append(slice, &sparseListItem{key, value})
+	}
+
+	n := len(t)
+	i := sort.Search(n, func(i int) bool {
+		return t[i].Key() >= key
+	})
+	if i == n {
+		return t.appendSlice(n, slice)
+	} else {
+		return t.insertSliceAt(i, n, slice)
+	}
+}
+
+func (t sparseListValue) DeleteAll(key int) List {
+	n := len(t)
+	i := sort.Search(n, func(i int) bool {
+		return t[i].Key() >= key
+	})
+	if i == n {
+		return t
+	}
+	cnt := 0
+	for j := i; j < n && t[j].Key() == key; j++ {
+		cnt++
+	}
+	return t.removeSliceAt(i, cnt, n)
+}
+
+func (t sparseListValue) appendSlice(n int, slice []ListItem) List {
+	if n == 0 {
+		return sparseListValue(slice)
+	} else if AllowFastAppends {  // fast appends are permitted w/o memory allocation
+		return append(t, slice...)
+	} else {
+		dst := make([]ListItem, n+len(slice))
+		copy(dst, t)
+		copy(dst[n:], slice)
+		return sparseListValue(dst)
+	}
+}
+
+func (t sparseListValue) insertSliceAt(i, n int, slice []ListItem) List {
+	if i == 0 {
+		if AllowFastAppends {
+			return append(sparseListValue(slice), t...)
+		} else {
+			m := len(slice)
+			dst := make([]ListItem, m+n)
+			copy(dst, slice)
+			copy(dst[m:], t)
+			return sparseListValue(dst)
+		}
+	} else {
+		m := len(slice)
+		dst := make([]ListItem, n+m)
+		copy(dst, t[:i])
+		copy(dst[i:], slice)
+		copy(dst[i+m:], t[i:])
+		return sparseListValue(dst)
+	}
+}
+
+func (t sparseListValue) removeSliceAt(i, cnt, n int) List {
+	if i == 0 {
+		return t[cnt:]
+	} else if i+cnt == n {
+		return t[:i]
+	} else if AllowFastAppends  {
+		return append(t[:i], t[i+cnt:]...)
+	} else {
+		dst := make([]ListItem, n-cnt)
+		copy(dst, t[:i])
+		copy(dst[i:], t[i+cnt:])
+		return sparseListValue(dst)
 	}
 }

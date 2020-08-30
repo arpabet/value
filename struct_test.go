@@ -112,3 +112,79 @@ func TestStruct(t *testing.T) {
 	require.True(t, s.InnerField.String.Equal(innerList.GetAt(1)))
 
 }
+
+type RepExample struct {
+
+	BoolField       []value.Bool      `tag:"1" repeated:"true"`
+	NumberField     []value.Number    `tag:"2" repeated:"true"`
+	StringField     []value.String	  `tag:"3" repeated:"true"`
+	ListField       []value.List      `tag:"4" repeated:"true"`
+	MapField        []value.Map       `tag:"5" repeated:"true"`
+	InnerField      []*Inner          `tag:"100" repeated:"true"`
+
+}
+
+
+func TestRepStruct(t *testing.T) {
+
+	inner := &Inner {
+		String: value.Utf8("inner"),
+	}
+
+	s := RepExample{
+		BoolField: []value.Bool {value.True, value.False},
+		NumberField: []value.Number { value.Long(123), value.Long(456) },
+		StringField: []value.String { value.Utf8("test"), value.Raw([]byte("bytes"), false) },
+		ListField: []value.List { value.EmptyList(), value.EmptyList() },
+		MapField: []value.Map { value.EmptyMap(), value.EmptyMap() },
+		InnerField: []*Inner { inner, inner },
+	}
+
+	blob, err := value.PackStruct(&s)
+	require.Nil(t, err)
+
+	println(hex.EncodeToString(blob))
+
+	var d RepExample
+	err = value.UnpackStruct(blob, &d, false)
+	require.Nil(t, err)
+
+}
+
+
+type ArrayExample struct {
+
+	BoolField       []value.Bool      `tag:"1"`
+	NumberField     []value.Number    `tag:"2"`
+	StringField     []value.String	  `tag:"3"`
+	ListField       []value.List      `tag:"4"`
+	MapField        []value.Map       `tag:"5"`
+	InnerField      []*Inner          `tag:"100"`
+
+}
+
+func TestArrayStruct(t *testing.T) {
+
+	inner := &Inner {
+		String: value.Utf8("inner"),
+	}
+
+	s := ArrayExample{
+		BoolField: []value.Bool {value.True, value.False},
+		NumberField: []value.Number { value.Long(123), value.Long(456) },
+		StringField: []value.String { value.Utf8("test"), value.Raw([]byte("bytes"), false) },
+		ListField: []value.List { value.EmptyList(), value.EmptyList() },
+		MapField: []value.Map { value.EmptyMap(), value.EmptyMap() },
+		InnerField: []*Inner { inner, inner },
+	}
+
+	blob, err := value.PackStruct(&s)
+	require.Nil(t, err)
+
+	println(hex.EncodeToString(blob))
+
+	var d ArrayExample
+	err = value.UnpackStruct(blob, &d, false)
+	require.Nil(t, err)
+
+}

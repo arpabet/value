@@ -144,3 +144,27 @@ func TestSparseListJson(t *testing.T) {
 
 }
 
+func TestSparseListInsert(t *testing.T) {
+
+	b := val.EmptySparseList()
+	b = b.InsertAt(5, val.Utf8("San Jose"))
+	require.Equal(t, "San Jose", b.GetAt(5).String())
+
+	b = b.InsertAt(5, val.Utf8("San Francisco"))
+	require.Equal(t, "San Francisco", b.GetAt(5).String())
+
+	b = b.InsertAt(5, val.Utf8("Los Angeles"))
+	require.Equal(t, "Los Angeles", b.GetAt(5).String())
+
+	testPackUnpack(t, b)
+
+	b = b.InsertAll(5, []val.Value { val.Utf8("Los Angeles"), val.Utf8("San Francisco"), val.Utf8("San Jose") } )
+	require.Equal(t, 6, b.Len())
+
+	testPackUnpack(t, b)
+
+	b = b.DeleteAll(5)
+	require.Equal(t, 0, b.Len())
+
+
+}

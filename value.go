@@ -413,6 +413,26 @@ type List interface {
 
 	RemoveAt(int) List
 
+	/**
+		Gets all values with the same key
+
+	    return value array or nil
+	*/
+
+	Select(int) []Value
+
+	/**
+		Insert all values with the same key
+	*/
+
+	InsertAll(int, []Value) List
+
+	/**
+		Delete all values with the same key
+	*/
+
+	DeleteAll(int) List
+
 }
 
 
@@ -506,9 +526,27 @@ type Map interface {
 
 	Remove(string) Map
 
+	/**
+		Gets all values with the same key
+
+	    return value array or nil
+	*/
+
+	Select(string) []Value
+
+	/**
+	Insert all values with the same key
+	*/
+
+	InsertAll(string, []Value) Map
+
+	/**
+	Delete all values with the same key
+	*/
+
+	DeleteAll(string) Map
+
 }
-
-
 
 
 

@@ -310,7 +310,71 @@ func (t solidListValue) removeAt(i, n int) List {
 		return t[1:]
 	} else if i+1 == n {
 		return t[:i]
-	} else {
+	} else if AllowFastAppends {
 		return append(t[:i], t[i+1:]...)
+	} else {
+		dst := make([]Value, n-1)
+		copy(dst, t[:i])
+		copy(dst[i:], t[i+1:])
+		return solidListValue(dst)
+	}
+}
+
+
+func (t solidListValue) Select(i int) []Value {
+	val := t.GetAt(i)
+	if val != nil {
+		return []Value {val}
+	}
+	return nil
+}
+
+func (t solidListValue) InsertAll(i int, list []Value) List {
+	if i >= 0 {
+		n := len(t)
+		if i < n {
+			return t.insertSliceAt(i, n, list)
+		} else {
+			return t.appendSlice(n, list)
+		}
+	}
+	return t
+}
+
+func (t solidListValue) DeleteAll(i int) List {
+	return t.RemoveAt(i)
+}
+
+func (t solidListValue) appendSlice(n int, slice []Value) List {
+	if n == 0 {
+		return solidListValue(slice)
+	} else if AllowFastAppends {  // fast appends are permitted w/o memory allocation
+		return append(t, slice...)
+	} else {
+		dst := make([]Value, n+len(slice))
+		copy(dst, t)
+		copy(dst[n:], slice)
+		return solidListValue(dst)
+	}
+}
+
+func (t solidListValue) insertSliceAt(i, n int, slice []Value) List {
+	if i == 0 {
+		if AllowFastAppends {
+			return append(solidListValue(slice), t...)
+		} else {
+			m := len(slice)
+			dst := make([]Value, m+n)
+			copy(dst, slice)
+			copy(dst[m:], t)
+			return solidListValue(dst)
+		}
+	} else {
+		m := len(slice)
+		dst := make([]Value, n+m)
+		copy(dst, t[:i])
+		copy(dst[i:], slice)
+		copy(dst[i+m:], t[i:])
+		return solidListValue(dst)
 	}
 }

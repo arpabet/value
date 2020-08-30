@@ -364,7 +364,110 @@ func (t sortedMapValue) removeAt(i, n int) Map {
 		return t[1:]
 	} else if i+1 == n {
 		return t[:i]
-	} else {
+	} else if AllowFastAppends {
 		return append(t[:i], t[i+1:]...)
+	} else {
+		dst := make([]MapEntry, n-1)
+		copy(dst, t[:i])
+		copy(dst[i:], t[i+1:])
+		return sortedMapValue(dst)
+	}
+}
+
+func (t sortedMapValue) Select(key string) []Value {
+	n := len(t)
+	i := sort.Search(n, func(i int) bool {
+		return t[i].Key() >= key
+	})
+	var list []Value
+	for j := i; j < n && t[j].Key() == key; j++ {
+		list = append(list, t[j].Value())
+	}
+	return list
+}
+
+func (t sortedMapValue) InsertAll(key string, list []Value) Map {
+
+	if len(list) == 0 {
+		return t
+	}
+
+	var slice []MapEntry
+	for _, value := range list {
+		slice = append(slice, &sortedMapEntry{key, value})
+	}
+
+	n := len(t)
+	i := sort.Search(n, func(i int) bool {
+		return t[i].Key() >= key
+	})
+	if i == n {
+		return t.appendSlice(n, slice)
+	} else {
+		return t.insertSliceAt(i, n, slice)
+	}
+}
+
+func (t sortedMapValue) DeleteAll(key string) Map {
+	n := len(t)
+	i := sort.Search(n, func(i int) bool {
+		return t[i].Key() >= key
+	})
+	if i == n {
+		return t
+	}
+	cnt := 0
+	for j := i; j < n && t[j].Key() == key; j++ {
+		cnt++
+	}
+	return t.removeSliceAt(i, cnt, n)
+}
+
+func (t sortedMapValue) appendSlice(n int, slice []MapEntry) Map {
+	if n == 0 {
+		return sortedMapValue(slice)
+	} else if AllowFastAppends {  // fast appends are permitted w/o memory allocation
+		return append(t, slice...)
+	} else {
+		dst := make([]MapEntry, n+len(slice))
+		copy(dst, t)
+		copy(dst[n:], slice)
+		return sortedMapValue(dst)
+	}
+}
+
+func (t sortedMapValue) insertSliceAt(i, n int, slice []MapEntry) Map {
+	if i == 0 {
+		if AllowFastAppends {
+			return append(sortedMapValue(slice), t...)
+		} else {
+			m := len(slice)
+			dst := make([]MapEntry, m+n)
+			copy(dst, slice)
+			copy(dst[m:], t)
+			return sortedMapValue(dst)
+		}
+	} else {
+		m := len(slice)
+		dst := make([]MapEntry, n+m)
+		copy(dst, t[:i])
+		copy(dst[i:], slice)
+		copy(dst[i+m:], t[i:])
+		return sortedMapValue(dst)
+	}
+}
+
+func (t sortedMapValue) removeSliceAt(i, cnt, n int) Map {
+	if i == 0 {
+		return t[cnt:]
+	} else if i+cnt == n {
+		return t[:i]
+	} else if AllowFastAppends  {
+		return append(t[:i], t[i+cnt:]...)
+	} else {
+		dst := make([]MapEntry, n-cnt)
+		copy(dst, t[:i])
+		copy(dst[i:], t[i+cnt:])
+		return sortedMapValue(dst)
 	}
 }
