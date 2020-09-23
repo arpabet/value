@@ -19,7 +19,7 @@
 package value_test
 
 import (
-	val "github.com/consensusdb/value"
+	val "github.com/arpabet/value"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

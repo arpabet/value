@@ -1,4 +1,4 @@
-module github.com/consensusdb/value
+module github.com/arpabet/value
 
 go 1.13
 

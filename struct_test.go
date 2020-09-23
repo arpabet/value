@@ -20,7 +20,7 @@ package value_test
 
 import (
 	"encoding/hex"
-	"github.com/consensusdb/value"
+	"github.com/arpabet/value"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
