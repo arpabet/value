@@ -1,4 +1,4 @@
-module github.com/arpabet/value
+module arpabet.pkg.is/value
 
 go 1.13
 
