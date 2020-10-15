@@ -25,7 +25,7 @@ package value_test
 
 import (
 	"testing"
-	val "github.com/arpabet/value"
+	val "arpabet.pkg.is/value"
 	"github.com/stretchr/testify/require"
 	"bytes"
 	"time"

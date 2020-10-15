@@ -1,3 +1,5 @@
+arpabet.pkg.is/value v0.4.0 h1:Bf1HT+JuFSnPynlo5HUlIcqrPEF9dl9PRgLgs5tkbms=
+arpabet.pkg.is/value v0.4.0/go.mod h1:Y3sZoA/gblv3F+0bEv0abHzwiCoDn8/oCREz9z02TgM=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=

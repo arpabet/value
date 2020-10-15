@@ -21,7 +21,7 @@ package value_test
 import (
 	"testing"
 	"github.com/stretchr/testify/require"
-	val "github.com/arpabet/value"
+	val "arpabet.pkg.is/value"
 	"encoding/json"
 )
 

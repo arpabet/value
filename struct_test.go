@@ -20,7 +20,7 @@ package value_test
 
 import (
 	"encoding/hex"
-	"github.com/arpabet/value"
+	"arpabet.pkg.is/value"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
