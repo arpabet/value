@@ -1,6 +1,8 @@
-/**
-  Copyright (c) 2022 Arpabet, LLC. All rights reserved.
-*/
+/*
+ * Copyright (c) 2025 Karagatan LLC.
+ * SPDX-License-Identifier: BUSL-1.1
+ */
+
 
 package value
 
@@ -26,7 +28,13 @@ type rawString []byte
 var uft8StringClass = reflect.TypeOf((*uft8String)(nil)).Elem()
 var rawStringClass = reflect.TypeOf((*rawString)(nil)).Elem()
 
+var EmptyString = uft8String("")
+
 func Utf8(val string) String {
+	return uft8String(val)
+}
+
+func Str(val string) String {
 	return uft8String(val)
 }
 

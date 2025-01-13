@@ -1,6 +1,7 @@
-/**
-  Copyright (c) 2022 Arpabet, LLC. All rights reserved.
-*/
+/*
+ * Copyright (c) 2025 Karagatan LLC.
+ * SPDX-License-Identifier: BUSL-1.1
+ */
 
 
 package value_test
@@ -15,7 +16,7 @@ import (
 func TestNilSparseList(t *testing.T) {
 
 	b := val.EmptySparseList()
-	b = b.Append(nil)
+	b = b.Append(val.Null)
 
 	data, err := val.Pack(b)
 	require.Nil(t, err)
@@ -55,7 +56,7 @@ func TestSparseListAppend(t *testing.T) {
 
 func TestSparseListPutAt(t *testing.T) {
 
-	b := val.EmptyList()
+	b := val.EmptySparseList()
 
 	b = b.PutAt(7, val.Long(777))
 	b = b.PutAt(9, val.Long(999))
@@ -67,9 +68,9 @@ func TestSparseListPutAt(t *testing.T) {
 	require.True(t, val.Long(555).Equal(b.GetAt(5)))
 	require.True(t, val.Long(777).Equal(b.GetAt(7)))
 	require.True(t, val.Long(999).Equal(b.GetAt(9)))
-	require.Nil(t, b.GetAt(0))
-	require.Nil(t, b.GetAt(1))
-	require.Nil(t, b.GetAt(2))
+	require.Equal(t, val.Null, b.GetAt(0))
+	require.Equal(t, val.Null, b.GetAt(1))
+	require.Equal(t, val.Null, b.GetAt(2))
 
 	// Replace
 
@@ -78,8 +79,8 @@ func TestSparseListPutAt(t *testing.T) {
 
 	// Remove
 
-	b = b.RemoveAt(7)
-	require.Equal(t, 9, b.Len())
+	b = b.RemoveAt(9)
+	require.Equal(t, 8, b.Len())
 
 	b = b.RemoveAt(8)
 	require.Equal(t, 8, b.Len())

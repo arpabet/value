@@ -1,5 +1,7 @@
 # value
 
+![build workflow](https://go.arpabet.com/value/actions/workflows/build.yaml/badge.svg)
+
 Value in GO
 
 * All instances are immutable and good for multi-threading or go-routing.

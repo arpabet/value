@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: BUSL-1.1
  */
 
-
 package value
 
 import (
@@ -14,45 +13,45 @@ import (
 )
 
 /**
-	This is a sorted Map implementation with deterministic serialization process
+This is an immutable sorted Map implementation with deterministic serialization process
 
-	Serializes in MessagePack as Map with string index
+Serializes in MessagePack as Map with string index
 */
 
-type sortedMapValue []MapEntry
+type immutableMapValue []MapEntry
 
-var sortedMapValueClass = reflect.TypeOf((*sortedMapValue)(nil)).Elem()
+var immutableMapValueClass = reflect.TypeOf((*immutableMapValue)(nil)).Elem()
 
-func EmptyMutableMap() Map {
-	return sortedMapValue([]MapEntry{})
+func EmptyImmutableMap() Map {
+	return immutableMapValue([]MapEntry{})
 }
 
-func SortedMapOf(src map[string]Value) Map {
+func ImmutableMapOf(src map[string]Value) Map {
 	entries := make([]MapEntry, len(src))
 	var i int
 	for key, value := range src {
-		entries[i] = MutableEntry(key, value)
+		entries[i] = ImmutableEntry(key, value)
 		i++
 	}
-	t := sortedMapValue(entries)
+	t := immutableMapValue(entries)
 	sort.Sort(t)
 	return t
 }
 
-func SortedMap(entries []MapEntry, sorted bool) Map {
-	t := sortedMapValue(entries)
+func ImmutableMap(entries []MapEntry, sorted bool) Map {
+	t := immutableMapValue(entries)
 	if !sorted {
 		sort.Sort(t)
 	}
 	return t
 }
 
-func SortedMapCopyOf(other Map) Map {
-	t := sortedMapValue(mapEntryCopyOf(other.Entries()))
+func ImmutableMapCopyOf(other Map) Map {
+	t := immutableMapValue(mapEntryCopyOf(other.Entries()))
 	return t
 }
 
-func (t sortedMapValue) HashMap() map[string]Value {
+func (t immutableMapValue) HashMap() map[string]Value {
 	cache := make(map[string]Value)
 	for _, entry := range t {
 		cache[entry.Key()] = entry.Value()
@@ -60,11 +59,11 @@ func (t sortedMapValue) HashMap() map[string]Value {
 	return cache
 }
 
-func (t sortedMapValue) Entries() []MapEntry {
+func (t immutableMapValue) Entries() []MapEntry {
 	return t
 }
 
-func (t sortedMapValue) Keys() []string {
+func (t immutableMapValue) Keys() []string {
 	var keys []string
 	for _, entry := range t {
 		keys = append(keys, entry.Key())
@@ -72,7 +71,7 @@ func (t sortedMapValue) Keys() []string {
 	return keys
 }
 
-func (t sortedMapValue) Values() []Value {
+func (t immutableMapValue) Values() []Value {
 	var values []Value
 	for _, entry := range t {
 		values = append(values, entry.Value())
@@ -80,37 +79,37 @@ func (t sortedMapValue) Values() []Value {
 	return values
 }
 
-func (t sortedMapValue) Len() int {
+func (t immutableMapValue) Len() int {
 	return len(t)
 }
 
-func (t sortedMapValue) Swap(i, j int) {
+func (t immutableMapValue) Swap(i, j int) {
 	t[i], t[j] = t[j], t[i]
 }
 
-func (t sortedMapValue) Less(i, j int) bool {
+func (t immutableMapValue) Less(i, j int) bool {
 	return t[i].Key() < t[j].Key()
 }
 
-func (t sortedMapValue) Kind() Kind {
+func (t immutableMapValue) Kind() Kind {
 	return MAP
 }
 
-func (t sortedMapValue) Class() reflect.Type {
-	return sortedMapValueClass
+func (t immutableMapValue) Class() reflect.Type {
+	return immutableMapValueClass
 }
 
-func (t sortedMapValue) Object() interface{} {
+func (t immutableMapValue) Object() interface{} {
 	return []MapEntry(t)
 }
 
-func (t sortedMapValue) String() string {
+func (t immutableMapValue) String() string {
 	var out strings.Builder
 	t.PrintJSON(&out)
 	return out.String()
 }
 
-func (t sortedMapValue) Pack(p Packer) {
+func (t immutableMapValue) Pack(p Packer) {
 
 	p.PackMap(len(t))
 
@@ -126,7 +125,7 @@ func (t sortedMapValue) Pack(p Packer) {
 
 }
 
-func (t sortedMapValue) PrintJSON(out *strings.Builder) {
+func (t immutableMapValue) PrintJSON(out *strings.Builder) {
 
 	out.WriteRune('{')
 	for i, entry := range t {
@@ -148,20 +147,20 @@ func (t sortedMapValue) PrintJSON(out *strings.Builder) {
 	out.WriteRune('}')
 }
 
-func (t sortedMapValue) MarshalJSON() ([]byte, error) {
+func (t immutableMapValue) MarshalJSON() ([]byte, error) {
 	var out strings.Builder
 	t.PrintJSON(&out)
 	return []byte(out.String()), nil
 }
 
-func (t sortedMapValue) MarshalBinary() ([]byte, error) {
+func (t immutableMapValue) MarshalBinary() ([]byte, error) {
 	buf := bytes.Buffer{}
 	p := MessagePacker(&buf)
 	t.Pack(p)
 	return buf.Bytes(), p.Error()
 }
 
-func (t sortedMapValue) Equal(val Value) bool {
+func (t immutableMapValue) Equal(val Value) bool {
 	if val == nil || val.Kind() != MAP {
 		return false
 	}
@@ -179,7 +178,7 @@ func (t sortedMapValue) Equal(val Value) bool {
 	return true
 }
 
-func (t sortedMapValue) Get(key string) Value {
+func (t immutableMapValue) Get(key string) Value {
 	n := len(t)
 	i := sort.Search(n, func(i int) bool {
 		return t[i].Key() >= key
@@ -193,7 +192,7 @@ func (t sortedMapValue) Get(key string) Value {
 	}
 }
 
-func (t sortedMapValue) GetBool(key string) Bool {
+func (t immutableMapValue) GetBool(key string) Bool {
 	value := t.Get(key)
 	if value != Null {
 		if value.Kind() == BOOL {
@@ -204,7 +203,7 @@ func (t sortedMapValue) GetBool(key string) Bool {
 	return False
 }
 
-func (t sortedMapValue) GetNumber(key string) Number {
+func (t immutableMapValue) GetNumber(key string) Number {
 	value := t.Get(key)
 	if value != Null {
 		if value.Kind() == NUMBER {
@@ -215,7 +214,7 @@ func (t sortedMapValue) GetNumber(key string) Number {
 	return Zero
 }
 
-func (t sortedMapValue) GetString(key string) String {
+func (t immutableMapValue) GetString(key string) String {
 	value := t.Get(key)
 	if value != Null {
 		if value.Kind() == STRING {
@@ -226,25 +225,25 @@ func (t sortedMapValue) GetString(key string) String {
 	return EmptyString
 }
 
-func (t sortedMapValue) GetList(key string) List {
+func (t immutableMapValue) GetList(key string) List {
 	value := t.Get(key)
 	if value != Null {
 		switch value.Kind() {
 		case LIST:
 			return value.(List)
 		case MAP:
-			return MutableList(value.(Map).Values())
+			return ImmutableList(value.(Map).Values())
 		}
 	}
 	return EmptyImmutableList()
 }
 
-func (t sortedMapValue) GetMap(key string) Map {
+func (t immutableMapValue) GetMap(key string) Map {
 	value := t.Get(key)
 	if value != Null {
 		switch value.Kind() {
 		case LIST:
-			return SortedMap(value.(List).Entries(), false)
+			return ImmutableMap(value.(List).Entries(), false)
 		case MAP:
 			return value.(Map)
 		}
@@ -252,7 +251,7 @@ func (t sortedMapValue) GetMap(key string) Map {
 	return EmptyImmutableMap()
 }
 
-func (t sortedMapValue) Insert(key string, value Value) Map {
+func (t immutableMapValue) Insert(key string, value Value) Map {
 	if value == nil {
 		value = Null
 	}
@@ -261,13 +260,13 @@ func (t sortedMapValue) Insert(key string, value Value) Map {
 		return t[i].Key() >= key
 	})
 	if i == n {
-		return t.append(n, MutableEntry(key, value))
+		return t.append(n, ImmutableEntry(key, value))
 	} else {
-		return t.insertAt(i, n, MutableEntry(key, value))
+		return t.insertAt(i, n, ImmutableEntry(key, value))
 	}
 }
 
-func (t sortedMapValue) Put(key string, value Value) Map {
+func (t immutableMapValue) Put(key string, value Value) Map {
 	if value == nil {
 		value = Null
 	}
@@ -276,27 +275,19 @@ func (t sortedMapValue) Put(key string, value Value) Map {
 		return t[i].Key() >= key
 	})
 	if i == n {
-		return t.append(n, MutableEntry(key, value))
+		return t.append(n, ImmutableEntry(key, value))
 	} else if t[i].Key() == key {
-		return t.replaceAt(i, n, MutableEntry(key, value))
+		return t.replaceAt(i, n, ImmutableEntry(key, value))
 	} else {
-		return t.insertAt(i, n, MutableEntry(key, value))
+		return t.insertAt(i, n, ImmutableEntry(key, value))
 	}
 }
 
-func (t sortedMapValue) Update(key string, updater Updater) bool {
-	n := len(t)
-	i := sort.Search(n, func(i int) bool {
-		return t[i].Key() >= key
-	})
-	if i >= 0 && i < n && t[i].Key() == key {
-		return t[i].Update(updater)
-	} else {
-		return false
-	}
+func (t immutableMapValue) Update(key string, updater Updater) bool {
+	return false
 }
 
-func (t sortedMapValue) Remove(key string) Map {
+func (t immutableMapValue) Remove(key string) Map {
 	n := len(t)
 	i := sort.Search(n, func(i int) bool {
 		return t[i].Key() >= key
@@ -310,49 +301,59 @@ func (t sortedMapValue) Remove(key string) Map {
 	}
 }
 
-func (t sortedMapValue) append(n int, entry MapEntry) Map {
+func (t immutableMapValue) append(n int, entry MapEntry) Map {
 	if n == 0 {
-		return sortedMapValue([]MapEntry{entry})
+		return immutableMapValue([]MapEntry{entry})
 	} else {
-		return append(t, entry)
+		dst := make([]MapEntry, n+1)
+		copy(dst, t)
+		dst[n] = entry
+		return immutableMapValue(dst)
 	}
 }
 
-func (t sortedMapValue) replaceAt(i, n int, entry MapEntry) Map {
+func (t immutableMapValue) replaceAt(i, n int, entry MapEntry) Map {
 	dst := make([]MapEntry, n)
 	copy(dst, t)
 	dst[i] = entry
-	return sortedMapValue(dst)
+	return immutableMapValue(dst)
 }
 
-func (t sortedMapValue) insertAt(i, n int, entry MapEntry) Map {
+func (t immutableMapValue) insertAt(i, n int, entry MapEntry) Map {
 	if i == 0 {
 		dst := make([]MapEntry, n+1)
 		copy(dst[1:], t)
 		dst[0] = entry
-		return sortedMapValue(dst)
+		return immutableMapValue(dst)
 	} else if i+1 == n {
-		return append(t[:i], entry, t[i])
+		dst := make([]MapEntry, n+1)
+		copy(dst, t[:i])
+		dst[n-1] = entry
+		dst[n] = t[i]
+		return immutableMapValue(dst)
 	} else {
 		dst := make([]MapEntry, n+1)
 		copy(dst, t[:i])
 		dst[i] = entry
 		copy(dst[i+1:], t[i:])
-		return sortedMapValue(dst)
+		return immutableMapValue(dst)
 	}
 }
 
-func (t sortedMapValue) removeAt(i, n int) Map {
+func (t immutableMapValue) removeAt(i, n int) Map {
 	if i == 0 {
 		return t[1:]
 	} else if i+1 == n {
 		return t[:i]
-	} else {
-		return append(t[:i], t[i+1:]...)
+	}  else {
+		dst := make([]MapEntry, n-1)
+		copy(dst, t[:i])
+		copy(dst[i:], t[i+1:])
+		return immutableMapValue(dst)
 	}
 }
 
-func (t sortedMapValue) Select(key string) []Value {
+func (t immutableMapValue) Select(key string) []Value {
 	n := len(t)
 	i := sort.Search(n, func(i int) bool {
 		return t[i].Key() >= key
@@ -364,7 +365,7 @@ func (t sortedMapValue) Select(key string) []Value {
 	return list
 }
 
-func (t sortedMapValue) InsertAll(key string, list []Value) Map {
+func (t immutableMapValue) InsertAll(key string, list []Value) Map {
 
 	if len(list) == 0 {
 		return t
@@ -376,9 +377,9 @@ func (t sortedMapValue) InsertAll(key string, list []Value) Map {
 		}
 	}
 
-	var slice []MapEntry
-	for _, value := range list {
-		slice = append(slice, &mutableMapEntry{key, value})
+	slice := make([]MapEntry, len(list))
+	for i, value := range list {
+		slice[i] = &immutableMapEntry{key, value}
 	}
 
 	n := len(t)
@@ -392,7 +393,7 @@ func (t sortedMapValue) InsertAll(key string, list []Value) Map {
 	}
 }
 
-func (t sortedMapValue) DeleteAll(key string) Map {
+func (t immutableMapValue) DeleteAll(key string) Map {
 	n := len(t)
 	i := sort.Search(n, func(i int) bool {
 		return t[i].Key() >= key
@@ -407,34 +408,44 @@ func (t sortedMapValue) DeleteAll(key string) Map {
 	return t.removeSliceAt(i, cnt, n)
 }
 
-func (t sortedMapValue) appendSlice(n int, slice []MapEntry) Map {
+func (t immutableMapValue) appendSlice(n int, slice []MapEntry) Map {
 	if n == 0 {
-		return sortedMapValue(slice)
+		return immutableMapValue(mapEntryCopyOf(slice))
 	} else {
-		return append(t, slice...)
+		dst := make([]MapEntry, n+len(slice))
+		copy(dst, t)
+		copy(dst[n:], slice)
+		return immutableMapValue(dst)
 	}
 }
 
-func (t sortedMapValue) insertSliceAt(i, n int, slice []MapEntry) Map {
+func (t immutableMapValue) insertSliceAt(i, n int, slice []MapEntry) Map {
 	if i == 0 {
-		return append(sortedMapValue(slice), t...)
+		m := len(slice)
+		dst := make([]MapEntry, m+n)
+		copy(dst, slice)
+		copy(dst[m:], t)
+		return immutableMapValue(dst)
 	} else {
 		m := len(slice)
 		dst := make([]MapEntry, n+m)
 		copy(dst, t[:i])
 		copy(dst[i:], slice)
 		copy(dst[i+m:], t[i:])
-		return sortedMapValue(dst)
+		return immutableMapValue(dst)
 	}
 }
 
-func (t sortedMapValue) removeSliceAt(i, cnt, n int) Map {
+func (t immutableMapValue) removeSliceAt(i, cnt, n int) Map {
 	if i == 0 {
-		return t[cnt:]
+		return immutableMapValue(mapEntryCopyOf(t[cnt:]))
 	} else if i+cnt == n {
-		return t[:i]
+		return immutableMapValue(mapEntryCopyOf(t[:i]))
 	} else {
-		return append(t[:i], t[i+cnt:]...)
+		dst := make([]MapEntry, n-cnt)
+		copy(dst, t[:i])
+		copy(dst[i:], t[i+cnt:])
+		return immutableMapValue(dst)
 	}
 }
 

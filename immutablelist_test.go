@@ -12,9 +12,9 @@ import (
 	"testing"
 )
 
-func TestNilSolidList(t *testing.T) {
+func TestNilImmutableList(t *testing.T) {
 
-	b := val.EmptyMutableList()
+	b := val.EmptyImmutableList()
 	b = b.Append(val.Null)
 
 	data, err := val.Pack(b)
@@ -30,12 +30,12 @@ func TestNilSolidList(t *testing.T) {
 	testPackUnpack(t, b)
 }
 
-func TestEmptySolidList(t *testing.T) {
+func TestEmptyImmutableList(t *testing.T) {
 
-	b := val.EmptyMutableList()
+	b := val.EmptyImmutableList()
 
 	require.Equal(t, val.LIST, b.Kind())
-	require.Equal(t, "value.solidListValue", b.Class().String())
+	require.Equal(t, "value.immutableListValue", b.Class().String())
 	require.Equal(t, 0, b.Len())
 	require.Equal(t, "90", val.Hex(b))
 	require.Equal(t, "[]", val.Jsonify(b))
@@ -43,9 +43,9 @@ func TestEmptySolidList(t *testing.T) {
 
 }
 
-func TestSolidListAppend(t *testing.T) {
+func TestImmutableListAppend(t *testing.T) {
 
-	b := val.EmptyMutableList()
+	b := val.EmptyImmutableList()
 	b = b.Append(val.Long(123))
 
 	require.Equal(t, val.LIST, b.Kind())
@@ -54,9 +54,9 @@ func TestSolidListAppend(t *testing.T) {
 }
 
 
-func TestSolidListPutAt(t *testing.T) {
+func TestImmutableListPutAt(t *testing.T) {
 
-	b := val.EmptyMutableList()
+	b := val.EmptyImmutableList()
 
 	b = b.PutAt(7, val.Long(777))
 	b = b.PutAt(9, val.Long(999))
@@ -87,9 +87,9 @@ func TestSolidListPutAt(t *testing.T) {
 
 }
 
-func TestSolidListMarshal(t *testing.T) {
+func TestImmutableListMarshal(t *testing.T) {
 
-	b := val.EmptyMutableList()
+	b := val.EmptyImmutableList()
 	b = b.Append(val.Long(100))
 
 	j, _ := b.MarshalJSON()
@@ -98,7 +98,7 @@ func TestSolidListMarshal(t *testing.T) {
 	bin, _ := b.MarshalBinary()
 	require.Equal(t, []byte{0x91, 0x64}, bin)
 
-	b = val.EmptyMutableList()
+	b = val.EmptyImmutableList()
 	b = b.PutAt(3, val.Boolean(true))
 
 	j, _ = b.MarshalJSON()
@@ -110,9 +110,9 @@ func TestSolidListMarshal(t *testing.T) {
 
 }
 
-func TestSolidListJson(t *testing.T) {
+func TestImmutableListJson(t *testing.T) {
 
-	b := val.EmptyMutableList()
+	b := val.EmptyImmutableList()
 
 	b = b.Append(val.Boolean(true))
 	b = b.Append(val.Long(123))

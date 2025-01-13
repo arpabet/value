@@ -1,7 +1,7 @@
-/**
-  Copyright (c) 2022 Arpabet, LLC. All rights reserved.
-*/
-
+/*
+ * Copyright (c) 2025 Karagatan LLC.
+ * SPDX-License-Identifier: BUSL-1.1
+ */
 
 package value
 
@@ -55,9 +55,11 @@ func Decimal(dec decimal.Decimal) Number {
 	return decimalNumber(dec)
 }
 
-func Nan() Number {
-	return doubleNumber(math.NaN())
-}
+var (
+   Nan = doubleNumber(math.NaN())
+   Zero = longNumber(0)
+   One = longNumber(1)
+)
 
 func ParseNumber(str string) Number {
 
@@ -66,7 +68,11 @@ func ParseNumber(str string) Number {
 	}
 
 	if str == "null" {
-		return Nan()
+		return Zero
+	}
+
+	if str == "nan" {
+		return Nan
 	}
 
 	if strings.IndexByte(str, '.') != -1 {
@@ -74,7 +80,7 @@ func ParseNumber(str string) Number {
 		if err == nil {
 			return Double(double)
 		}
-		return Nan()
+		return Nan
 	}
 
 	if hasHexPrefix(str) {
@@ -93,7 +99,7 @@ func ParseNumber(str string) Number {
 		}
 	}
 
-	return Nan()
+	return Nan
 
 }
 
@@ -518,7 +524,7 @@ func (n doubleNumber) Add(other Number) Number {
 	left := float64(n)
 	right := other.Double()
 	if math.IsNaN(left) || math.IsNaN(right) {
-		return Nan()
+		return Nan
 	}
 	return Double(left + right)
 }
@@ -542,7 +548,7 @@ func (n doubleNumber) Subtract(other Number) Number {
 	left := float64(n)
 	right := other.Double()
 	if math.IsNaN(left) || math.IsNaN(right) {
-		return Nan()
+		return Nan
 	}
 	return Double(left - right)
 }

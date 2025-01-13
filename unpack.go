@@ -1,6 +1,8 @@
-/**
-  Copyright (c) 2022 Arpabet, LLC. All rights reserved.
-*/
+/*
+ * Copyright (c) 2025 Karagatan LLC.
+ * SPDX-License-Identifier: BUSL-1.1
+ */
+
 
 package value
 
@@ -21,7 +23,7 @@ func doParse(unpacker Unpacker, parser Parser) (Value, error) {
 	case UnexpectedEOF:
 		return nil, io.ErrUnexpectedEOF
 	case NilToken:
-		return nil, nil
+		return Null, nil
 	case BoolToken:
 		return Boolean(parser.ParseBool(header)), parser.Error()
 	case LongToken:
@@ -77,7 +79,7 @@ func doParseList(header []byte, unpacker Unpacker, parser Parser) (List, error) 
 		return nil, parser.Error()
 	}
 	if cnt == 0 {
-		return EmptyList(), nil
+		return EmptyImmutableList(), nil
 	}
 	list := make([]Value, cnt)
 	for i := 0; i < cnt; i++ {
@@ -87,7 +89,7 @@ func doParseList(header []byte, unpacker Unpacker, parser Parser) (List, error) 
 		}
 		list[i] = el
 	}
-	return SolidList(list), nil
+	return ImmutableList(list), nil
 }
 
 func doParseMap(header []byte, unpacker Unpacker, parser Parser) (Value, error) {
@@ -96,7 +98,7 @@ func doParseMap(header []byte, unpacker Unpacker, parser Parser) (Value, error) 
 		return nil, parser.Error()
 	}
 	if cnt == 0 {
-		return EmptyMap(), nil
+		return EmptyImmutableMap(), nil
 	}
 	var sparseListItems []ListItem
 	mayBeList := false
@@ -139,7 +141,7 @@ func doParseMap(header []byte, unpacker Unpacker, parser Parser) (Value, error) 
 				if i > 0 && prevListKey > k {
 					sorted = false
 				}
-				sparseListItems[i] = Item(int(k), value)
+				sparseListItems[i] = ImmutableItem(int(k), value)
 				prevListKey = k
 			} else {
 				// not a list
@@ -147,13 +149,13 @@ func doParseMap(header []byte, unpacker Unpacker, parser Parser) (Value, error) 
 				sortedMapEntries = make([]MapEntry, cnt)
 				for j := 0; j < i; j++ {
 					item := sparseListItems[i]
-					sortedMapEntries[i] = Entry(strconv.Itoa(item.Key()), item.Value())
+					sortedMapEntries[i] = ImmutableEntry(strconv.Itoa(item.Key()), item.Value())
 				}
 				k := key.String()
 				if i > 0 && prevMapKey > k {
 					sorted = false
 				}
-				sortedMapEntries[i] = Entry(k, value)
+				sortedMapEntries[i] = ImmutableEntry(k, value)
 				prevMapKey = k
 			}
 
@@ -162,7 +164,7 @@ func doParseMap(header []byte, unpacker Unpacker, parser Parser) (Value, error) 
 			if i > 0 && prevMapKey > k {
 				sorted = false
 			}
-			sortedMapEntries[i] = Entry(k, value)
+			sortedMapEntries[i] = ImmutableEntry(k, value)
 			prevMapKey = k
 		}
 
@@ -171,7 +173,7 @@ func doParseMap(header []byte, unpacker Unpacker, parser Parser) (Value, error) 
 	if mayBeList {
 		return SparseList(sparseListItems, sorted), nil
 	} else {
-		return SortedMap(sortedMapEntries, sorted), nil
+		return ImmutableMap(sortedMapEntries, sorted), nil
 	}
 
 }

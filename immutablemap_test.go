@@ -14,9 +14,9 @@ import (
 )
 
 
-func TestNilSortedMap(t *testing.T) {
+func TestNilImmutableMap(t *testing.T) {
 
-	b := val.EmptyMutableMap()
+	b := val.EmptyImmutableMap()
 	b = b.Put("null", val.Null)
 
 	data, err := val.Pack(b)
@@ -32,12 +32,12 @@ func TestNilSortedMap(t *testing.T) {
 	testPackUnpack(t, b)
 }
 
-func TestEmptySortedMap(t *testing.T) {
+func TestEmptyImmutableMap(t *testing.T) {
 
-	b := val.EmptyMutableMap()
+	b := val.EmptyImmutableMap()
 
 	require.Equal(t, val.MAP, b.Kind())
-	require.Equal(t, "value.sortedMapValue", b.Class().String())
+	require.Equal(t, "value.immutableMapValue", b.Class().String())
 	require.Equal(t, 0, b.Len())
 	require.Equal(t, "80", val.Hex(b))
 	require.Equal(t, "{}", val.Jsonify(b))
@@ -45,9 +45,9 @@ func TestEmptySortedMap(t *testing.T) {
 
 }
 
-func TestSortedMapPut(t *testing.T) {
+func TestImmutableMapPut(t *testing.T) {
 
-	b := val.EmptyMutableMap()
+	b := val.EmptyImmutableMap()
 
 	b = b.Put("name", val.Utf8("alex"))
 	b = b.Put("state", val.Utf8("CA"))
@@ -100,9 +100,9 @@ func TestSortedMapPut(t *testing.T) {
 
 }
 
-func TestSortedMapMarshal(t *testing.T) {
+func TestImmutableMapMarshal(t *testing.T) {
 
-	b := val.EmptyMutableMap()
+	b := val.EmptyImmutableMap()
 	b = b.Put("k", val.Long(100))
 
 	j, _ := b.MarshalJSON()
@@ -111,7 +111,7 @@ func TestSortedMapMarshal(t *testing.T) {
 	bin, _ := b.MarshalBinary()
 	require.Equal(t, []byte{0x81, 0xa1, 0x6b, 0x64}, bin)
 
-	b = val.EmptyMutableMap()
+	b = val.EmptyImmutableMap()
 	b = b.Put("3", val.Boolean(true))
 
 	j, _ = b.MarshalJSON()
@@ -123,9 +123,9 @@ func TestSortedMapMarshal(t *testing.T) {
 
 }
 
-func TestSortedMapPutLongNum(t *testing.T) {
+func TestImmutableMapPutLongNum(t *testing.T) {
 
-	b := val.EmptyMutableMap()
+	b := val.EmptyImmutableMap()
 
 	b = b.Put("12345678901234567890", val.Long(555))
 
@@ -142,11 +142,11 @@ func TestSortedMapPutLongNum(t *testing.T) {
 
 }
 
-func TestSortedMapJson(t *testing.T) {
+func TestImmutableMapJson(t *testing.T) {
 
-	d := val.EmptyMutableMap()
+	d := val.EmptyImmutableMap()
 
-	c := val.EmptyMutableMap()
+	c := val.EmptyImmutableMap()
 	c = c.Put("5", val.Long(5))
 
 	d = d.Put("name", val.Utf8("name"))
@@ -160,7 +160,17 @@ func TestSortedMapJson(t *testing.T) {
 
 }
 
-func TestSortedMapProtocol(t *testing.T) {
+
+func newHandshakeRequest(clientId int64) val.Map {
+	return val.EmptyImmutableMap().
+		Put("m", val.Utf8("vRPC")).
+		Put("v", val.Double(1.0)).
+		Put("t", val.Long(1)).
+		Put("rid", val.Long(123)).
+		Put("cid", val.Long(clientId))
+}
+
+func TestImmutableMapProtocol(t *testing.T) {
 
 	req := newHandshakeRequest(555)
 	require.Equal(t,  5, req.Len())

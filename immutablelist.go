@@ -2,6 +2,7 @@
  * Copyright (c) 2025 Karagatan LLC.
  * SPDX-License-Identifier: BUSL-1.1
  */
+
 package value
 
 import (
@@ -11,51 +12,42 @@ import (
 	"strings"
 )
 
-/**
-	Position in list is important, that guarantees the order
-
-	Serializes in MessagePack as List
-*/
-
-type solidListValue []Value
-
-var solidListValueClass = reflect.TypeOf((*solidListValue)(nil)).Elem()
-
-func EmptyMutableList() List {
-	return solidListValue([]Value{})
+type immutableListEntry struct {
+	key    string
+	value  Value
 }
 
-func MutableList(list []Value) List {
-	return solidListValue(list)
+type immutableListValue []Value
+
+var immutableListValueClass = reflect.TypeOf((*immutableListValue)(nil)).Elem()
+
+func EmptyImmutableList() List {
+	return immutableListValue([]Value{})
 }
 
-func Tuple(values... Value) List {
-	return solidListValue(values)
+func ImmutableList(list []Value) List {
+	return immutableListValue(list)
 }
 
-func Single(value Value) List {
-	return solidListValue([]Value{value})
-}
-
-func (t solidListValue) Kind() Kind {
+func (t immutableListValue) Kind() Kind {
 	return LIST
 }
 
-func (t solidListValue) Class() reflect.Type {
-	return solidListValueClass
+func (t immutableListValue) Class() reflect.Type {
+	return immutableListValueClass
 }
 
-func (t solidListValue) Object() interface{} {
+func (t immutableListValue) Object() interface{} {
 	return []Value(t)
 }
 
-func (t solidListValue) String() string {
+func (t immutableListValue) String() string {
 	var out strings.Builder
 	t.PrintJSON(&out)
 	return out.String()
 }
 
-func (t solidListValue) Items() []ListItem {
+func (t immutableListValue) Items() []ListItem {
 	var items []ListItem
 	for key, value := range t {
 		items = append(items, ImmutableItem(key, value))
@@ -63,7 +55,7 @@ func (t solidListValue) Items() []ListItem {
 	return items
 }
 
-func (t solidListValue) Entries() []MapEntry {
+func (t immutableListValue) Entries() []MapEntry {
 	var entries []MapEntry
 	for key, value := range t {
 		entries = append(entries, ImmutableEntry(strconv.Itoa(key), value))
@@ -71,15 +63,15 @@ func (t solidListValue) Entries() []MapEntry {
 	return entries
 }
 
-func (t solidListValue) Values() []Value {
+func (t immutableListValue) Values() []Value {
 	return t
 }
 
-func (t solidListValue) Len() int {
+func (t immutableListValue) Len() int {
 	return len(t)
 }
 
-func (t solidListValue) Pack(p Packer) {
+func (t immutableListValue) Pack(p Packer) {
 
 	p.PackList(len(t))
 
@@ -92,7 +84,7 @@ func (t solidListValue) Pack(p Packer) {
 	}
 }
 
-func (t solidListValue) PrintJSON(out *strings.Builder) {
+func (t immutableListValue) PrintJSON(out *strings.Builder) {
 	out.WriteRune('[')
 	for i, e := range t {
 		if i != 0 {
@@ -107,20 +99,20 @@ func (t solidListValue) PrintJSON(out *strings.Builder) {
 	out.WriteRune(']')
 }
 
-func (t solidListValue) MarshalJSON() ([]byte, error) {
+func (t immutableListValue) MarshalJSON() ([]byte, error) {
 	var out strings.Builder
 	t.PrintJSON(&out)
 	return []byte(out.String()), nil
 }
 
-func (t solidListValue) MarshalBinary() ([]byte, error) {
+func (t immutableListValue) MarshalBinary() ([]byte, error) {
 	buf := bytes.Buffer{}
 	p := MessagePacker(&buf)
 	t.Pack(p)
 	return buf.Bytes(), p.Error()
 }
 
-func (t solidListValue) Equal(val Value) bool {
+func (t immutableListValue) Equal(val Value) bool {
 	if val == nil || val.Kind() != LIST {
 		return false
 	}
@@ -136,14 +128,14 @@ func (t solidListValue) Equal(val Value) bool {
 	return true
 }
 
-func (t solidListValue) GetAt(i int) Value {
+func (t immutableListValue) GetAt(i int) Value {
 	if i >= 0 && i < len(t) {
 		return t[i]
 	}
 	return Null
 }
 
-func (t solidListValue) GetBoolAt(index int) Bool {
+func (t immutableListValue) GetBoolAt(index int) Bool {
 	value := t.GetAt(index)
 	if value != Null {
 		if value.Kind() == BOOL {
@@ -154,7 +146,7 @@ func (t solidListValue) GetBoolAt(index int) Bool {
 	return False
 }
 
-func (t solidListValue) GetNumberAt(index int) Number {
+func (t immutableListValue) GetNumberAt(index int) Number {
 	value := t.GetAt(index)
 	if value != Null {
 		if value.Kind() == NUMBER {
@@ -165,7 +157,7 @@ func (t solidListValue) GetNumberAt(index int) Number {
 	return Zero
 }
 
-func (t solidListValue) GetStringAt(index int) String {
+func (t immutableListValue) GetStringAt(index int) String {
 	value := t.GetAt(index)
 	if value != Null {
 		if value.Kind() == STRING {
@@ -176,25 +168,25 @@ func (t solidListValue) GetStringAt(index int) String {
 	return EmptyString
 }
 
-func (t solidListValue) GetListAt(index int) List {
+func (t immutableListValue) GetListAt(index int) List {
 	value := t.GetAt(index)
 	if value != Null {
 		switch value.Kind() {
 		case LIST:
 			return value.(List)
 		case MAP:
-			return MutableList(value.(Map).Values())
+			return ImmutableList(value.(Map).Values())
 		}
 	}
 	return EmptyImmutableList()
 }
 
-func (t solidListValue) GetMapAt(index int) Map {
+func (t immutableListValue) GetMapAt(index int) Map {
 	value := t.GetAt(index)
 	if value != Null {
 		switch value.Kind() {
 		case LIST:
-			return SortedMap(value.(List).Entries(), false)
+			return ImmutableMap(value.(List).Entries(), false)
 		case MAP:
 			return value.(Map)
 		}
@@ -202,14 +194,14 @@ func (t solidListValue) GetMapAt(index int) Map {
 	return EmptyImmutableMap()
 }
 
-func (t solidListValue) Append(val Value) List {
+func (t immutableListValue) Append(val Value) List {
 	if val == nil {
 		val = Null
 	}
 	return t.append(len(t), val)
 }
 
-func (t solidListValue) PutAt(i int, val Value) List {
+func (t immutableListValue) PutAt(i int, val Value) List {
 	if val == nil {
 		val = Null
 	}
@@ -224,20 +216,11 @@ func (t solidListValue) PutAt(i int, val Value) List {
 	return t
 }
 
-func (t solidListValue) UpdateAt(i int, updater Updater) bool {
-	n := len(t)
-	if i >= 0 && i < n {
-		newValue := updater.Update(t[i])
-		if newValue == nil {
-			newValue = Null
-		}
-		t[i] = newValue
-		return true
-	}
+func (t immutableListValue) UpdateAt(int, Updater) bool {
 	return false
 }
 
-func (t solidListValue) InsertAt(i int, val Value) List {
+func (t immutableListValue) InsertAt(i int, val Value) List {
 	if val == nil {
 		val = Null
 	}
@@ -252,7 +235,7 @@ func (t solidListValue) InsertAt(i int, val Value) List {
 	return t
 }
 
-func (t solidListValue) RemoveAt(i int) List {
+func (t immutableListValue) RemoveAt(i int) List {
 	n := len(t)
 	if i >= 0 && i < n {
 		return t.removeAt(i, n)
@@ -260,15 +243,18 @@ func (t solidListValue) RemoveAt(i int) List {
 	return t
 }
 
-func (t solidListValue) append(n int, val Value) List {
+func (t immutableListValue) append(n int, val Value) List {
 	if n == 0 {
-		return solidListValue([]Value{val})
+		return immutableListValue([]Value{val})
 	} else {
-		return append(t, val)
+		dst := make([]Value, n+1)
+		copy(dst, t)
+		dst[n] = val
+		return immutableListValue(dst)
 	}
 }
 
-func (t solidListValue) putAt(i, n int, val Value) List {
+func (t immutableListValue) putAt(i, n int, val Value) List {
 	j := i+1
 	if j < n {
 		j = n
@@ -276,37 +262,44 @@ func (t solidListValue) putAt(i, n int, val Value) List {
 	dst := make([]Value, j)
 	copy(dst, t)
 	dst[i] = val
-	return solidListValue(dst)
+	return immutableListValue(dst)
 }
 
-func (t solidListValue) insertAt(i, n int, val Value) List {
+func (t immutableListValue) insertAt(i, n int, val Value) List {
 	if i == 0 {
 		dst := make([]Value, n+1)
 		copy(dst[1:], t)
 		dst[0] = val
-		return solidListValue(dst)
+		return immutableListValue(dst)
 	} else if i+1 == n {
-		return append(t[:i], val, t[i])
+		dst := make([]Value, n+1)
+		copy(dst, t[:i])
+		dst[n-1] = val
+		dst[n] = t[i]
+		return immutableListValue(dst)
 	} else {
 		dst := make([]Value, n+1)
 		copy(dst, t[:i])
 		dst[i] = val
 		copy(dst[i+1:], t[i:])
-		return solidListValue(dst)
+		return immutableListValue(dst)
 	}
 }
 
-func (t solidListValue) removeAt(i, n int) List {
+func (t immutableListValue) removeAt(i, n int) List {
 	if i == 0 {
-		return t[1:]
+		return immutableListValue(t.copyOf(t[1:]))
 	} else if i+1 == n {
-		return t[:i]
-	} else  {
-		return append(t[:i], t[i+1:]...)
+		return immutableListValue(t.copyOf(t[:i]))
+	} else {
+		dst := make([]Value, n-1)
+		copy(dst, t[:i])
+		copy(dst[i:], t[i+1:])
+		return immutableListValue(dst)
 	}
 }
 
-func (t solidListValue) Select(i int) []Value {
+func (t immutableListValue) Select(i int) []Value {
 	val := t.GetAt(i)
 	if val != Null {
 		return []Value {val}
@@ -314,7 +307,7 @@ func (t solidListValue) Select(i int) []Value {
 	return []Value {}
 }
 
-func (t solidListValue) InsertAll(i int, list []Value) List {
+func (t immutableListValue) InsertAll(i int, list []Value) List {
 
 	if len(list) == 0 {
 		return t
@@ -337,27 +330,41 @@ func (t solidListValue) InsertAll(i int, list []Value) List {
 	return t
 }
 
-func (t solidListValue) DeleteAll(i int) List {
+func (t immutableListValue) DeleteAll(i int) List {
 	return t.RemoveAt(i)
 }
 
-func (t solidListValue) appendSlice(n int, slice []Value) List {
+func (t immutableListValue) appendSlice(n int, slice []Value) List {
 	if n == 0 {
-		return solidListValue(slice)
+		return immutableListValue(t.copyOf(slice))
 	} else {
-		return append(t, slice...)
+		dst := make([]Value, n+len(slice))
+		copy(dst, t)
+		copy(dst[n:], slice)
+		return immutableListValue(dst)
 	}
 }
 
-func (t solidListValue) insertSliceAt(i, n int, slice []Value) List {
+func (t immutableListValue) insertSliceAt(i, n int, slice []Value) List {
 	if i == 0 {
-		return append(solidListValue(slice), t...)
+		m := len(slice)
+		dst := make([]Value, m+n)
+		copy(dst, slice)
+		copy(dst[m:], t)
+		return immutableListValue(dst)
 	} else {
 		m := len(slice)
 		dst := make([]Value, n+m)
 		copy(dst, t[:i])
 		copy(dst[i:], slice)
 		copy(dst[i+m:], t[i:])
-		return solidListValue(dst)
+		return immutableListValue(dst)
 	}
+}
+
+func (t immutableListValue) copyOf(src []Value) []Value {
+	n := len(src)
+	dst := make([]Value, n)
+	copy(dst, src)
+	return dst
 }
