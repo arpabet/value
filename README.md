@@ -4,9 +4,11 @@
 
 Value in GO
 
-* All instances are immutable and good for multi-threading or go-routing.
-* Deterministic serialization that guarantee consistent results before hashing.
-* No cycle pack deps, because all objects are immutable
+* The `Immutable*` value types are safe to share across goroutines; mutable
+  variants are available for in-place building.
+* Deterministic, canonical serialization: equal values produce identical bytes,
+  so they hash identically. See [CANONICAL.md](CANONICAL.md).
+* Acyclic by construction — values form trees, so packing never cycles.
 
 ### List
 ```

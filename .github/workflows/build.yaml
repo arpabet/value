@@ -41,3 +41,19 @@ jobs:
 
       - name: govulncheck
         run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+
+      - name: Fuzz Unpack
+        run: go test -run='^$' -fuzz=FuzzUnpack -fuzztime=40s
+
+      - name: Fuzz Read
+        run: go test -run='^$' -fuzz=FuzzRead -fuzztime=40s

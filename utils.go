@@ -109,7 +109,7 @@ func Equal(left Value, right Value) bool {
 }
 
 func Parse(unpacker Unpacker, parser Parser) (Value, error) {
-	return doParse(unpacker, parser)
+	return doParse(unpacker, parser, 0)
 }
 
 func WriteStream(w io.Writer, valueC <-chan Value) error {
@@ -139,7 +139,7 @@ func ReadStream(r io.Reader, out chan<- Value) error {
 
 	for {
 
-		value, err := doParse(unpacker, parser)
+		value, err := doParse(unpacker, parser, 0)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil

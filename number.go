@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"github.com/shopspring/decimal"
 	"math"
 	"math/big"
@@ -339,8 +340,13 @@ func UnpackBigInt(data []byte) (*big.Int, error) {
 
 func UnpackDecimal(data []byte) (decimal.Decimal, error) {
 	d := decimal.Decimal{}
-	err := d.UnmarshalBinary(data)
-	return d, err
+	if err := d.UnmarshalBinary(data); err != nil {
+		return d, err
+	}
+	if exp := int(d.Exponent()); MaxDecimalExponent > 0 && (exp > MaxDecimalExponent || exp < -MaxDecimalExponent) {
+		return decimal.Decimal{}, fmt.Errorf("value: decimal exponent %d exceeds limit %d", exp, MaxDecimalExponent)
+	}
+	return d, nil
 }
 
 func (n longNumber) PrintJSON(out *strings.Builder) {
