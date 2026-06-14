@@ -2,8 +2,11 @@
 
 This document specifies the canonical serialization produced by `value.Pack` (and
 `value.Write`/`value.Hash`). It is the contract that makes the library suitable
-for **content addressing**: equal values produce identical bytes, so they produce
-identical hashes.
+for **content addressing, hashing, and cryptographic signing**: equal values
+produce identical bytes, so they produce identical hashes and verifiable
+signatures. That property is what lets `value` back Merkle structures, content
+identifiers, and reproducible signatures in **blockchain** and other distributed
+protocols.
 
 The canonical form is the **MessagePack byte stream**. `String()` and JSON output
 (`Jsonify`, `MarshalJSON`) are human-facing and are **not** canonical — do not hash

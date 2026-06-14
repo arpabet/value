@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2025 Karagatan LLC.
- * SPDX-License-Identifier: BUSL-1.1
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 
@@ -162,7 +162,7 @@ func (s rawString) Equal(val Value) bool {
 		return false
 	}
 	o := val.(String)
-	return bytes.Compare(s, o.Raw()) == 0
+	return bytes.Equal(s, o.Raw())
 }
 
 func (s rawString) Len() int {

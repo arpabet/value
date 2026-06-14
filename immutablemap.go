@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2025 Karagatan LLC.
- * SPDX-License-Identifier: BUSL-1.1
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 package value
@@ -64,7 +64,7 @@ func (t immutableMapValue) Entries() []MapEntry {
 }
 
 func (t immutableMapValue) Keys() []string {
-	var keys []string
+	keys := make([]string, 0, len(t))
 	for _, entry := range t {
 		keys = append(keys, entry.Key())
 	}
@@ -72,7 +72,7 @@ func (t immutableMapValue) Keys() []string {
 }
 
 func (t immutableMapValue) Values() []Value {
-	var values []Value
+	values := make([]Value, 0, len(t))
 	for _, entry := range t {
 		values = append(values, entry.Value())
 	}

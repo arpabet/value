@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2025 Karagatan LLC.
- * SPDX-License-Identifier: BUSL-1.1
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 
@@ -65,7 +65,7 @@ func (t sortedMapValue) Entries() []MapEntry {
 }
 
 func (t sortedMapValue) Keys() []string {
-	var keys []string
+	keys := make([]string, 0, len(t))
 	for _, entry := range t {
 		keys = append(keys, entry.Key())
 	}
@@ -73,7 +73,7 @@ func (t sortedMapValue) Keys() []string {
 }
 
 func (t sortedMapValue) Values() []Value {
-	var values []Value
+	values := make([]Value, 0, len(t))
 	for _, entry := range t {
 		values = append(values, entry.Value())
 	}
