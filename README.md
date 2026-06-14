@@ -167,6 +167,46 @@ out, _ := value.Unseal(sealed, senderPub, recipientPriv)
 out.Equal(value.Utf8("secret message")) // true
 ```
 
+## How it compares: MessagePack `value` vs RLP vs CBOR
+
+All three are binary encodings used where a **stable, canonical byte
+representation** is needed for hashing and signing — but they make different
+trade-offs.
+
+| | `value` (this library) | RLP (Ethereum) | CBOR (RFC 8949) |
+|---|---|---|---|
+| Encoding | MessagePack | Recursive Length Prefix | CBOR |
+| Data model | rich, dynamic — null, bool, int, float, big.Int, decimal, text, bytes, list, sparse list, map | two types only — byte strings and lists | rich, self-describing — ints, floats, bytes, text, arrays, maps, tags |
+| Self-describing | yes | **no** (types come from an external schema) | yes |
+| Deterministic output | **always** (canonical by design) | **always** (a single valid encoding) | **optional** (must opt into Core Deterministic Encoding, §4.2) |
+| Native maps | yes, keys sorted | no (key/value lives in app-layer tries) | yes (sorted keys in deterministic mode) |
+| Floats | float64 | none | float16/32/64 |
+| Canonical spec | [CANONICAL.md](CANONICAL.md) | Ethereum Yellow Paper | IETF STD 94 |
+| Cross-language standard | no (a Go library) | all Ethereum clients | yes, many languages |
+| Typical use | hashing / signing / content addressing in Go | Ethereum tx, block & state hashing | COSE signing, CWT, WebAuthn, IoT |
+
+**RLP** is the minimalist. It knows only byte strings and lists and has exactly
+one canonical encoding, which is why Ethereum uses it to hash transactions,
+blocks, and state. The cost is that it is **not self-describing**: the integer
+`1024` and the two-byte string `{0x04, 0x00}` encode to the same bytes, and only
+the surrounding schema decides which it is — so RLP is a poor general-purpose,
+decode-anywhere value format.
+
+**CBOR** is the standard. It is an IETF format with a rich, self-describing model,
+tags for bignums/decimals/timestamps, and broad cross-language support, which is
+why it underpins COSE signing, CWT tokens, and WebAuthn. Its catch for hashing is
+that determinism is **opt-in**: plain CBOR permits several encodings of the same
+value (map-key order, integer and float width), so you must explicitly select
+Core Deterministic Encoding and a conforming library.
+
+**`value`** sits between them for Go services. It offers a rich, self-describing
+tree like CBOR, but is **canonical by default** like RLP — there is no
+non-deterministic mode to forget to turn off — and it adds immutable structural
+sharing plus one tree that emits both canonical bytes and JSON. The trade-offs:
+it is a Go library rather than a multi-language standard, and its big-integer and
+decimal extensions currently use a Go-specific framing (a portable framing is
+planned for v2; see [CANONICAL.md](CANONICAL.md)).
+
 ## Documentation
 
 - [CANONICAL.md](CANONICAL.md) — the exact canonical wire format and equality
