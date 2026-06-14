@@ -564,12 +564,22 @@ func (n decimalNumber) Subtract(other Number) Number {
 	return Decimal(dec.Sub(other.Decimal()))
 }
 
+// Equal implements an equivalence relation that is consistent with
+// serialization: for any two numbers a.Equal(b) holds if and only if
+// Pack(a) == Pack(b). This is required for content addressing and hashing,
+// where equal values must produce identical bytes. Equality therefore requires
+// the same number Type; it never coerces across types (a long and a double that
+// happen to be numerically close are not equal, because they pack differently).
+// For an approximate, cross-type numeric comparison use ApproxEqual.
 func (n longNumber) Equal(val Value) bool {
 	if val == nil || val.Kind() != NUMBER {
 		return false
 	}
 	other := val.(Number)
-	return n.Long() == other.Long()
+	if other.Type() != LONG {
+		return false
+	}
+	return int64(n) == other.Long()
 }
 
 func (n doubleNumber) Equal(val Value) bool {
@@ -577,10 +587,13 @@ func (n doubleNumber) Equal(val Value) bool {
 		return false
 	}
 	other := val.(Number)
-	if n.IsNaN() || other.IsNaN() {
+	if other.Type() != DOUBLE {
 		return false
 	}
-	return  math.Abs(n.Double() - other.Double()) < PrecisionLevel
+	// Compare exact IEEE-754 bit patterns rather than a tolerance, so that
+	// Equal matches the packed bytes. This also makes equality reflexive for
+	// NaN (a value always equals itself), which round-tripping relies on.
+	return math.Float64bits(float64(n)) == math.Float64bits(other.Double())
 }
 
 func (n bigIntNumber) Equal(val Value) bool {
@@ -588,6 +601,9 @@ func (n bigIntNumber) Equal(val Value) bool {
 		return false
 	}
 	other := val.(Number)
+	if other.Type() != BIGINT {
+		return false
+	}
 	return n.Int.Cmp(other.BigInt()) == 0
 }
 
@@ -596,6 +612,28 @@ func (n decimalNumber) Equal(val Value) bool {
 		return false
 	}
 	other := val.(Number)
-	return n.Decimal().Cmp(other.Decimal()) == 0
+	if other.Type() != DECIMAL {
+		return false
+	}
+	// Compare the exact representation (coefficient + exponent) instead of the
+	// numeric value, so that e.g. 1.0 and 1.00 are distinct just as their packed
+	// bytes are. This keeps Equal consistent with serialization.
+	a, b := decimal.Decimal(n), other.Decimal()
+	return a.Exponent() == b.Exponent() && a.Coefficient().Cmp(b.Coefficient()) == 0
+}
+
+// ApproxEqual reports whether two numbers are numerically close within
+// PrecisionLevel, comparing across number types by their float64 value. Unlike
+// Equal it is NOT consistent with serialization (close values pack to different
+// bytes) and is not transitive, so it must never be used for hashing or content
+// addressing. NaN is never ApproxEqual to anything, including itself.
+func ApproxEqual(a, b Number) bool {
+	if a == nil || b == nil {
+		return false
+	}
+	if a.IsNaN() || b.IsNaN() {
+		return false
+	}
+	return math.Abs(a.Double()-b.Double()) < PrecisionLevel
 }
 
