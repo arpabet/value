@@ -7,7 +7,7 @@
 package value
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 	"io"
 	"strconv"
 )
@@ -68,7 +68,7 @@ func doParse(unpacker Unpacker, parser Parser) (Value, error) {
 		}
 		return doParseExt(tagAndData)
 	default:
-		return nil, errors.Errorf("parse: invalid format %v", format)
+		return nil, fmt.Errorf("parse: invalid format %v", format)
 	}
 
 }

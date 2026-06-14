@@ -138,13 +138,14 @@ func ReadStream(r io.Reader, out chan<- Value) error {
 
 		value, err := doParse(unpacker, parser)
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
 			return err
 		}
 
 		out <- value
 	}
-
-	return nil
 }
 
 func CopyOf(src []Value) []Value {

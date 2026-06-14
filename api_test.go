@@ -40,27 +40,28 @@ func TestStream(t *testing.T) {
 	buf := bytes.Buffer{}
 
 	valueC := make(chan val.Value)
-	go val.WriteStream(&buf, valueC)
+	writeDone := make(chan error, 1)
+	go func() { writeDone <- val.WriteStream(&buf, valueC) }()
 
 	for i:=0; i!=numIterations; i++ {
 		valueC <- m
 	}
 
 	close(valueC)
-	time.Sleep(time.Millisecond)
+	require.NoError(t, <-writeDone) // wait for the writer to finish before reading buf
 
 	valueC = make(chan val.Value)
 	go val.ReadStream(&buf, valueC)
 
 	cnt := 0
 	for {
-		val, ok := <- valueC
+		v, ok := <- valueC
 
 		if !ok {
 			break
 		}
 
-		require.True(t, m.Equal(val))
+		require.True(t, m.Equal(v))
 
 		cnt = cnt + 1
 	}

@@ -7,7 +7,7 @@ package value
 
 import (
 	"bytes"
-	"github.com/pkg/errors"
+	"fmt"
 	"reflect"
 	"sort"
 	"strconv"
@@ -35,10 +35,10 @@ func UnpackStruct(buf []byte, obj interface{}, copy bool) error {
 	parser := MessageParser()
 	classPtr := reflect.TypeOf(obj)
 	if classPtr.Kind() != reflect.Ptr {
-		return errors.Errorf("non-pointer instance is not allowed in '%v'", classPtr)
+		return fmt.Errorf("non-pointer instance is not allowed in '%v'", classPtr)
 	}
 	if schema, err := reflectSchema(classPtr); err != nil {
-		return errors.Errorf("error on reflect schema for '%v', %v", classPtr, err)
+		return fmt.Errorf("error on reflect schema for '%v', %v", classPtr, err)
 	} else {
 		valuePtr := reflect.ValueOf(obj)
 		value := valuePtr.Elem()
@@ -49,7 +49,7 @@ func UnpackStruct(buf []byte, obj interface{}, copy bool) error {
 func reflectPackStruct(p *messagePacker, obj interface{}) error {
 	classPtr := reflect.TypeOf(obj)
 	if classPtr.Kind() != reflect.Ptr {
-		return errors.Errorf("non-pointer instance is not allowed in '%v'", classPtr)
+		return fmt.Errorf("non-pointer instance is not allowed in '%v'", classPtr)
 	}
 	schema, err := reflectSchema(classPtr)
 	if err != nil {
@@ -115,14 +115,14 @@ func doReflectPackStruct(p *messagePacker, value reflect.Value, schema *Schema) 
 func doReflectPackValue(p *messagePacker, value reflect.Value, entry *packingField) error {
 	if entry.field.Struct {
 		if err := doReflectPackStruct(p, value.Elem(), entry.field.FieldSchema); err != nil {
-			return errors.Errorf("can not pack field %v, inner struct error %v", value, err)
+			return fmt.Errorf("can not pack field %v, inner struct error %v", value, err)
 		}
 	} else {
 		fieldObject := value.Interface()
 		if val, ok := fieldObject.(Value); ok {
 			val.Pack(p)
 		} else {
-			return errors.Errorf("can not convert field %v to value.Value", value)
+			return fmt.Errorf("can not convert field %v to value.Value", value)
 		}
 	}
 	return nil
@@ -183,11 +183,11 @@ func doReflectSchema(classPtr reflect.Type) (*Schema, error) {
 		}
 		tagStr, ok := field.Tag.Lookup("tag")
 		if !ok {
-			return nil, errors.Errorf("no tag in field '%s' in class '%v'", field.Name, classPtr)
+			return nil, fmt.Errorf("no tag in field '%s' in class '%v'", field.Name, classPtr)
 		}
 		tag, err := strconv.Atoi(tagStr)
 		if err != nil {
-			return nil, errors.Errorf("invalid tag number '%s' in field '%s' in class '%v'", tagStr, field.Name, classPtr)
+			return nil, fmt.Errorf("invalid tag number '%s' in field '%s' in class '%v'", tagStr, field.Name, classPtr)
 		}
 		array := false
 		fieldType := field.Type
@@ -208,9 +208,9 @@ func doReflectSchema(classPtr reflect.Type) (*Schema, error) {
 			fields[tag] = f
 			sortedFields = append(sortedFields, f)
 		} else if fieldType.Kind() != reflect.Ptr {
-			return nil, errors.Errorf("tagged field '%s' in class '%v' with type '%v' does not implement value.Value interface and non-ptr", field.Name, field.Type, classPtr)
+			return nil, fmt.Errorf("tagged field '%s' in class '%v' with type '%v' does not implement value.Value interface and non-ptr", field.Name, field.Type, classPtr)
 		} else if fieldSchema, err := reflectSchema(fieldType); err != nil {
-			return nil, errors.Errorf("struct field '%s' in class '%v' has wrong schema, %v", field.Name, classPtr, err)
+			return nil, fmt.Errorf("struct field '%s' in class '%v' has wrong schema, %v", field.Name, classPtr, err)
 		} else {
 			f := &Field{
 				FieldNum: j,
@@ -237,7 +237,7 @@ func doReflectSchema(classPtr reflect.Type) (*Schema, error) {
 func ParseStruct(unpacker Unpacker, parser Parser, value reflect.Value, schema *Schema) error {
 	format, header := unpacker.Next()
 	if format != MapHeader {
-		return errors.Errorf("expected MapHeader for struct, but got %v", format)
+		return fmt.Errorf("expected MapHeader for struct, but got %v", format)
 	}
 	cnt := parser.ParseMap(header)
 	if parser.Error() != nil {
@@ -246,10 +246,10 @@ func ParseStruct(unpacker Unpacker, parser Parser, value reflect.Value, schema *
 	for i := 0; i < cnt; i++ {
 		key, err := doParse(unpacker, parser)
 		if err != nil {
-			return errors.Errorf("fail to parse key on position %d, %v", i, err)
+			return fmt.Errorf("fail to parse key on position %d, %v", i, err)
 		}
 		if key.Kind() != NUMBER {
-			return errors.Errorf("expected int key, but got %s on position %d", key.Kind().String(), i)
+			return fmt.Errorf("expected int key, but got %s on position %d", key.Kind().String(), i)
 		}
 		tag := int(key.(Number).Long())
 		if field, ok := schema.Fields[tag]; ok {
@@ -257,13 +257,13 @@ func ParseStruct(unpacker Unpacker, parser Parser, value reflect.Value, schema *
 			if field.Array {
 
 				if !fieldValue.CanSet() {
-					return errors.Errorf("can not set empty slice value to field %v", field.FieldName)
+					return fmt.Errorf("can not set empty slice value to field %v", field.FieldName)
 				}
 
 				if !field.Repeated {
 					listFormat, listHeader := unpacker.Next()
 					if listFormat != ListHeader {
-						return errors.Errorf("expected ListHeader for array field, but got %v", listFormat)
+						return fmt.Errorf("expected ListHeader for array field, but got %v", listFormat)
 					}
 					listCnt := parser.ParseList(listHeader)
 					arrayType := reflect.ArrayOf(listCnt, field.FieldType.Elem())
@@ -276,16 +276,16 @@ func ParseStruct(unpacker Unpacker, parser Parser, value reflect.Value, schema *
 							elemValue.Set(structValue)
 							err := ParseStruct(unpacker, parser, elemValue.Elem(), field.FieldSchema)
 							if err != nil {
-								return errors.Errorf("fail to set struct value %v", err)
+								return fmt.Errorf("fail to set struct value %v", err)
 							}
 						} else {
 							val, err := doParse(unpacker, parser)
 							if err != nil {
-								return errors.Errorf("fail to parse value %v", err)
+								return fmt.Errorf("fail to parse value %v", err)
 							}
 							err = setFieldValue(elemValue, field.FieldType.Elem(), val)
 							if err != nil {
-								return errors.Errorf("fail to set value %v", err)
+								return fmt.Errorf("fail to set value %v", err)
 							}
 						}
 					}
@@ -306,18 +306,18 @@ func ParseStruct(unpacker Unpacker, parser Parser, value reflect.Value, schema *
 						sliceValue = reflect.Append(sliceValue, elemValue)
 						err := ParseStruct(unpacker, parser, elemValue.Elem(), field.FieldSchema)
 						if err != nil {
-							return errors.Errorf("fail to set struct value %v", err)
+							return fmt.Errorf("fail to set struct value %v", err)
 						}
 					} else {
 						elemValue = reflect.New(field.FieldType.Elem()).Elem()
 						sliceValue = reflect.Append(sliceValue, elemValue)
 						val, err := doParse(unpacker, parser)
 						if err != nil {
-							return errors.Errorf("fail to parse value %v", err)
+							return fmt.Errorf("fail to parse value %v", err)
 						}
 						err = setFieldValue(elemValue, field.FieldType.Elem(), val)
 						if err != nil {
-							return errors.Errorf("fail to set value %v", err)
+							return fmt.Errorf("fail to set value %v", err)
 						}
 					}
 					fieldValue.Set(sliceValue)
@@ -325,11 +325,11 @@ func ParseStruct(unpacker Unpacker, parser Parser, value reflect.Value, schema *
 			} else {
 				err = parseFieldValue(unpacker, parser, field, fieldValue)
 				if err != nil {
-					return errors.Errorf("parse field on position %d, %v", i, err)
+					return fmt.Errorf("parse field on position %d, %v", i, err)
 				}
 			}
 		} else {
-			return errors.Errorf("unknown tag %d on position %d", tag, i)
+			return fmt.Errorf("unknown tag %d on position %d", tag, i)
 		}
 	}
 	return nil
@@ -341,21 +341,21 @@ func parseFieldValue(unpacker Unpacker, parser Parser, field *Field, fieldValue 
 			if fieldValue.CanSet() {
 				fieldValue.Set(reflect.New(field.FieldType.Elem()))
 			} else {
-				return errors.Errorf("can not set empty struct value to field %v", field.FieldName)
+				return fmt.Errorf("can not set empty struct value to field %v", field.FieldName)
 			}
 		}
 		err := ParseStruct(unpacker, parser, fieldValue.Elem(), field.FieldSchema)
 		if err != nil {
-			return errors.Errorf("fail to set struct value %v", err)
+			return fmt.Errorf("fail to set struct value %v", err)
 		}
 	} else {
 		val, err := doParse(unpacker, parser)
 		if err != nil {
-			return errors.Errorf("fail to parse value %v", err)
+			return fmt.Errorf("fail to parse value %v", err)
 		}
 		err = setFieldValue(fieldValue, field.FieldType, val)
 		if err != nil {
-			return errors.Errorf("fail to set value %v", err)
+			return fmt.Errorf("fail to set value %v", err)
 		}
 	}
 	return nil
@@ -365,13 +365,13 @@ func parseFieldValue(unpacker Unpacker, parser Parser, field *Field, fieldValue 
 func setFieldValue(fieldValue reflect.Value, fieldType reflect.Type, val Value) error {
 	if fieldValue.CanSet() {
 		if !val.Class().AssignableTo(fieldType) {
-			return errors.Errorf("expected value type %v, actual %v", fieldType, val.Class())
+			return fmt.Errorf("expected value type %v, actual %v", fieldType, val.Class())
 		}
 		value := reflect.ValueOf(val)
 		fieldValue.Set(value)
 		return nil
 	} else {
-		return errors.Errorf("can not set value '%v' to field %v", val, fieldType)
+		return fmt.Errorf("can not set value '%v' to field %v", val, fieldType)
 	}
 }
 
