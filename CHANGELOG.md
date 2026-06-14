@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and the project aims to follow
 [Semantic Versioning](https://semver.org/).
 
-## v1.0.0 — 2026-06-13
+## v1.2.0 — 2026-06-13
 
 First openly-licensed, hardened, and fully-specified release. The wire format is
 unchanged; see _Behavior changes_ before upgrading.
