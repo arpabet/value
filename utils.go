@@ -90,6 +90,9 @@ var ErrUnseal = errors.New("unseal error")
 
 func Unseal(encrypted []byte, senderPublicKey, recipientPrivateKey *[32]byte) (Value, error) {
 	var decryptNonce [24]byte
+	if len(encrypted) < 24 {
+		return nil, ErrUnseal
+	}
 	copy(decryptNonce[:], encrypted[:24])
 	decrypted, ok := box.Open(nil, encrypted[24:], &decryptNonce, senderPublicKey, recipientPrivateKey)
 	if !ok {

@@ -144,12 +144,15 @@ func doParseMap(header []byte, unpacker Unpacker, parser Parser) (Value, error) 
 				sparseListItems[i] = ImmutableItem(int(k), value)
 				prevListKey = k
 			} else {
-				// not a list
+				// not a list: fall back to a string-keyed map. The mix of
+				// stringified-int and string keys has no guaranteed order, so
+				// force a re-sort of the resulting map below.
 				mayBeList = false
+				sorted = false
 				sortedMapEntries = make([]MapEntry, cnt)
 				for j := 0; j < i; j++ {
-					item := sparseListItems[i]
-					sortedMapEntries[i] = ImmutableEntry(strconv.Itoa(item.Key()), item.Value())
+					item := sparseListItems[j]
+					sortedMapEntries[j] = ImmutableEntry(strconv.Itoa(item.Key()), item.Value())
 				}
 				k := key.String()
 				if i > 0 && prevMapKey > k {

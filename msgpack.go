@@ -191,31 +191,31 @@ func MessagePacker(w io.Writer) *messagePacker {
 	return &messagePacker{w: w}
 }
 
-func (p messagePacker) PackNil()  {
+func (p *messagePacker) PackNil()  {
 	if p.err == nil {
 		_, p.err = p.w.Write(p.m.WriteNil())
 	}
 }
 
-func (p messagePacker) PackBool(val bool) {
+func (p *messagePacker) PackBool(val bool) {
 	if p.err == nil {
 		_, p.err = p.w.Write(p.m.WriteBool(val))
 	}
 }
 
-func (p messagePacker) PackLong(val int64) {
+func (p *messagePacker) PackLong(val int64) {
 	if p.err == nil {
 		_, p.err = p.w.Write(p.m.WriteLong(val))
 	}
 }
 
-func (p messagePacker) PackDouble(val float64) {
+func (p *messagePacker) PackDouble(val float64) {
 	if p.err == nil {
 		_, p.err = p.w.Write(p.m.WriteDouble(val))
 	}
 }
 
-func (p messagePacker) PackStr(str string) {
+func (p *messagePacker) PackStr(str string) {
 	b := []byte(str)
 	if p.err == nil {
 		_, p.err = p.w.Write(p.m.WriteStrHeader(len(b)))
@@ -225,7 +225,7 @@ func (p messagePacker) PackStr(str string) {
 	}
 }
 
-func (p messagePacker) PackBin(b []byte) {
+func (p *messagePacker) PackBin(b []byte) {
 	if p.err == nil {
 		_, p.err = p.w.Write(p.m.WriteBinHeader(len(b)))
 	}
@@ -243,7 +243,7 @@ func (p *messagePacker) PackExt(xtag Ext, data []byte) {
 	}
 }
 
-func (p messagePacker) PackList(size int) {
+func (p *messagePacker) PackList(size int) {
 	if size < 0 {
 		size = 0
 	}
@@ -252,7 +252,7 @@ func (p messagePacker) PackList(size int) {
 	}
 }
 
-func (p messagePacker) PackMap(size int) {
+func (p *messagePacker) PackMap(size int) {
 	if size < 0 {
 		size = 0
 	}
@@ -261,13 +261,13 @@ func (p messagePacker) PackMap(size int) {
 	}
 }
 
-func (p messagePacker) PackRaw(b []byte) {
+func (p *messagePacker) PackRaw(b []byte) {
 	if p.err == nil {
 		_, p.err = p.w.Write(b)
 	}
 }
 
-func (p messagePacker) Error() error {
+func (p *messagePacker) Error() error {
 	return p.err
 }
 
@@ -434,7 +434,7 @@ func (p messageWriter) WriteArrayHeader(len int) []byte {
 		binary.BigEndian.PutUint16(p.buf[1:3], uint16(len))
 		return p.buf[:3]
 	default:
-		p.buf[0] = mpArray16
+		p.buf[0] = mpArray32
 		binary.BigEndian.PutUint32(p.buf[1:5], uint32(len))
 		return p.buf[:5]
 	}
@@ -693,7 +693,8 @@ type messageIOUnpacker struct {
 }
 
 func MessageReader(r io.Reader) *messageIOUnpacker {
-	return &messageIOUnpacker{r: r, br: r.(io.ByteReader)}
+	br, _ := r.(io.ByteReader) // optional fast path; a nil br is handled in Next
+	return &messageIOUnpacker{r: r, br: br}
 }
 
 func (p *messageIOUnpacker) Next() (Format, []byte) {
@@ -704,33 +705,28 @@ func (p *messageIOUnpacker) Next() (Format, []byte) {
 			return EOF, nil
 		}
 		p.buf[0] = code
-	}  else {
-		n, _ := p.r.Read(p.buf[:1])
-		if n == 0 {
-			return EOF, nil
-		}
+	} else if _, err := io.ReadFull(p.r, p.buf[:1]); err != nil {
+		return EOF, nil
 	}
 
 	format, len := nextFormat(p.buf[0])
 	n := 1 + len
 
-	m, _ := p.r.Read(p.buf[1:n])
-	if m != len {
+	// io.Reader is allowed to return short reads; ReadFull guarantees the
+	// whole header/value header is read before parsing.
+	if _, err := io.ReadFull(p.r, p.buf[1:n]); err != nil {
 		return UnexpectedEOF, nil
 	}
 
 	return format, p.buf[0:n]
 }
 
-func (p *messageIOUnpacker) Read(n int) (b []byte, err error) {
-	b = make([]byte, n)
-	m, err := p.r.Read(b)
-	if m != n {
-		if err == nil {
-			err = io.ErrUnexpectedEOF
-		}
+func (p *messageIOUnpacker) Read(n int) ([]byte, error) {
+	b := make([]byte, n)
+	if _, err := io.ReadFull(p.r, b); err != nil {
+		return nil, err
 	}
-	return b, err
+	return b, nil
 }
 
 func nextFormat(code byte) (Format, int) {
