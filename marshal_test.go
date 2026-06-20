@@ -12,6 +12,7 @@ import (
 	"crypto/rand"
 	"reflect"
 	"testing"
+	"time"
 )
 
 type inner struct {
@@ -202,5 +203,24 @@ func TestMarshalValuePassthrough(t *testing.T) {
 	}
 	if got := v.(Map).Get("raw"); got == nil || got.Kind() != NUMBER || got.(Number).Long() != 123 {
 		t.Fatalf("Value passthrough failed: %v", got)
+	}
+}
+
+func TestMarshalTime(t *testing.T) {
+	type withTime struct {
+		Name string    `value:"name"`
+		At   time.Time `value:"at"`
+	}
+	src := withTime{Name: "x", At: time.Now()}
+	v, err := Marshal(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var dst withTime
+	if err := Unmarshal(v, &dst); err != nil {
+		t.Fatal(err)
+	}
+	if !src.At.Truncate(time.Millisecond).Equal(dst.At) {
+		t.Fatalf("time round-trip: %v != %v", src.At, dst.At)
 	}
 }

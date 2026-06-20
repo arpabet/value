@@ -10,7 +10,10 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 )
+
+var timeType = reflect.TypeOf(time.Time{})
 
 // Marshal converts a plain Go value (typically a struct) into the dynamic Value
 // model. Struct fields are mapped to a Map keyed by their `value:"name"` tag (or
@@ -115,6 +118,11 @@ func toValue(rv reflect.Value) (Value, error) {
 		if v, ok := rv.Interface().(Value); ok {
 			return v, nil
 		}
+	}
+	// time.Time is a struct but encodes as Unix milliseconds (deterministic,
+	// location-independent), not a map of its unexported fields.
+	if rv.Type() == timeType {
+		return Long(rv.Interface().(time.Time).UnixMilli()), nil
 	}
 	switch rv.Kind() {
 	case reflect.Bool:
@@ -235,6 +243,13 @@ func fromValue(v Value, rv reflect.Value) error {
 	}
 	if v == nil || v.Kind() == NULL {
 		return nil // leave the zero value
+	}
+	if rv.Type() == timeType {
+		if n, ok := v.(Number); ok {
+			rv.Set(reflect.ValueOf(time.UnixMilli(n.Long()).UTC()))
+			return nil
+		}
+		return fmt.Errorf("value: cannot unmarshal %s into time.Time", v.Kind())
 	}
 	switch rv.Kind() {
 	case reflect.Bool:
