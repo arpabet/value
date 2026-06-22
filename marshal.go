@@ -21,8 +21,11 @@ var timeType = reflect.TypeOf(time.Time{})
 // as: bool→Bool, signed/unsigned ints→Number(long), floats→Number(double),
 // string→String(utf8), []byte / [N]byte→String(raw), other slices/arrays→List,
 // map[string]T→Map, nested struct→Map. A field whose type already implements
-// Value is used as-is. This is the reflection counterpart of Unmarshal; pair it
-// with Pack to get the canonical MessagePack wire bytes.
+// Value is used as-is. A field tagged with the `omitempty` option (e.g.
+// `value:"sig,omitempty"`) is dropped when it holds its zero value, matching
+// encoding/json; a field without it is always written and is required by
+// Unmarshal. This is the reflection counterpart of Unmarshal; pair it with Pack
+// to get the canonical MessagePack wire bytes.
 //
 // Unlike PackStruct (a strict numeric-tag schema where fields must themselves be
 // Value), Marshal works on ordinary Go structs and is the codec used for wire
@@ -38,8 +41,11 @@ func Marshal(obj interface{}) (Value, error) {
 }
 
 // Unmarshal decodes a Value (produced by Marshal/Unpack) into the Go value
-// pointed to by obj, using the same `value:"name"` field tags as Marshal. A
-// missing or Null map entry leaves the destination field at its zero value.
+// pointed to by obj, using the same `value:"name"` field tags as Marshal. A field
+// is required unless its tag carries the `omitempty` option: Unmarshal returns an
+// error if a required field's key is absent from the map. An absent optional
+// (omitempty) field — or any present-but-Null entry — leaves the destination at
+// its zero value.
 func Unmarshal(v Value, obj interface{}) error {
 	rv := reflect.ValueOf(obj)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
@@ -194,9 +200,14 @@ func structToMap(rv reflect.Value, signOnly bool) (Value, error) {
 			continue
 		}
 		if signOnly {
+			// The signing projection includes every sign-tagged field, always:
+			// omitempty does not apply, so the signed bytes have a fixed shape.
 			if _, ok := opts["sign"]; !ok {
 				continue
 			}
+		} else if _, omit := opts["omitempty"]; omit && isEmptyValue(rv.Field(i)) {
+			// Optional field at its zero value: omit it from the wire map.
+			continue
 		}
 		v, err := toValue(rv.Field(i))
 		if err != nil {
@@ -205,6 +216,28 @@ func structToMap(rv reflect.Value, signOnly bool) (Value, error) {
 		m[name] = v
 	}
 	return ImmutableMapOf(m), nil
+}
+
+// isEmptyValue reports whether rv holds its type's zero/empty value, matching
+// encoding/json's omitempty semantics (so value and json/msgpack agree on which
+// fields are dropped). Structs are never "empty"; use a pointer for an optional
+// struct/time field.
+func isEmptyValue(rv reflect.Value) bool {
+	switch rv.Kind() {
+	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
+		return rv.Len() == 0
+	case reflect.Bool:
+		return !rv.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return rv.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return rv.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return rv.Float() == 0
+	case reflect.Ptr, reflect.Interface:
+		return rv.IsNil()
+	}
+	return false
 }
 
 func signProjection(obj interface{}) (Value, error) {
@@ -333,16 +366,27 @@ func mapFromValue(m Map, rv reflect.Value) error {
 }
 
 func mapToStruct(m Map, rv reflect.Value) error {
+	// Get returns Null for both absent and present-Null keys, so use the presence
+	// map to distinguish them (required fields must actually be present).
+	hm := m.HashMap()
 	rt := rv.Type()
 	for i := 0; i < rt.NumField(); i++ {
 		f := rt.Field(i)
-		name, _, skip := parseValueTag(f)
+		name, opts, skip := parseValueTag(f)
 		if skip {
 			continue
 		}
-		fv := m.Get(name)
-		if fv == nil || fv.Kind() == NULL {
+		fv, present := hm[name]
+		if !present {
+			// Absent key: an error for required fields (no omitempty), tolerated
+			// for optional ones. This enforces the wire schema in the library.
+			if _, optional := opts["omitempty"]; !optional {
+				return fmt.Errorf("value: missing required field %q", name)
+			}
 			continue
+		}
+		if fv == nil || fv.Kind() == NULL {
+			continue // present but null leaves the zero value
 		}
 		if err := fromValue(fv, rv.Field(i)); err != nil {
 			return fmt.Errorf("value: field %q: %w", f.Name, err)
