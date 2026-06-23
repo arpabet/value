@@ -6,7 +6,7 @@
 package value_test
 
 import (
-	"errors"
+	"golang.org/x/xerrors"
 	"io"
 	"testing"
 
@@ -56,7 +56,7 @@ type errAfterWriter struct {
 func (w *errAfterWriter) Write(p []byte) (int, error) {
 	w.seen++
 	if w.seen > w.okWrites {
-		return 0, errors.New("write failed")
+		return 0, xerrors.New("write failed")
 	}
 	return len(p), nil
 }

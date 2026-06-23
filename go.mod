@@ -6,6 +6,7 @@ require (
 	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.53.0
+	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da
 )
 
 require (

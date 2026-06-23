@@ -7,7 +7,7 @@ package value
 
 import (
 	"crypto"
-	"fmt"
+	"golang.org/x/xerrors"
 	"reflect"
 	"strings"
 	"time"
@@ -49,7 +49,7 @@ func Marshal(obj interface{}) (Value, error) {
 func Unmarshal(v Value, obj interface{}) error {
 	rv := reflect.ValueOf(obj)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		return fmt.Errorf("value: Unmarshal requires a non-nil pointer, got %T", obj)
+		return xerrors.Errorf("value: Unmarshal requires a non-nil pointer, got %T", obj)
 	}
 	return fromValue(v, rv.Elem())
 }
@@ -158,7 +158,7 @@ func toValue(rv reflect.Value) (Value, error) {
 	case reflect.Struct:
 		return structToMap(rv, false)
 	default:
-		return nil, fmt.Errorf("value: cannot marshal kind %s", rv.Kind())
+		return nil, xerrors.Errorf("value: cannot marshal kind %s", rv.Kind())
 	}
 }
 
@@ -176,7 +176,7 @@ func seqToList(rv reflect.Value) (Value, error) {
 
 func mapToValue(rv reflect.Value) (Value, error) {
 	if rv.Type().Key().Kind() != reflect.String {
-		return nil, fmt.Errorf("value: map key must be string, got %s", rv.Type().Key().Kind())
+		return nil, xerrors.Errorf("value: map key must be string, got %s", rv.Type().Key().Kind())
 	}
 	m := make(map[string]Value, rv.Len())
 	iter := rv.MapRange()
@@ -211,7 +211,7 @@ func structToMap(rv reflect.Value, signOnly bool) (Value, error) {
 		}
 		v, err := toValue(rv.Field(i))
 		if err != nil {
-			return nil, fmt.Errorf("value: field %q: %w", f.Name, err)
+			return nil, xerrors.Errorf("value: field %q: %w", f.Name, err)
 		}
 		m[name] = v
 	}
@@ -244,12 +244,12 @@ func signProjection(obj interface{}) (Value, error) {
 	rv := reflect.ValueOf(obj)
 	for rv.Kind() == reflect.Ptr {
 		if rv.IsNil() {
-			return nil, fmt.Errorf("value: SignBytes/SignHash got a nil pointer")
+			return nil, xerrors.Errorf("value: SignBytes/SignHash got a nil pointer")
 		}
 		rv = rv.Elem()
 	}
 	if rv.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("value: SignBytes/SignHash require a struct, got %s", rv.Kind())
+		return nil, xerrors.Errorf("value: SignBytes/SignHash require a struct, got %s", rv.Kind())
 	}
 	return structToMap(rv, true)
 }
@@ -282,7 +282,7 @@ func fromValue(v Value, rv reflect.Value) error {
 			rv.Set(reflect.ValueOf(time.UnixMilli(n.Long()).UTC()))
 			return nil
 		}
-		return fmt.Errorf("value: cannot unmarshal %s into time.Time", v.Kind())
+		return xerrors.Errorf("value: cannot unmarshal %s into time.Time", v.Kind())
 	}
 	switch rv.Kind() {
 	case reflect.Bool:
@@ -345,12 +345,12 @@ func fromValue(v Value, rv reflect.Value) error {
 			return mapToStruct(m, rv)
 		}
 	}
-	return fmt.Errorf("value: cannot unmarshal %s into %s", v.Kind(), rv.Type())
+	return xerrors.Errorf("value: cannot unmarshal %s into %s", v.Kind(), rv.Type())
 }
 
 func mapFromValue(m Map, rv reflect.Value) error {
 	if rv.Type().Key().Kind() != reflect.String {
-		return fmt.Errorf("value: map key must be string, got %s", rv.Type().Key().Kind())
+		return xerrors.Errorf("value: map key must be string, got %s", rv.Type().Key().Kind())
 	}
 	out := reflect.MakeMapWithSize(rv.Type(), m.Len())
 	elemType := rv.Type().Elem()
@@ -381,7 +381,7 @@ func mapToStruct(m Map, rv reflect.Value) error {
 			// Absent key: an error for required fields (no omitempty), tolerated
 			// for optional ones. This enforces the wire schema in the library.
 			if _, optional := opts["omitempty"]; !optional {
-				return fmt.Errorf("value: missing required field %q", name)
+				return xerrors.Errorf("value: missing required field %q", name)
 			}
 			continue
 		}
@@ -389,7 +389,7 @@ func mapToStruct(m Map, rv reflect.Value) error {
 			continue // present but null leaves the zero value
 		}
 		if err := fromValue(fv, rv.Field(i)); err != nil {
-			return fmt.Errorf("value: field %q: %w", f.Name, err)
+			return xerrors.Errorf("value: field %q: %w", f.Name, err)
 		}
 	}
 	return nil

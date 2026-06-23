@@ -11,6 +11,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"golang.org/x/xerrors"
 	"golang.org/x/crypto/nacl/box"
 	"io"
 	"strings"
@@ -86,7 +87,7 @@ func Seal(val Value, recipientPublicKey, senderPrivateKey *[32]byte) ([]byte, er
 	return encrypted, nil
 }
 
-var ErrUnseal = errors.New("unseal error")
+var ErrUnseal = xerrors.New("unseal error")
 
 func Unseal(encrypted []byte, senderPublicKey, recipientPrivateKey *[32]byte) (Value, error) {
 	var decryptNonce [24]byte

@@ -5,7 +5,7 @@
 
 package value
 
-import "fmt"
+import "golang.org/x/xerrors"
 
 /*
 Decoding limits guard the parser against hostile or corrupt input. The defaults
@@ -36,27 +36,27 @@ var (
 
 func checkDepth(depth int) error {
 	if MaxParseDepth > 0 && depth > MaxParseDepth {
-		return fmt.Errorf("value: max parse depth %d exceeded", MaxParseDepth)
+		return xerrors.Errorf("value: max parse depth %d exceeded", MaxParseDepth)
 	}
 	return nil
 }
 
 func checkCollectionLen(cnt int) error {
 	if cnt < 0 {
-		return fmt.Errorf("value: negative collection length %d", cnt)
+		return xerrors.Errorf("value: negative collection length %d", cnt)
 	}
 	if MaxParseCollectionLen > 0 && cnt > MaxParseCollectionLen {
-		return fmt.Errorf("value: collection length %d exceeds limit %d", cnt, MaxParseCollectionLen)
+		return xerrors.Errorf("value: collection length %d exceeds limit %d", cnt, MaxParseCollectionLen)
 	}
 	return nil
 }
 
 func checkByteLen(n int) error {
 	if n < 0 {
-		return fmt.Errorf("value: negative byte length %d", n)
+		return xerrors.Errorf("value: negative byte length %d", n)
 	}
 	if MaxParseByteLen > 0 && n > MaxParseByteLen {
-		return fmt.Errorf("value: byte length %d exceeds limit %d", n, MaxParseByteLen)
+		return xerrors.Errorf("value: byte length %d exceeds limit %d", n, MaxParseByteLen)
 	}
 	return nil
 }

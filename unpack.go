@@ -7,7 +7,7 @@
 package value
 
 import (
-	"fmt"
+	"golang.org/x/xerrors"
 	"io"
 	"strconv"
 )
@@ -81,7 +81,7 @@ func doParse(unpacker Unpacker, parser Parser, depth int) (Value, error) {
 		}
 		return doParseExt(tagAndData)
 	default:
-		return nil, fmt.Errorf("parse: invalid format %v", format)
+		return nil, xerrors.Errorf("parse: invalid format %v", format)
 	}
 
 }

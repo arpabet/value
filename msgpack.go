@@ -10,7 +10,7 @@ import (
 	"io"
 	"math"
 	"encoding/binary"
-	"fmt"
+	"golang.org/x/xerrors"
 )
 
 
@@ -474,7 +474,7 @@ func (r *messageParser) ParseBool(b []byte) bool {
 	case mpFalse:
 		return false
 	default:
-		r.err = fmt.Errorf("bool: invalid code %v", code)
+		r.err = xerrors.Errorf("bool: invalid code %v", code)
 		return false
 	}
 }
@@ -508,7 +508,7 @@ func (r *messageParser) ParseLong(b []byte) int64 {
 	case code >= mpNegFixIntMin && code <= mpNegFixIntMax:
 		return int64(int8(code))
 	default:
-		r.err = fmt.Errorf("long: invalid code %v", code)
+		r.err = xerrors.Errorf("long: invalid code %v", code)
 		return 0
 	}
 }
@@ -525,7 +525,7 @@ func (r *messageParser) ParseDouble(b []byte) float64 {
 		val64 := binary.BigEndian.Uint64(b[1:])
 		return math.Float64frombits(val64)
 	default:
-		r.err = fmt.Errorf("double: invalid code %v", code)
+		r.err = xerrors.Errorf("double: invalid code %v", code)
 		return 0
 	}
 }
@@ -542,7 +542,7 @@ func (r *messageParser) ParseBin(b []byte) int {
 	case mpBin32:
 		return int(binary.BigEndian.Uint32(b[1:]))
 	default:
-		r.err = fmt.Errorf("bin: invalid code %v", code)
+		r.err = xerrors.Errorf("bin: invalid code %v", code)
 		return 0
 	}
 }
@@ -563,7 +563,7 @@ func (r *messageParser) ParseStr(b []byte) int {
 	case mpStr32:
 		return int(binary.BigEndian.Uint32(b[1:]))
 	default:
-		r.err = fmt.Errorf("str: invalid code %v", code)
+		r.err = xerrors.Errorf("str: invalid code %v", code)
 		return 0
 	}
 }
@@ -582,7 +582,7 @@ func (r *messageParser) ParseList(b []byte) int {
 	case mpArray32:
 		return int(binary.BigEndian.Uint32(b[1:]))
 	default:
-		r.err = fmt.Errorf("list: invalid code %v", code)
+		r.err = xerrors.Errorf("list: invalid code %v", code)
 		return 0
 	}
 
@@ -602,7 +602,7 @@ func (r *messageParser) ParseMap(b []byte) int {
 	case mpMap32:
 		return int(binary.BigEndian.Uint32(b[1:]))
 	default:
-		r.err = fmt.Errorf("map: invalid code %v", code)
+		r.err = xerrors.Errorf("map: invalid code %v", code)
 		return 0
 	}
 }
@@ -629,7 +629,7 @@ func (r *messageParser) ParseExt(b []byte) (len int, tagAndData []byte) {
 	case mpExt32:
 		return int(binary.BigEndian.Uint32(b[1:])), b[5:]
 	default:
-		r.err = fmt.Errorf("ext: invalid code %v", code)
+		r.err = xerrors.Errorf("ext: invalid code %v", code)
 		return 0, b
 	}
 }

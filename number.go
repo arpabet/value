@@ -9,7 +9,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
-	"fmt"
+	"golang.org/x/xerrors"
 	"github.com/shopspring/decimal"
 	"math"
 	"math/big"
@@ -344,7 +344,7 @@ func UnpackDecimal(data []byte) (decimal.Decimal, error) {
 		return d, err
 	}
 	if exp := int(d.Exponent()); MaxDecimalExponent > 0 && (exp > MaxDecimalExponent || exp < -MaxDecimalExponent) {
-		return decimal.Decimal{}, fmt.Errorf("value: decimal exponent %d exceeds limit %d", exp, MaxDecimalExponent)
+		return decimal.Decimal{}, xerrors.Errorf("value: decimal exponent %d exceeds limit %d", exp, MaxDecimalExponent)
 	}
 	return d, nil
 }
