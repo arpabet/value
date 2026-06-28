@@ -54,15 +54,19 @@ func Unmarshal(v Value, obj interface{}) error {
 	return fromValue(v, rv.Elem())
 }
 
-// SignBytes returns the canonical MessagePack bytes of obj's signing
-// projection: a Map built from only the struct fields tagged with the "sign"
-// option (e.g. `value:"acc_id,sign"`), packed deterministically. Sign those
-// bytes (e.g. ed25519.Sign) and verify against the same projection rebuilt by the
-// peer — the canonical packing makes it stable across processes and field order.
-// Include a domain field (a constant string tagged `value:"...,sign"`) per
-// message type for domain separation.
-func SignBytes(obj interface{}) ([]byte, error) {
-	v, err := signProjection(obj)
+// SignBytes returns the canonical MessagePack bytes of obj's signing projection
+// for the given marker: a Map built from only the struct fields whose `value` tag
+// carries that marker, packed deterministically. The marker is configurable —
+// `SignBytes(o, "sign")` includes `value:"acc_id,sign"` fields, `SignBytes(o,
+// "sig_acc")` includes `value:"acc_id,sig_acc"` fields. A field may carry several
+// markers (`value:"x,sig1,sig2"`) to belong to multiple, independent signatures,
+// each produced via SignBytes(o, "sig1") / SignBytes(o, "sig2"). The marker must be
+// non-empty. Sign these bytes (e.g. ed25519.Sign) and verify against the same
+// projection rebuilt by the peer — the canonical packing makes it stable across
+// processes and field order. Include a domain field (a constant string tagged with
+// the same marker) per message type for domain separation.
+func SignBytes(obj interface{}, selector string) ([]byte, error) {
+	v, err := signProjection(obj, selector)
 	if err != nil {
 		return nil, err
 	}
@@ -70,8 +74,8 @@ func SignBytes(obj interface{}) ([]byte, error) {
 }
 
 // SignHash is SignBytes followed by the given hash; it returns the digest.
-func SignHash(obj interface{}, hash crypto.Hash) ([]byte, error) {
-	v, err := signProjection(obj)
+func SignHash(obj interface{}, hash crypto.Hash, selector string) ([]byte, error) {
+	v, err := signProjection(obj, selector)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +160,7 @@ func toValue(rv reflect.Value) (Value, error) {
 	case reflect.Map:
 		return mapToValue(rv)
 	case reflect.Struct:
-		return structToMap(rv, false)
+		return structToMap(rv, "")
 	default:
 		return nil, xerrors.Errorf("value: cannot marshal kind %s", rv.Kind())
 	}
@@ -190,7 +194,11 @@ func mapToValue(rv reflect.Value) (Value, error) {
 	return ImmutableMapOf(m), nil
 }
 
-func structToMap(rv reflect.Value, signOnly bool) (Value, error) {
+// structToMap projects a struct into a Value map. signMarker == "" is marshal
+// mode (the full wire map, honoring omitempty); a non-empty signMarker is the
+// signing projection — only fields whose tag carries that marker, omitempty
+// ignored so the signed shape is fixed.
+func structToMap(rv reflect.Value, signMarker string) (Value, error) {
 	rt := rv.Type()
 	m := make(map[string]Value)
 	for i := 0; i < rt.NumField(); i++ {
@@ -199,10 +207,10 @@ func structToMap(rv reflect.Value, signOnly bool) (Value, error) {
 		if skip {
 			continue
 		}
-		if signOnly {
-			// The signing projection includes every sign-tagged field, always:
-			// omitempty does not apply, so the signed bytes have a fixed shape.
-			if _, ok := opts["sign"]; !ok {
+		if signMarker != "" {
+			// Signing projection: include a field iff its tag carries the requested
+			// marker.
+			if _, ok := opts[signMarker]; !ok {
 				continue
 			}
 		} else if _, omit := opts["omitempty"]; omit && isEmptyValue(rv.Field(i)) {
@@ -240,7 +248,10 @@ func isEmptyValue(rv reflect.Value) bool {
 	return false
 }
 
-func signProjection(obj interface{}) (Value, error) {
+func signProjection(obj interface{}, selector string) (Value, error) {
+	if selector == "" {
+		return nil, xerrors.Errorf("value: SignBytes/SignHash require a non-empty signature marker")
+	}
 	rv := reflect.ValueOf(obj)
 	for rv.Kind() == reflect.Ptr {
 		if rv.IsNil() {
@@ -251,7 +262,7 @@ func signProjection(obj interface{}) (Value, error) {
 	if rv.Kind() != reflect.Struct {
 		return nil, xerrors.Errorf("value: SignBytes/SignHash require a struct, got %s", rv.Kind())
 	}
-	return structToMap(rv, true)
+	return structToMap(rv, selector)
 }
 
 func fromValue(v Value, rv reflect.Value) error {

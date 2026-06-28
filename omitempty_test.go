@@ -81,7 +81,7 @@ func TestSignIgnoresOmitEmpty(t *testing.T) {
 		Domain string `value:"dom,sign"`
 		Data   []byte `value:"data,sign,omitempty"`
 	}
-	v, err := signProjection(sig{Domain: "d"}) // Data empty
+	v, err := signProjection(sig{Domain: "d"}, "sign") // Data empty
 	if err != nil {
 		t.Fatalf("signProjection: %v", err)
 	}

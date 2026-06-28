@@ -135,11 +135,11 @@ func TestSignProjection(t *testing.T) {
 	b.Sig = []byte{0xbe, 0xef}
 	b.Nonce = 999
 
-	sa, err := SignBytes(a)
+	sa, err := SignBytes(a, "sign")
 	if err != nil {
 		t.Fatal(err)
 	}
-	sb, err := SignBytes(b)
+	sb, err := SignBytes(b, "sign")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,7 +150,7 @@ func TestSignProjection(t *testing.T) {
 	// Changing a sign field -> different signing bytes.
 	c := base
 	c.Acct = "vox-evil"
-	sc, err := SignBytes(c)
+	sc, err := SignBytes(c, "sign")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,7 +173,7 @@ func TestSignProjection(t *testing.T) {
 	if err := Unmarshal(uv, &recv); err != nil {
 		t.Fatal(err)
 	}
-	verifyBytes, err := SignBytes(recv)
+	verifyBytes, err := SignBytes(recv, "sign")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -182,12 +182,62 @@ func TestSignProjection(t *testing.T) {
 	}
 
 	// SignHash is SignBytes + hash.
-	h, err := SignHash(a, crypto.SHA256)
+	h, err := SignHash(a, crypto.SHA256, "sign")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(h) != 32 {
 		t.Fatalf("SignHash SHA256 len = %d, want 32", len(h))
+	}
+}
+
+// A struct can define several independent signatures via per-field markers; the
+// SignBytes selector picks which one to project.
+func TestSignMultiMarker(t *testing.T) {
+	type multi struct {
+		Dom1 string `value:"_d1,sig1"`      // sig1 only
+		Dom2 string `value:"_d2,sig2"`      // sig2 only
+		A    string `value:"a,sig1"`        // sig1 only
+		B    string `value:"b,sig2"`        // sig2 only
+		Both string `value:"both,sig1,sig2"` // in both signatures
+		Meta string `value:"meta"`          // in neither
+	}
+	m := multi{Dom1: "d1", Dom2: "d2", A: "aval", B: "bval", Both: "x", Meta: "ignored"}
+
+	s1, err := SignBytes(m, "sig1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s2, err := SignBytes(m, "sig2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Equal(s1, s2) {
+		t.Fatal("different markers must produce different projections")
+	}
+
+	// A sig2-only field must NOT affect the sig1 projection...
+	m2 := m
+	m2.B = "changed"
+	if s1b, _ := SignBytes(m2, "sig1"); !bytes.Equal(s1, s1b) {
+		t.Fatal("a sig2-only field leaked into the sig1 projection")
+	}
+	// ...but a shared (sig1,sig2) field must affect sig1.
+	m3 := m
+	m3.Both = "changed"
+	if s1c, _ := SignBytes(m3, "sig1"); bytes.Equal(s1, s1c) {
+		t.Fatal("a shared field did not affect the sig1 projection")
+	}
+	// A sig1-only field must NOT affect the sig2 projection.
+	mA := m
+	mA.A = "changed"
+	if s2b, _ := SignBytes(mA, "sig2"); !bytes.Equal(s2, s2b) {
+		t.Fatal("a sig1-only field leaked into the sig2 projection")
+	}
+
+	// An empty marker is rejected — no silently-empty signature.
+	if _, err := SignBytes(m, ""); err == nil {
+		t.Fatal("empty selector must error")
 	}
 }
 
