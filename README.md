@@ -122,6 +122,120 @@ back, _ := value.Unpack(mp, false)
 v.Equal(back) // true
 ```
 
+## Go struct schemas
+
+Value deliberately provides two struct schema families. Both are deterministic,
+but they represent different schema styles and produce different wire shapes.
+Neither is a replacement for the other.
+
+| API | Struct tags | Wire keys | Field types | Best suited for |
+|---|---|---|---|---|
+| `ValueCodec.Marshal` / `Unmarshal` | `value:"name"`, `json:"name"`, or `msgpack:"name"` | UTF-8 field names | ordinary Go types and `Value` | durable records, signed objects, APIs, and data that benefits from readable field names |
+| `PackStruct` / `UnpackStruct` | `tag:"1"`, optionally `repeated:"true"` | integer field numbers | `Value`, slices of `Value`, and nested schema pointers | compact RPC payloads and binary protocol dialects with a separately defined schema |
+
+The numeric codec is intentionally protobuf-style: field names do not appear on
+the wire, and a stable integer identifies each field. It is not deprecated, it
+is not protobuf wire-compatible, and it is not shorthand for
+`Pack(Marshal(obj))`. Peers must agree on which codec defines a payload.
+
+### Value codecs and tag dialects
+
+`ValueCodec` converts an ordinary Go object to the same canonical `Value` model
+while selecting which struct tags provide its field names:
+
+```go
+classic := value.DefaultValueCodec() // value:"field"
+jsonDTO := value.JSONValueCodec()    // json:"field"
+legacy := value.MsgpackValueCodec()  // msgpack:"field"
+
+tree, _ := legacy.Marshal(record)
+wire, _ := value.Pack(tree)
+```
+
+All codecs produce a `Value`; their names describe the struct-tag dialect, not
+the final bytes. In particular, `JSONValueCodec` does not produce textual JSON,
+and `MsgpackValueCodec` does not reproduce vmihailenco/msgpack bytes. `Pack`
+always applies Value's canonical MessagePack encoding.
+
+| Factory | Struct tag | Decode policy | Supported tag options |
+|---|---|---|---|
+| `DefaultValueCodec()` | `value` | fields required unless `omitempty` | `-`, `omitempty`, legacy signing selectors |
+| `JSONValueCodec()` | `json` | missing fields allowed | `-`, `omitempty` |
+| `MsgpackValueCodec()` | `msgpack` | missing fields allowed | `-`, `omitempty` |
+
+Unsupported JSON/MessagePack options return an error instead of silently
+claiming compatibility. Library-specific behaviors such as JSON `string` and
+MessagePack `intern`, `inline`, or `as_array` are not emulated by these tag
+profiles in this release. The dedicated `sign:"selector"` tag works with every
+profile.
+
+### Named map schema: `ValueCodec`
+
+`Marshal` and `Unmarshal` map ordinary Go structs through `value` tags. The tag
+defines the canonical schema; MessagePack is the byte encoding produced later
+by `Pack`, not the struct-tag namespace.
+
+The package-level functions are compatibility wrappers around
+`DefaultValueCodec()`.
+
+```go
+type Record struct {
+    ID   string `value:"id"`
+    Note string `value:"note,omitempty"`
+}
+
+tree, _ := value.Marshal(Record{ID: "r1"})
+wire, _ := value.Pack(tree)
+```
+
+Use `value` tags for stable protocol, storage, hashing, and signing field names.
+Do not use dependency-injection configuration tags as serialization metadata.
+An untagged exported field uses its Go field name; explicit tags are preferred
+for durable or cryptographic schemas.
+
+### Numeric binary schema: `PackStruct` / `UnpackStruct`
+
+`PackStruct` writes canonical MessagePack directly from a numeric schema. It
+sorts fields by number, so Go declaration order and Go field names do not affect
+the bytes. `UnpackStruct` applies the same numeric schema while decoding.
+
+```go
+type RPCFrame struct {
+    Method  value.String   `tag:"1"`
+    Payload value.String   `tag:"2"`
+    Trace   []value.String `tag:"3" repeated:"true"`
+}
+
+frame := &RPCFrame{
+    Method:  value.Utf8("mail.deliver"),
+    Payload: value.Raw(ciphertext, false),
+    Trace:   []value.String{value.Utf8("edge"), value.Utf8("relay")},
+}
+
+wire, _ := value.PackStruct(frame)
+
+var decoded RPCFrame
+_ = value.UnpackStruct(wire, &decoded, false)
+```
+
+Numeric-schema rules:
+
+* pass a pointer to `PackStruct` and `UnpackStruct` (apart from packing `nil`);
+* give every field a unique, stable integer `tag`; never renumber or reuse a tag
+  once a protocol has shipped;
+* scalar fields must implement `value.Value`; nested messages are pointers to
+  structs governed by the same numeric schema;
+* a slice without `repeated:"true"` is encoded as one list-valued field;
+* a slice with `repeated:"true"` is encoded as repeated occurrences of its
+  numeric field key, matching the protobuf-style repeated-field model;
+* nil fields and nil slices are absent from the wire; and
+* unknown numeric tags are rejected, so adding a field requires coordinated
+  schema/version negotiation rather than protobuf's unknown-field behavior.
+
+Use `UnpackStruct` to decode numeric payloads, particularly repeated fields. A
+generic `Unpack` produces a dynamic Value tree and does not carry the external
+Go schema needed to reconstruct the typed message.
+
 ## Hashing
 
 Equal values hash identically across processes and machines — the basis for
@@ -152,6 +266,26 @@ data, _ := value.Pack(v)
 sig := ed25519.Sign(priv, data)
 ed25519.Verify(pub, data, sig) // true
 ```
+
+For Go structs, keep canonical field names and signing membership separate. The
+preferred style is `value` for the wire name and `sign` for one or more signing
+selectors:
+
+```go
+type License struct {
+    Domain  string `value:"_dom" sign:"license"`
+    Product string `value:"product" sign:"license,audit"`
+    Sig     []byte `value:"sig"`
+}
+
+payload, _ := value.SignBytes(license, "license")
+signature := ed25519.Sign(privateKey, payload)
+```
+
+The `sign` tag does not change ordinary `Marshal` or `Unmarshal`. Existing code
+using selectors inside `value` tags, such as `value:"product,license"`, remains
+supported for compatibility and produces the same projection, but new code
+should use the dedicated `sign` tag.
 
 ## Sealing (authenticated encryption)
 

@@ -14,7 +14,21 @@ import (
 	"sync"
 )
 
-
+// PackStruct encodes a pointer to a numeric-schema struct directly as canonical
+// MessagePack. Every field must have a stable `tag:"N"` number and must either
+// implement Value, be a slice/array of Value, or point to another numeric-schema
+// struct. Nil fields are omitted. A slice tagged `repeated:"true"` is emitted as
+// repeated occurrences of the same integer key; otherwise it is emitted as one
+// list-valued field.
+//
+// PackStruct is the compact, protobuf-style struct dialect intended for RPC and
+// other binary protocols whose peers share an external numeric schema. It is
+// intentionally distinct from Marshal followed by Pack: Marshal supports plain
+// Go fields and uses string keys selected by `value:"name"` tags. The two wire
+// formats are not interchangeable. PackStruct is not protobuf wire-compatible.
+//
+// Apart from nil, obj must be a pointer. Field numbers must be unique and should
+// never be renumbered or reused after a protocol is deployed.
 func PackStruct(obj interface{}) ([]byte, error) {
 	buf := bytes.Buffer{}
 	p := MessagePacker(&buf)
@@ -30,6 +44,11 @@ func PackStruct(obj interface{}) ([]byte, error) {
 	return buf.Bytes(), p.Error()
 }
 
+// UnpackStruct decodes a numeric-schema payload produced by PackStruct into obj,
+// which must be a non-nil pointer governed by the same `tag:"N"` schema. Unknown
+// numeric tags are rejected; protocols that evolve independently must therefore
+// negotiate a schema/version before decoding. If copy is false, decoded raw byte
+// values may share the input buffer according to MessageUnpacker's normal rules.
 func UnpackStruct(buf []byte, obj interface{}, copy bool) error {
 	unpacker := MessageUnpacker(buf, copy)
 	parser := MessageParser()
@@ -61,16 +80,16 @@ func reflectPackStruct(p *messagePacker, obj interface{}) error {
 }
 
 type packingField struct {
-	field       *Field
-	fieldValue  reflect.Value
+	field      *Field
+	fieldValue reflect.Value
 }
 
 func doReflectPackStruct(p *messagePacker, value reflect.Value, schema *Schema) error {
 	var list []*packingField
 	cnt := 0
 	for _, field := range schema.SortedFields {
-		f := &packingField {
-			field: field,
+		f := &packingField{
+			field:      field,
 			fieldValue: value.Field(field.FieldNum),
 		}
 		if !f.fieldValue.IsNil() {
@@ -104,7 +123,7 @@ func doReflectPackStruct(p *messagePacker, value reflect.Value, schema *Schema) 
 			}
 		} else {
 			p.PackLong(int64(entry.field.Tag))
-			if err := doReflectPackValue(p,  entry.fieldValue, entry); err != nil {
+			if err := doReflectPackValue(p, entry.fieldValue, entry); err != nil {
 				return err
 			}
 		}
@@ -129,19 +148,19 @@ func doReflectPackValue(p *messagePacker, value reflect.Value, entry *packingFie
 }
 
 type Field struct {
-	FieldNum       int
-	FieldType      reflect.Type
-	FieldName      string
-	Array          bool
-	Struct         bool
-	Repeated       bool
-	FieldSchema    *Schema
-	Tag            int
+	FieldNum    int
+	FieldType   reflect.Type
+	FieldName   string
+	Array       bool
+	Struct      bool
+	Repeated    bool
+	FieldSchema *Schema
+	Tag         int
 }
 
 type Schema struct {
-	Fields        map[int]*Field   // tag is the key
-	SortedFields  []*Field
+	Fields       map[int]*Field // tag is the key
+	SortedFields []*Field
 }
 
 var schemaCache sync.Map
@@ -197,13 +216,13 @@ func doReflectSchema(classPtr reflect.Type) (*Schema, error) {
 		}
 		if fieldType.Implements(ValueClass) {
 			f := &Field{
-				FieldNum:   j,
-				FieldType:  field.Type,
-				FieldName:  field.Name,
-				Array:      array,
-				Struct:     false,
-				Repeated:   repeated,
-				Tag:        tag,
+				FieldNum:  j,
+				FieldType: field.Type,
+				FieldName: field.Name,
+				Array:     array,
+				Struct:    false,
+				Repeated:  repeated,
+				Tag:       tag,
 			}
 			fields[tag] = f
 			sortedFields = append(sortedFields, f)
@@ -213,26 +232,25 @@ func doReflectSchema(classPtr reflect.Type) (*Schema, error) {
 			return nil, xerrors.Errorf("struct field '%s' in class '%v' has wrong schema, %v", field.Name, classPtr, err)
 		} else {
 			f := &Field{
-				FieldNum: j,
-				FieldType: field.Type,
-				FieldName: field.Name,
-				Array:   array,
-				Struct:   true,
-				Repeated: repeated,
+				FieldNum:    j,
+				FieldType:   field.Type,
+				FieldName:   field.Name,
+				Array:       array,
+				Struct:      true,
+				Repeated:    repeated,
 				FieldSchema: fieldSchema,
-				Tag: tag,
+				Tag:         tag,
 			}
 			fields[tag] = f
 			sortedFields = append(sortedFields, f)
 		}
 	}
 	sort.Sort(sortableFields(sortedFields))
-	return &Schema {
-		Fields: fields,
+	return &Schema{
+		Fields:       fields,
 		SortedFields: sortedFields,
 	}, nil
 }
-
 
 func ParseStruct(unpacker Unpacker, parser Parser, value reflect.Value, schema *Schema) error {
 	return doParseStruct(unpacker, parser, value, schema, 0)
@@ -274,9 +292,9 @@ func doParseStruct(unpacker Unpacker, parser Parser, value reflect.Value, schema
 					}
 					listCnt := parser.ParseList(listHeader)
 					if err := checkCollectionLen(listCnt); err != nil {
-							return err
-						}
-						arrayType := reflect.ArrayOf(listCnt, field.FieldType.Elem())
+						return err
+					}
+					arrayType := reflect.ArrayOf(listCnt, field.FieldType.Elem())
 					arrayValue := reflect.New(arrayType).Elem()
 
 					for j := 0; j < listCnt; j++ {
@@ -371,7 +389,6 @@ func parseFieldValue(unpacker Unpacker, parser Parser, field *Field, fieldValue 
 	return nil
 }
 
-
 func setFieldValue(fieldValue reflect.Value, fieldType reflect.Type, val Value) error {
 	if fieldValue.CanSet() {
 		if !val.Class().AssignableTo(fieldType) {
@@ -384,5 +401,3 @@ func setFieldValue(fieldValue reflect.Value, fieldType reflect.Type, val Value) 
 		return xerrors.Errorf("can not set value '%v' to field %v", val, fieldType)
 	}
 }
-
-

@@ -191,16 +191,86 @@ func TestSignProjection(t *testing.T) {
 	}
 }
 
+func TestSignProjectionDedicatedTag(t *testing.T) {
+	type preferred struct {
+		Domain  string `value:"_dom" sign:"license"`
+		Product string `value:"product" sign:"license,audit"`
+		Meta    string `value:"meta"`
+	}
+	type legacy struct {
+		Domain  string `value:"_dom,license"`
+		Product string `value:"product,license,audit"`
+		Meta    string `value:"meta"`
+	}
+
+	p := preferred{Domain: "license/v1", Product: "mailnite", Meta: "not signed"}
+	l := legacy{Domain: p.Domain, Product: p.Product, Meta: p.Meta}
+
+	preferredBytes, err := SignBytes(p, "license")
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacyBytes, err := SignBytes(l, "license")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(preferredBytes, legacyBytes) {
+		t.Fatal("dedicated and legacy signing tags produced different projections")
+	}
+
+	// Signing metadata does not affect the ordinary wire schema.
+	wire, err := Marshal(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := wire.(Map).Get("meta"); got == nil || got.Kind() == NULL {
+		t.Fatal("ordinary marshal omitted a field without a sign selector")
+	}
+
+	// The second selector includes only Product, proving comma-separated
+	// dedicated selectors are independent.
+	auditBytes, err := SignBytes(p, "audit")
+	if err != nil {
+		t.Fatal(err)
+	}
+	auditValue, err := Unpack(auditBytes, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	auditMap := auditValue.(Map).HashMap()
+	if len(auditMap) != 1 || auditMap["product"] == nil {
+		t.Fatalf("audit projection = %v, want only product", auditMap)
+	}
+}
+
+func TestSignProjectionCombinesDedicatedAndLegacySelectors(t *testing.T) {
+	type mixed struct {
+		Both string `value:"both,legacy" sign:"modern"`
+	}
+	m := mixed{Both: "x"}
+	legacyBytes, err := SignBytes(m, "legacy")
+	if err != nil {
+		t.Fatal(err)
+	}
+	modernBytes, err := SignBytes(m, "modern")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(legacyBytes, modernBytes) {
+		t.Fatal("legacy and dedicated selectors must compose on the same field")
+	}
+}
+
 // A struct can define several independent signatures via per-field markers; the
 // SignBytes selector picks which one to project.
 func TestSignMultiMarker(t *testing.T) {
 	type multi struct {
-		Dom1 string `value:"_d1,sig1"`      // sig1 only
-		Dom2 string `value:"_d2,sig2"`      // sig2 only
-		A    string `value:"a,sig1"`        // sig1 only
-		B    string `value:"b,sig2"`        // sig2 only
+		Dom1 string `value:"_d1,sig1"`       // sig1 only
+		Dom2 string `value:"_d2,sig2"`       // sig2 only
+		A    string `value:"a,sig1"`         // sig1 only
+		B    string `value:"b,sig2"`         // sig2 only
 		Both string `value:"both,sig1,sig2"` // in both signatures
-		Meta string `value:"meta"`          // in neither
+		Meta string `value:"meta"`           // in neither
 	}
 	m := multi{Dom1: "d1", Dom2: "d2", A: "aval", B: "bval", Both: "x", Meta: "ignored"}
 

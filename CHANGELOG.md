@@ -4,6 +4,37 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and the project aims to follow
 [Semantic Versioning](https://semver.org/).
 
+## v1.4.0 — 2026-08-15
+
+### Added
+
+- Added the immutable `ValueCodec` abstraction with
+  `DefaultValueCodec()`, `JSONValueCodec()`, and `MsgpackValueCodec()` tag
+  profiles. Every profile maps objects to the canonical `Value` tree; byte
+  encoding remains the separate responsibility of `Pack`/`Unpack`.
+- Added the dedicated `sign:"selector"` struct tag for `SignBytes` and
+  `SignHash`. Multiple comma-separated selectors are supported.
+- Documented the preferred separation between canonical field naming
+  (`value:"field"`) and signing policy (`sign:"license"`).
+- Documented `PackStruct` / `UnpackStruct` as the supported protobuf-style
+  numeric binary dialect for RPC and other externally schematized protocols,
+  distinct from the named-map `Marshal` / `Unmarshal` codec.
+
+### Compatibility
+
+- Package-level `Marshal`, `Unmarshal`, `SignBytes`, and `SignHash` remain
+  wrappers over the classic `value`-tag profile. The zero `ValueCodec` also
+  selects that profile.
+- JSON and MessagePack profiles support field names, `-`, and `omitempty`.
+  Unsupported library-specific tag options are rejected explicitly, and these
+  profiles do not claim byte compatibility with encoding/json or third-party
+  MessagePack encoders.
+- Existing signing selectors embedded in `value` tags, such as
+  `value:"field,license"`, remain supported and produce the same canonical
+  projection. Dedicated and legacy selectors may coexist on the same field.
+- The canonical MessagePack wire format and ordinary `Marshal`/`Unmarshal`
+  behavior are unchanged.
+
 ## v1.2.0 — 2026-06-13
 
 First openly-licensed, hardened, and fully-specified release. The wire format is
