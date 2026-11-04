@@ -331,16 +331,34 @@ func TestMarshalTime(t *testing.T) {
 		Name string    `value:"name"`
 		At   time.Time `value:"at"`
 	}
-	src := withTime{Name: "x", At: time.Now()}
+	src := withTime{Name: "x", At: time.Now().In(time.FixedZone("X", -3600))}
 	v, err := Marshal(src)
 	if err != nil {
 		t.Fatal(err)
+	}
+	at := v.(Map).Get("at")
+	if at.Kind() != TIMESTAMP {
+		t.Fatalf("time.Time marshals as %s, want TIMESTAMP", at.Kind())
 	}
 	var dst withTime
 	if err := Unmarshal(v, &dst); err != nil {
 		t.Fatal(err)
 	}
-	if !src.At.Truncate(time.Millisecond).Equal(dst.At) {
+	if !src.At.Equal(dst.At) || dst.At.Nanosecond() != src.At.Nanosecond() {
 		t.Fatalf("time round-trip: %v != %v", src.At, dst.At)
+	}
+	if dst.At.Location() != time.UTC {
+		t.Fatalf("time comes back in %v, want UTC", dst.At.Location())
+	}
+	// Data written before v1.5.0 holds Unix milliseconds; it still reads.
+	legacy := ImmutableMapOf(map[string]Value{"name": Utf8("x"), "at": Long(1793345319075)})
+	if err := Unmarshal(legacy, &dst); err != nil {
+		t.Fatal(err)
+	}
+	if want := time.UnixMilli(1793345319075).UTC(); !dst.At.Equal(want) {
+		t.Fatalf("legacy millis: %v, want %v", dst.At, want)
+	}
+	if err := Unmarshal(ImmutableMapOf(map[string]Value{"name": Utf8("x"), "at": Utf8("2026")}), &dst); err == nil {
+		t.Fatal("a string must not unmarshal into time.Time")
 	}
 }

@@ -43,8 +43,8 @@ func DefaultValueCodec() ValueCodec {
 
 // JSONValueCodec returns a codec using `json:"field"` tags to name fields in
 // the Value tree. Missing fields are accepted, as they are by encoding/json.
-// This codec still maps []byte to Value binary strings and time.Time to Unix
-// milliseconds; it does not produce or consume textual JSON.
+// This codec still maps []byte to Value binary strings and time.Time to
+// Timestamp; it does not produce or consume textual JSON.
 func JSONValueCodec() ValueCodec {
 	return ValueCodec{profile: jsonTags}
 }
@@ -241,10 +241,10 @@ func (c ValueCodec) toValue(rv reflect.Value) (Value, error) {
 			return v, nil
 		}
 	}
-	// time.Time is a struct but encodes as Unix milliseconds (deterministic,
-	// location-independent), not a map of its unexported fields.
+	// time.Time is a struct but encodes as a Timestamp (an instant, without
+	// its location), not a map of its unexported fields.
 	if rv.Type() == timeType {
-		return Long(rv.Interface().(time.Time).UnixMilli()), nil
+		return Time(rv.Interface().(time.Time)), nil
 	}
 	switch rv.Kind() {
 	case reflect.Bool:
@@ -408,8 +408,13 @@ func (c ValueCodec) fromValue(v Value, rv reflect.Value) error {
 		return nil // leave the zero value
 	}
 	if rv.Type() == timeType {
-		if n, ok := v.(Number); ok {
-			rv.Set(reflect.ValueOf(time.UnixMilli(n.Long()).UTC()))
+		switch x := v.(type) {
+		case Timestamp:
+			rv.Set(reflect.ValueOf(x.Time()))
+			return nil
+		case Number:
+			// Unix milliseconds, the encoding of time.Time before v1.5.0.
+			rv.Set(reflect.ValueOf(time.UnixMilli(x.Long()).UTC()))
 			return nil
 		}
 		return xerrors.Errorf("value: cannot unmarshal %s into time.Time", v.Kind())

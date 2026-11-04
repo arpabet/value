@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
-	"golang.org/x/xerrors"
 	"github.com/shopspring/decimal"
 	"math"
 	"math/big"
@@ -322,31 +321,11 @@ func (n doubleNumber) Pack(p Packer) {
 }
 
 func (n bigIntNumber) Pack(p Packer) {
-	b, _ := n.Int.GobEncode()
-	p.PackExt(BigIntExt, b)
+	p.PackExt(BigIntExt, bigIntPayload(n.Int))
 }
 
 func (n decimalNumber) Pack(p Packer) {
-	dec := decimal.Decimal(n)
-	b, _ := dec.MarshalBinary()
-	p.PackExt(DecimalExt, b)
-}
-
-func UnpackBigInt(data []byte) (*big.Int, error) {
-	x := new(big.Int)
-	err := x.GobDecode(data)
-	return x, err
-}
-
-func UnpackDecimal(data []byte) (decimal.Decimal, error) {
-	d := decimal.Decimal{}
-	if err := d.UnmarshalBinary(data); err != nil {
-		return d, err
-	}
-	if exp := int(d.Exponent()); MaxDecimalExponent > 0 && (exp > MaxDecimalExponent || exp < -MaxDecimalExponent) {
-		return decimal.Decimal{}, xerrors.Errorf("value: decimal exponent %d exceeds limit %d", exp, MaxDecimalExponent)
-	}
-	return d, nil
+	p.PackExt(DecimalExt, decimalPayload(decimal.Decimal(n)))
 }
 
 func (n longNumber) PrintJSON(out *strings.Builder) {

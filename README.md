@@ -43,14 +43,31 @@ value.Hex(value.Boolean(false)) // c2
 ```go
 value.Hex(value.Long(123))               // 7b
 value.Hex(value.Double(1.5))             // cb3ff8000000000000
-value.Hex(value.BigInt(big.NewInt(123))) // d501027b  (msgpack extension)
+value.Hex(value.BigInt(big.NewInt(123))) // d4017b  (msgpack extension 1, two's complement)
 
-value.Decimal(decimal.New(12345, -2)).Double() // 123.45  (exact base-10)
+d := value.Decimal(decimal.New(12345, -2)) // 123.45, exact base-10
+d.Double()                                 // 123.45
+value.Hex(d)                               // c70602000000023039  (extension 2: scale 2, unscaled 12345)
 ```
 
 The four number kinds are distinct values with distinct encodings: `Long(1)`,
 `Double(1.0)`, `BigInt(1)` and `Decimal(1)` are never `Equal`. See
-[CANONICAL.md](CANONICAL.md) for the equality contract.
+[CANONICAL.md](CANONICAL.md) for the equality contract and the portable
+payload layouts, which any language can produce (`BigInteger.toByteArray()`,
+`BigDecimal(unscaled, scale)`).
+
+### Timestamps — `Time`, `UnixTime`
+
+```go
+t := value.Time(time.Date(2026, 10, 30, 7, 28, 39, 75000000, time.UTC))
+t.String()   // 2026-10-30T07:28:39.075Z
+value.Hex(t) // d7ff11e1a3006ae44727  (msgpack timestamp extension, -1)
+```
+
+A timestamp is an instant with nanosecond precision and no location: the
+same instant in two zones is one value with one encoding. It uses MessagePack's
+predefined timestamp extension in its smallest form (32-, 64- or 96-bit), so
+every MessagePack library reads it. `time.Time` struct fields marshal to it.
 
 ### Strings — `Utf8` (text) and `Raw` (binary)
 
@@ -310,7 +327,7 @@ trade-offs.
 | | `value` (this library) | RLP (Ethereum) | CBOR (RFC 8949) |
 |---|---|---|---|
 | Encoding | MessagePack | Recursive Length Prefix | CBOR |
-| Data model | rich, dynamic — null, bool, int, float, big.Int, decimal, text, bytes, list, sparse list, map | two types only — byte strings and lists | rich, self-describing — ints, floats, bytes, text, arrays, maps, tags |
+| Data model | rich, dynamic — null, bool, int, float, big.Int, decimal, timestamp, text, bytes, list, sparse list, map | two types only — byte strings and lists | rich, self-describing — ints, floats, bytes, text, arrays, maps, tags |
 | Self-describing | yes | **no** (types come from an external schema) | yes |
 | Deterministic output | **always** (canonical by design) | **always** (a single valid encoding) | **optional** (must opt into Core Deterministic Encoding, §4.2) |
 | Native maps | yes, keys sorted | no (key/value lives in app-layer tries) | yes (sorted keys in deterministic mode) |
@@ -337,9 +354,11 @@ Core Deterministic Encoding and a conforming library.
 tree like CBOR, but is **canonical by default** like RLP — there is no
 non-deterministic mode to forget to turn off — and it adds immutable structural
 sharing plus one tree that emits both canonical bytes and JSON. The trade-offs:
-it is a Go library rather than a multi-language standard, and its big-integer and
-decimal extensions currently use a Go-specific framing (a portable framing is
-planned for v2; see [CANONICAL.md](CANONICAL.md)).
+it is a Go library rather than a multi-language standard, though its canonical
+form is specified for any language in [CANONICAL.md](CANONICAL.md) with
+conformance vectors in `testdata/canonical.json`, and its big-integer, decimal
+and timestamp extensions use portable layouts (two's complement, Avro's decimal
+layout, MessagePack's own timestamp).
 
 ## Documentation
 

@@ -228,11 +228,33 @@ func doParseExt(tagAndData []byte) (Value, error) {
 	switch xtag {
 
 	case BigIntExt:
+		if LegacyBigNumbers {
+			v, err := UnpackLegacyBigInt(ext)
+			if err != nil {
+				return nil, err
+			}
+			return BigInt(v), nil
+		}
 		v, err := UnpackBigInt(ext)
-		return BigInt(v), err
+		if err != nil {
+			return nil, err
+		}
+		return BigInt(v), nil
 	case DecimalExt:
+		if LegacyBigNumbers {
+			v, err := UnpackLegacyDecimal(ext)
+			if err != nil {
+				return nil, err
+			}
+			return Decimal(v), nil
+		}
 		v, err := UnpackDecimal(ext)
-		return Decimal(v), err
+		if err != nil {
+			return nil, err
+		}
+		return Decimal(v), nil
+	case TimestampExt:
+		return UnpackTimestamp(ext)
 
 	}
 	return Unknown(tagAndData), nil

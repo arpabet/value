@@ -14,6 +14,7 @@ import (
 	"math/big"
 	"reflect"
 	"strings"
+	"time"
 )
 
 /**
@@ -33,12 +34,15 @@ const (
 	LIST
 	MAP
 	UNKNOWN
+	TIMESTAMP
 )
 
 func (k Kind) String() string {
 	switch k {
 	case INVALID:
 		return "INVALID"
+	case NULL:
+		return "NULL"
 	case BOOL:
 		return "BOOL"
 	case NUMBER:
@@ -51,6 +55,8 @@ func (k Kind) String() string {
 		return "MAP"
 	case UNKNOWN:
 		return "UNKNOWN"
+	case TIMESTAMP:
+		return "TIMESTAMP"
 	default:
 		return "DEFAULT"
 	}
@@ -275,6 +281,30 @@ type Extension interface {
 	 */
 
 	Native() []byte
+}
+
+/**
+	Timestamp interface
+
+	An instant in time, independent of location, encoded as MessagePack's
+	timestamp extension (type -1).
+*/
+
+type Timestamp interface {
+	Value
+
+	/**
+	Gets the instant in UTC
+	*/
+
+	Time() time.Time
+
+	/**
+	Gets the seconds since the Unix epoch and the nanoseconds within that
+	second, always 0 <= nsec < 1e9
+	*/
+
+	Unix() (sec int64, nsec int32)
 }
 
 type ListItem interface {

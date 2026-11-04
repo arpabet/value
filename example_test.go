@@ -13,6 +13,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/shopspring/decimal"
 	val "go.arpabet.com/value"
@@ -41,13 +42,25 @@ func ExampleDouble() {
 
 func ExampleBigInt() {
 	fmt.Println(val.Hex(val.BigInt(big.NewInt(123))))
-	// Output: d501027b
+	// Output: d4017b
 }
 
 func ExampleDecimal() {
 	d := val.Decimal(decimal.New(12345, -2)) // 123.45, exact base-10
 	fmt.Println(d.Double())
-	// Output: 123.45
+	fmt.Println(val.Hex(d)) // scale 2, unscaled 12345
+	// Output:
+	// 123.45
+	// c70602000000023039
+}
+
+func ExampleTime() {
+	t := val.Time(time.Date(2026, 10, 30, 7, 28, 39, 75000000, time.UTC))
+	fmt.Println(t)
+	fmt.Println(val.Hex(t)) // msgpack timestamp, 64-bit form
+	// Output:
+	// 2026-10-30T07:28:39.075Z
+	// d7ff11e1a3006ae44727
 }
 
 func ExampleUtf8() {

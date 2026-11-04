@@ -8,6 +8,7 @@ package value_test
 import (
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -33,8 +34,14 @@ func TestCanonicalGoldenVectors(t *testing.T) {
 		{"long-neg33", val.Long(-33), "d0df"},
 		{"double-0", val.Double(0), "cb0000000000000000"},
 		{"double-1.5", val.Double(1.5), "cb3ff8000000000000"},
-		{"bigint-0", val.BigInt(big.NewInt(0)), "d40102"},
-		{"bigint-123", val.BigInt(big.NewInt(123)), "d501027b"},
+		{"bigint-0", val.BigInt(big.NewInt(0)), "d40100"},
+		{"bigint-123", val.BigInt(big.NewInt(123)), "d4017b"},
+		{"bigint-neg1000", val.BigInt(big.NewInt(-1000)), "d501fc18"},
+		{"decimal-1.10", val.Decimal(decimal.New(110, -2)), "c70502000000026e"},
+		{"decimal-1e3", val.Decimal(decimal.New(1, 3)), "c70502fffffffd01"},
+		{"timestamp-seconds", val.Time(time.Date(2026, 10, 30, 7, 28, 39, 0, time.UTC)), "d6ff6ae44727"},
+		{"timestamp-millis", val.Time(time.Date(2026, 10, 30, 7, 28, 39, 75000000, time.UTC)), "d7ff11e1a3006ae44727"},
+		{"timestamp-neg-half", val.UnixTime(-1, 500000000), "c70cff1dcd6500ffffffffffffffff"},
 		{"utf8-empty", val.Utf8(""), "a0"},
 		{"utf8-hello", val.Utf8("hello"), "a568656c6c6f"},
 		{"raw-123", val.Raw([]byte{1, 2, 3}, false), "c403010203"},
@@ -68,6 +75,7 @@ func TestCanonicalIdempotent(t *testing.T) {
 		val.Double(-12.34),
 		val.BigInt(big.NewInt(-1000)),
 		val.Decimal(decimal.New(12345, -2)),
+		val.Time(time.Date(2026, 10, 30, 7, 28, 39, 123456789, time.UTC)),
 		val.Utf8("hello"),
 		val.Raw([]byte{0, 1, 2}, false),
 		val.ImmutableList([]val.Value{val.Long(1), val.Utf8("x")}),
@@ -92,6 +100,7 @@ func TestCanonicalEqualImpliesEqualBytes(t *testing.T) {
 		{val.Boolean(true), val.Boolean(true)},
 		{val.Long(5), val.Long(5)},
 		{val.Utf8("x"), val.Utf8("x")},
+		{val.Time(time.Date(2026, 10, 30, 7, 28, 39, 0, time.UTC)), val.Time(time.Date(2026, 10, 30, 9, 28, 39, 0, time.FixedZone("CET", 7200)))},
 		{val.MutableList([]val.Value{val.Long(1)}), val.ImmutableList([]val.Value{val.Long(1)})},
 		{val.SortedMapOf(map[string]val.Value{"a": val.Long(1)}), val.ImmutableMapOf(map[string]val.Value{"a": val.Long(1)})},
 	}

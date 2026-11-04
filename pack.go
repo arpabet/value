@@ -19,6 +19,10 @@ const (
 	DecimalExt
 
 	MaxExt
+
+	// TimestampExt is MessagePack's predefined timestamp extension, type -1,
+	// which is 0xff as the byte on the wire.
+	TimestampExt Ext = 0xff
 )
 
 type Packer interface {

@@ -4,6 +4,62 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and the project aims to follow
 [Semantic Versioning](https://semver.org/).
 
+## v1.5.0 — 2026-11-03
+
+Timestamps and portable big numbers. **The wire format of `BigInt` and
+`Decimal` changes**; see _Compatibility_ before upgrading a system that stores
+or exchanges those two kinds.
+
+### Added
+
+- **`TIMESTAMP` kind.** `value.Timestamp` is an instant with nanosecond
+  precision and no location, built with `Time(t time.Time)`,
+  `UnixTime(sec, nsec)` or `ParseTimestamp(rfc3339)`, read with `Time()` and
+  `Unix()`. It encodes as MessagePack's predefined timestamp extension (type
+  -1, `TimestampExt`) in the smallest of its three forms, decodes from any of
+  them (`UnpackTimestamp`), compares by instant, and renders as RFC 3339 in UTC
+  in `String()` and JSON. `Kind.String()` now also names `NULL`.
+- **`time.Time` support in every codec profile.** `Marshal` (the `value`,
+  `json` and `msgpack` tag profiles alike) writes a `time.Time` field as a
+  `Timestamp`; `Unmarshal` reads a `Timestamp` and, for data written by earlier
+  versions, an integer of Unix milliseconds. `PackStruct`/`UnpackStruct` carry
+  `value.Timestamp` fields like any other `Value`.
+- **Conformance vectors.** `testdata/canonical.json` describes 80 values in a
+  language-neutral notation with their canonical bytes; `vectors_test.go` runs
+  them. [CANONICAL.md](CANONICAL.md) is now normative for every implementation.
+- `LegacyBigNumbers`, `UnpackLegacyBigInt` and `UnpackLegacyDecimal` for reading
+  data written before this release (below).
+
+### Changed
+
+- **`BigInt` (ext 1) payload** is the two's-complement big-endian integer in
+  its minimal length (`BigInteger.toByteArray()`): `BigInt(123)` is now
+  `d4017b`, previously `d501027b` (Go's gob framing).
+- **`Decimal` (ext 2) payload** is a 4-byte big-endian signed scale followed
+  by the two's-complement unscaled integer, `unscaled × 10^-scale`
+  (`BigDecimal(unscaled, scale)`, Avro's layout): `Decimal(1.10)` is now
+  `c70502000000026e`. `MaxDecimalExponent` bounds the absolute scale.
+- Decoding accepts longer, sign-extended two's-complement encodings and
+  re-encodes them minimally, so `Equal` values still pack identically.
+- `time.Time` marshals as a `Timestamp` instead of an integer of Unix
+  milliseconds, keeping nanoseconds.
+
+### Compatibility
+
+- A reader older than v1.5.0 cannot read `BigInt`, `Decimal` or `time.Time`
+  values written by this version (it reads the first two as different numbers
+  and the third as an unknown extension). Upgrade readers before writers.
+- This version reads `Long`, `Double`, strings, binaries, lists and maps from
+  any earlier version unchanged, and a `time.Time` stored as Unix milliseconds.
+  It does **not** read the old `BigInt` and `Decimal` payloads by default: the
+  two layouts cannot be told apart from the bytes, so there is no guessing. A
+  program with stored big numbers sets `value.LegacyBigNumbers = true` while it
+  migrates (decode with the old layout, `Pack` writes the new one) or calls
+  `UnpackLegacyBigInt`/`UnpackLegacyDecimal` itself.
+- `Kind` gains `TIMESTAMP` after `UNKNOWN`; the other constants keep their
+  values. Code that switches over `Kind` exhaustively needs a new case.
+- The `Packer`, `Unpacker` and `Parser` interfaces are unchanged.
+
 ## v1.4.0 — 2026-08-15
 
 ### Added
