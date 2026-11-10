@@ -177,6 +177,68 @@ ascending, before encoding. Encoding therefore depends only on the contents, not
 on insertion order. Note this is **lexicographic**, so stringified integer keys do
 not sort numerically (`"10"` precedes `"2"`).
 
+## JSON
+
+`FormatJSON(v, mode)` / `AppendJSON` write a value as JSON text and `ParseJSON`
+reads it back. Plain JSON has numbers, strings, booleans, null, arrays and
+objects; every other kind is written as an object with a single **wrapper key**:
+
+| Kind | Wrapper | Example |
+|---|---|---|
+| LONG | `$long`, decimal digits | `{"$long":"5"}` |
+| DOUBLE | `$double`, shortest digits as JavaScript prints them; `NaN`, `Infinity`, `-Infinity`; `-0` keeps its sign | `{"$double":"1.5"}` |
+| BIGINT | `$bigint`, decimal digits | `{"$bigint":"-7"}` |
+| DECIMAL | `$decimal`, the exact digits: `1.10` keeps its trailing zero, an exponent above 0 or more than six leading zeros is written as `<coefficient>e<exponent>` | `{"$decimal":"1.10"}`, `{"$decimal":"1e400"}` |
+| binary | `$bin`, standard base64 with padding | `{"$bin":"AQI="}` |
+| TIMESTAMP | `$timestamp`, RFC 3339 in UTC with the fraction trimmed | `{"$timestamp":"2026-10-30T07:28:39.075Z"}` |
+| sparse list | `$sparse`, an object of index → item in index order | `{"$sparse":{"2":null,"10":true}}` |
+| UNKNOWN | `$ext`, the payload and the signed extension type | `{"$ext":{"base64":"AQ==","type":-7}}` |
+| a map whose only key is a wrapper key | `$map`, the map itself, read literally | `{"$map":{"$bin":"x"}}` |
+
+Two modes:
+
+- **Canonical** (`JSONCanonical`) wraps every kind above, so `ParseJSON` reads
+  back the same kinds and digits: the canonical MessagePack bytes of the value
+  are unchanged by the round trip, and the text is a function of the value (map
+  keys sorted bytewise, no insignificant space).
+- **Relaxed** (`JSONRelaxed`) is for people and plain JSON tools: LONG, finite
+  DOUBLE and DECIMAL are bare JSON numbers with their exact digits; the other
+  kinds are wrapped as in canonical mode.
+
+`ParseJSON` reads either mode. A **bare JSON number carries no type and reads as
+a DECIMAL** built from its exact text, integers included (`1` is Decimal 1,
+`1.10` keeps both digits), so a field never changes kind with the size of its
+number. An object is a wrapper only when the wrapper key is its only key; a
+malformed wrapper fails instead of reading as a map. Duplicate keys, invalid
+UTF-8, lone surrogates, raw control characters, text after the value and numbers
+longer than `MaxDecimalExponent` characters fail; the decoding limits below
+apply. Strings are written with only the escapes JSON requires (`"`, `\`, and
+control characters); a string that is not valid UTF-8 has no JSON form.
+
+`Jsonify` / `PrintJSON` keep their earlier, human-oriented rendering (below),
+which value-rpc's JSON wire codec speaks.
+
+## Numbers into Go fields
+
+A codec built with `Lossless()` sets a numeric Go field only when the number
+survives the conversion, and fails naming the field otherwise (the default
+codec truncates and wraps, as it always has):
+
+| Into | Allowed when |
+|---|---|
+| `int8` … `int64`, `int` | the number is integral and within range |
+| `uint8` … `uint64`, `uint` | the number is integral, not negative and within range |
+| `float64` | a DOUBLE always; another number when the shortest text of the float reads back as the same number (`1.10` → 1.1, but not `0.12345678901234567890` or 2^53 + 1) |
+| `float32` | the same at 32 bits; a DOUBLE only when it is a float32 |
+| `decimal.Decimal` | always; a DOUBLE through its shortest text, and it must be finite (every codec) |
+| `big.Int`, `*big.Int` | the number is integral (every codec) |
+
+`decimal.Decimal` and `big.Int` fields marshal as DECIMAL and BIGINT in every
+codec. `ExactInt`, `ExactUint`, `ExactFloat`, `ExactDecimal` and `ExactBigInt`
+are the conversions themselves. `AllowMissing()` makes a codec leave a field
+whose key is absent at its zero value, which a reader of a struct that gained
+fields needs for values written before.
+
 ## Decoding limits
 
 To stay safe on hostile input, decoding enforces configurable bounds (package
@@ -191,7 +253,8 @@ vars in `limits.go`; set any to `0` to disable):
 
 ## What is *not* canonical
 
-- **JSON / `String()`** output is for humans. Its formatting is affected by
+- **`Jsonify` / `PrintJSON` / `String()`** output is for humans (lossless JSON
+  is `FormatJSON`, above). Its formatting is affected by
   package vars (`Base64Prefix`, `DecimalExpDelim`, `UnknownPrefix`); changing them
   changes that text but never the MessagePack bytes from `Pack`.
 - **Mutability.** Only the `Immutable*` types are safe to share freely. The mutable

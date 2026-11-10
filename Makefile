@@ -19,6 +19,7 @@ vuln:
 fuzz:
 	go test -run=^$$ -fuzz=FuzzUnpack -fuzztime=30s
 	go test -run=^$$ -fuzz=FuzzRead -fuzztime=30s
+	go test -run=^$$ -fuzz=FuzzParseJSON -fuzztime=30s
 
 update:
 	go get -u ./...

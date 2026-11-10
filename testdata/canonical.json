@@ -1,5 +1,5 @@
 {
-  "description": "Canonical MessagePack encodings of go.arpabet.com/value (CANONICAL.md). Every implementation, in any language, must produce exactly these bytes for these values and decode them back to equal values. \"value\" describes the value in a language-neutral notation: kind null, bool (value), long/double/bigint/decimal (text, the exact decimal digits), str (text), bin (hex), timestamp (seconds since the Unix epoch, nanos within the second), ext (tag, hex payload), list (items), map (entries, unsorted here, sorted bytewise on the wire). \"text\" is the String() rendering where it is specified; \"json\" is the JSON rendering where it is stable across languages (maps are left out: whitespace differs between renderers, and JSON is not canonical).",
+  "description": "Canonical MessagePack encodings of go.arpabet.com/value (CANONICAL.md). Every implementation, in any language, must produce exactly these bytes for these values and decode them back to equal values. \"value\" describes the value in a language-neutral notation: kind null, bool (value), long/double/bigint/decimal (text, the exact decimal digits), str (text), bin (hex), timestamp (seconds since the Unix epoch, nanos within the second), ext (tag, hex payload), list (items), map (entries, unsorted here, sorted bytewise on the wire). \"text\" is the String() rendering where it is specified; \"json\" is the JSON rendering where it is stable across languages (maps are left out: whitespace differs between renderers, and JSON is not canonical). \"jsonCanonical\" is the lossless JSON of the value in canonical mode (CANONICAL.md, JSON), which every implementation must write exactly and read back to the same bytes.",
   "vectors": [
     {
       "name": "null",
@@ -7,7 +7,8 @@
         "kind": "null"
       },
       "hex": "c0",
-      "json": "null"
+      "json": "null",
+      "jsonCanonical": "null"
     },
     {
       "name": "true",
@@ -16,7 +17,8 @@
         "value": true
       },
       "hex": "c3",
-      "json": "true"
+      "json": "true",
+      "jsonCanonical": "true"
     },
     {
       "name": "false",
@@ -25,7 +27,8 @@
         "value": false
       },
       "hex": "c2",
-      "json": "false"
+      "json": "false",
+      "jsonCanonical": "false"
     },
     {
       "name": "long-0",
@@ -34,7 +37,8 @@
         "text": "0"
       },
       "hex": "00",
-      "json": "0"
+      "json": "0",
+      "jsonCanonical": "{\"$long\":\"0\"}"
     },
     {
       "name": "long-127",
@@ -43,7 +47,8 @@
         "text": "127"
       },
       "hex": "7f",
-      "json": "127"
+      "json": "127",
+      "jsonCanonical": "{\"$long\":\"127\"}"
     },
     {
       "name": "long-128",
@@ -52,7 +57,8 @@
         "text": "128"
       },
       "hex": "cc80",
-      "json": "128"
+      "json": "128",
+      "jsonCanonical": "{\"$long\":\"128\"}"
     },
     {
       "name": "long-255",
@@ -61,7 +67,8 @@
         "text": "255"
       },
       "hex": "ccff",
-      "json": "255"
+      "json": "255",
+      "jsonCanonical": "{\"$long\":\"255\"}"
     },
     {
       "name": "long-256",
@@ -70,7 +77,8 @@
         "text": "256"
       },
       "hex": "cd0100",
-      "json": "256"
+      "json": "256",
+      "jsonCanonical": "{\"$long\":\"256\"}"
     },
     {
       "name": "long-65535",
@@ -79,7 +87,8 @@
         "text": "65535"
       },
       "hex": "cdffff",
-      "json": "65535"
+      "json": "65535",
+      "jsonCanonical": "{\"$long\":\"65535\"}"
     },
     {
       "name": "long-65536",
@@ -88,7 +97,8 @@
         "text": "65536"
       },
       "hex": "ce00010000",
-      "json": "65536"
+      "json": "65536",
+      "jsonCanonical": "{\"$long\":\"65536\"}"
     },
     {
       "name": "long-2^32-1",
@@ -97,7 +107,8 @@
         "text": "4294967295"
       },
       "hex": "ceffffffff",
-      "json": "4294967295"
+      "json": "4294967295",
+      "jsonCanonical": "{\"$long\":\"4294967295\"}"
     },
     {
       "name": "long-2^32",
@@ -106,7 +117,8 @@
         "text": "4294967296"
       },
       "hex": "cf0000000100000000",
-      "json": "4294967296"
+      "json": "4294967296",
+      "jsonCanonical": "{\"$long\":\"4294967296\"}"
     },
     {
       "name": "long-max",
@@ -115,7 +127,8 @@
         "text": "9223372036854775807"
       },
       "hex": "cf7fffffffffffffff",
-      "json": "9223372036854775807"
+      "json": "9223372036854775807",
+      "jsonCanonical": "{\"$long\":\"9223372036854775807\"}"
     },
     {
       "name": "long-neg1",
@@ -124,7 +137,8 @@
         "text": "-1"
       },
       "hex": "ff",
-      "json": "-1"
+      "json": "-1",
+      "jsonCanonical": "{\"$long\":\"-1\"}"
     },
     {
       "name": "long-neg32",
@@ -133,7 +147,8 @@
         "text": "-32"
       },
       "hex": "e0",
-      "json": "-32"
+      "json": "-32",
+      "jsonCanonical": "{\"$long\":\"-32\"}"
     },
     {
       "name": "long-neg33",
@@ -142,7 +157,8 @@
         "text": "-33"
       },
       "hex": "d0df",
-      "json": "-33"
+      "json": "-33",
+      "jsonCanonical": "{\"$long\":\"-33\"}"
     },
     {
       "name": "long-neg128",
@@ -151,7 +167,8 @@
         "text": "-128"
       },
       "hex": "d080",
-      "json": "-128"
+      "json": "-128",
+      "jsonCanonical": "{\"$long\":\"-128\"}"
     },
     {
       "name": "long-neg129",
@@ -160,7 +177,8 @@
         "text": "-129"
       },
       "hex": "d1ff7f",
-      "json": "-129"
+      "json": "-129",
+      "jsonCanonical": "{\"$long\":\"-129\"}"
     },
     {
       "name": "long-neg32769",
@@ -169,7 +187,8 @@
         "text": "-32769"
       },
       "hex": "d2ffff7fff",
-      "json": "-32769"
+      "json": "-32769",
+      "jsonCanonical": "{\"$long\":\"-32769\"}"
     },
     {
       "name": "long-neg2^31-1",
@@ -178,7 +197,8 @@
         "text": "-2147483649"
       },
       "hex": "d3ffffffff7fffffff",
-      "json": "-2147483649"
+      "json": "-2147483649",
+      "jsonCanonical": "{\"$long\":\"-2147483649\"}"
     },
     {
       "name": "long-min",
@@ -187,7 +207,8 @@
         "text": "-9223372036854775808"
       },
       "hex": "d38000000000000000",
-      "json": "-9223372036854775808"
+      "json": "-9223372036854775808",
+      "jsonCanonical": "{\"$long\":\"-9223372036854775808\"}"
     },
     {
       "name": "double-0",
@@ -196,7 +217,8 @@
         "text": "0"
       },
       "hex": "cb0000000000000000",
-      "json": "0"
+      "json": "0",
+      "jsonCanonical": "{\"$double\":\"0\"}"
     },
     {
       "name": "double-1",
@@ -205,7 +227,8 @@
         "text": "1"
       },
       "hex": "cb3ff0000000000000",
-      "json": "1"
+      "json": "1",
+      "jsonCanonical": "{\"$double\":\"1\"}"
     },
     {
       "name": "double-1.5",
@@ -214,7 +237,8 @@
         "text": "1.5"
       },
       "hex": "cb3ff8000000000000",
-      "json": "1.5"
+      "json": "1.5",
+      "jsonCanonical": "{\"$double\":\"1.5\"}"
     },
     {
       "name": "double-neg12.34",
@@ -223,7 +247,8 @@
         "text": "-12.34"
       },
       "hex": "cbc028ae147ae147ae",
-      "json": "-12.34"
+      "json": "-12.34",
+      "jsonCanonical": "{\"$double\":\"-12.34\"}"
     },
     {
       "name": "bigint-0",
@@ -232,7 +257,8 @@
         "text": "0"
       },
       "hex": "d40100",
-      "note": "one zero byte, never empty"
+      "note": "one zero byte, never empty",
+      "jsonCanonical": "{\"$bigint\":\"0\"}"
     },
     {
       "name": "bigint-1",
@@ -240,7 +266,8 @@
         "kind": "bigint",
         "text": "1"
       },
-      "hex": "d40101"
+      "hex": "d40101",
+      "jsonCanonical": "{\"$bigint\":\"1\"}"
     },
     {
       "name": "bigint-neg1",
@@ -248,7 +275,8 @@
         "kind": "bigint",
         "text": "-1"
       },
-      "hex": "d401ff"
+      "hex": "d401ff",
+      "jsonCanonical": "{\"$bigint\":\"-1\"}"
     },
     {
       "name": "bigint-123",
@@ -256,7 +284,8 @@
         "kind": "bigint",
         "text": "123"
       },
-      "hex": "d4017b"
+      "hex": "d4017b",
+      "jsonCanonical": "{\"$bigint\":\"123\"}"
     },
     {
       "name": "bigint-127",
@@ -264,7 +293,8 @@
         "kind": "bigint",
         "text": "127"
       },
-      "hex": "d4017f"
+      "hex": "d4017f",
+      "jsonCanonical": "{\"$bigint\":\"127\"}"
     },
     {
       "name": "bigint-128",
@@ -273,7 +303,8 @@
         "text": "128"
       },
       "hex": "d5010080",
-      "note": "a leading zero byte keeps the sign positive"
+      "note": "a leading zero byte keeps the sign positive",
+      "jsonCanonical": "{\"$bigint\":\"128\"}"
     },
     {
       "name": "bigint-neg128",
@@ -281,7 +312,8 @@
         "kind": "bigint",
         "text": "-128"
       },
-      "hex": "d40180"
+      "hex": "d40180",
+      "jsonCanonical": "{\"$bigint\":\"-128\"}"
     },
     {
       "name": "bigint-neg129",
@@ -289,7 +321,8 @@
         "kind": "bigint",
         "text": "-129"
       },
-      "hex": "d501ff7f"
+      "hex": "d501ff7f",
+      "jsonCanonical": "{\"$bigint\":\"-129\"}"
     },
     {
       "name": "bigint-255",
@@ -297,7 +330,8 @@
         "kind": "bigint",
         "text": "255"
       },
-      "hex": "d50100ff"
+      "hex": "d50100ff",
+      "jsonCanonical": "{\"$bigint\":\"255\"}"
     },
     {
       "name": "bigint-256",
@@ -305,7 +339,8 @@
         "kind": "bigint",
         "text": "256"
       },
-      "hex": "d5010100"
+      "hex": "d5010100",
+      "jsonCanonical": "{\"$bigint\":\"256\"}"
     },
     {
       "name": "bigint-neg256",
@@ -313,7 +348,8 @@
         "kind": "bigint",
         "text": "-256"
       },
-      "hex": "d501ff00"
+      "hex": "d501ff00",
+      "jsonCanonical": "{\"$bigint\":\"-256\"}"
     },
     {
       "name": "bigint-neg1000",
@@ -321,7 +357,8 @@
         "kind": "bigint",
         "text": "-1000"
       },
-      "hex": "d501fc18"
+      "hex": "d501fc18",
+      "jsonCanonical": "{\"$bigint\":\"-1000\"}"
     },
     {
       "name": "bigint-2^63",
@@ -329,7 +366,8 @@
         "kind": "bigint",
         "text": "9223372036854775808"
       },
-      "hex": "c70901008000000000000000"
+      "hex": "c70901008000000000000000",
+      "jsonCanonical": "{\"$bigint\":\"9223372036854775808\"}"
     },
     {
       "name": "bigint-neg2^63",
@@ -337,7 +375,8 @@
         "kind": "bigint",
         "text": "-9223372036854775808"
       },
-      "hex": "d7018000000000000000"
+      "hex": "d7018000000000000000",
+      "jsonCanonical": "{\"$bigint\":\"-9223372036854775808\"}"
     },
     {
       "name": "bigint-2^64",
@@ -345,7 +384,8 @@
         "kind": "bigint",
         "text": "18446744073709551616"
       },
-      "hex": "c70901010000000000000000"
+      "hex": "c70901010000000000000000",
+      "jsonCanonical": "{\"$bigint\":\"18446744073709551616\"}"
     },
     {
       "name": "bigint-10^20",
@@ -353,7 +393,8 @@
         "kind": "bigint",
         "text": "100000000000000000000"
       },
-      "hex": "c70901056bc75e2d63100000"
+      "hex": "c70901056bc75e2d63100000",
+      "jsonCanonical": "{\"$bigint\":\"100000000000000000000\"}"
     },
     {
       "name": "bigint-neg10^20",
@@ -361,7 +402,8 @@
         "kind": "bigint",
         "text": "-100000000000000000000"
       },
-      "hex": "c70901fa9438a1d29cf00000"
+      "hex": "c70901fa9438a1d29cf00000",
+      "jsonCanonical": "{\"$bigint\":\"-100000000000000000000\"}"
     },
     {
       "name": "decimal-0",
@@ -370,7 +412,8 @@
         "text": "0"
       },
       "hex": "c705020000000000",
-      "note": "scale 0, unscaled 00"
+      "note": "scale 0, unscaled 00",
+      "jsonCanonical": "{\"$decimal\":\"0\"}"
     },
     {
       "name": "decimal-1",
@@ -378,7 +421,8 @@
         "kind": "decimal",
         "text": "1"
       },
-      "hex": "c705020000000001"
+      "hex": "c705020000000001",
+      "jsonCanonical": "{\"$decimal\":\"1\"}"
     },
     {
       "name": "decimal-1.0",
@@ -387,7 +431,8 @@
         "text": "1.0"
       },
       "hex": "c70502000000010a",
-      "note": "distinct from 1: scale 1, unscaled 10"
+      "note": "distinct from 1: scale 1, unscaled 10",
+      "jsonCanonical": "{\"$decimal\":\"1.0\"}"
     },
     {
       "name": "decimal-1.10",
@@ -395,7 +440,8 @@
         "kind": "decimal",
         "text": "1.10"
       },
-      "hex": "c70502000000026e"
+      "hex": "c70502000000026e",
+      "jsonCanonical": "{\"$decimal\":\"1.10\"}"
     },
     {
       "name": "decimal-123.45",
@@ -403,7 +449,8 @@
         "kind": "decimal",
         "text": "123.45"
       },
-      "hex": "c70602000000023039"
+      "hex": "c70602000000023039",
+      "jsonCanonical": "{\"$decimal\":\"123.45\"}"
     },
     {
       "name": "decimal-neg1.045",
@@ -411,7 +458,8 @@
         "kind": "decimal",
         "text": "-1.045"
       },
-      "hex": "c7060200000003fbeb"
+      "hex": "c7060200000003fbeb",
+      "jsonCanonical": "{\"$decimal\":\"-1.045\"}"
     },
     {
       "name": "decimal-123.567",
@@ -419,7 +467,8 @@
         "kind": "decimal",
         "text": "123.567"
       },
-      "hex": "c707020000000301e2af"
+      "hex": "c707020000000301e2af",
+      "jsonCanonical": "{\"$decimal\":\"123.567\"}"
     },
     {
       "name": "decimal-neg123.567",
@@ -427,7 +476,8 @@
         "kind": "decimal",
         "text": "-123.567"
       },
-      "hex": "c7070200000003fe1d51"
+      "hex": "c7070200000003fe1d51",
+      "jsonCanonical": "{\"$decimal\":\"-123.567\"}"
     },
     {
       "name": "decimal-1e3",
@@ -436,7 +486,8 @@
         "text": "1e3"
       },
       "hex": "c70502fffffffd01",
-      "note": "negative scale: unscaled 1, scale -3"
+      "note": "negative scale: unscaled 1, scale -3",
+      "jsonCanonical": "{\"$decimal\":\"1e3\"}"
     },
     {
       "name": "decimal-neg1e3",
@@ -444,7 +495,8 @@
         "kind": "decimal",
         "text": "-1e3"
       },
-      "hex": "c70502fffffffdff"
+      "hex": "c70502fffffffdff",
+      "jsonCanonical": "{\"$decimal\":\"-1e3\"}"
     },
     {
       "name": "decimal-1e-10",
@@ -452,7 +504,8 @@
         "kind": "decimal",
         "text": "1e-10"
       },
-      "hex": "c705020000000a01"
+      "hex": "c705020000000a01",
+      "jsonCanonical": "{\"$decimal\":\"1e-10\"}"
     },
     {
       "name": "decimal-30-digits",
@@ -460,7 +513,8 @@
         "kind": "decimal",
         "text": "123456789012345678901234567890"
       },
-      "hex": "c7110200000000018ee90ff6c373e0ee4e3f0ad2"
+      "hex": "c7110200000000018ee90ff6c373e0ee4e3f0ad2",
+      "jsonCanonical": "{\"$decimal\":\"123456789012345678901234567890\"}"
     },
     {
       "name": "decimal-30-digits-fraction",
@@ -468,7 +522,8 @@
         "kind": "decimal",
         "text": "-1234567890.12345678901234567890"
       },
-      "hex": "c7110200000014fe7116f0093c8c1f11b1c0f52e"
+      "hex": "c7110200000014fe7116f0093c8c1f11b1c0f52e",
+      "jsonCanonical": "{\"$decimal\":\"-1234567890.12345678901234567890\"}"
     },
     {
       "name": "timestamp-epoch",
@@ -480,7 +535,8 @@
       "hex": "d6ff00000000",
       "text": "1970-01-01T00:00:00Z",
       "json": "\"1970-01-01T00:00:00Z\"",
-      "note": "32-bit form"
+      "note": "32-bit form",
+      "jsonCanonical": "{\"$timestamp\":\"1970-01-01T00:00:00Z\"}"
     },
     {
       "name": "timestamp-seconds",
@@ -492,7 +548,8 @@
       "hex": "d6ff6ae44727",
       "text": "2026-10-30T07:28:39Z",
       "json": "\"2026-10-30T07:28:39Z\"",
-      "note": "32-bit form"
+      "note": "32-bit form",
+      "jsonCanonical": "{\"$timestamp\":\"2026-10-30T07:28:39Z\"}"
     },
     {
       "name": "timestamp-millis",
@@ -504,7 +561,8 @@
       "hex": "d7ff11e1a3006ae44727",
       "text": "2026-10-30T07:28:39.075Z",
       "json": "\"2026-10-30T07:28:39.075Z\"",
-      "note": "64-bit form: nanoseconds above 34 bits of seconds"
+      "note": "64-bit form: nanoseconds above 34 bits of seconds",
+      "jsonCanonical": "{\"$timestamp\":\"2026-10-30T07:28:39.075Z\"}"
     },
     {
       "name": "timestamp-nanos",
@@ -516,7 +574,8 @@
       "hex": "d7ff1d6f34546ae44727",
       "text": "2026-10-30T07:28:39.123456789Z",
       "json": "\"2026-10-30T07:28:39.123456789Z\"",
-      "note": "64-bit form"
+      "note": "64-bit form",
+      "jsonCanonical": "{\"$timestamp\":\"2026-10-30T07:28:39.123456789Z\"}"
     },
     {
       "name": "timestamp-2^32-1",
@@ -528,7 +587,8 @@
       "hex": "d6ffffffffff",
       "text": "2106-02-07T06:28:15Z",
       "json": "\"2106-02-07T06:28:15Z\"",
-      "note": "largest 32-bit form"
+      "note": "largest 32-bit form",
+      "jsonCanonical": "{\"$timestamp\":\"2106-02-07T06:28:15Z\"}"
     },
     {
       "name": "timestamp-2^32",
@@ -540,7 +600,8 @@
       "hex": "d7ff0000000100000000",
       "text": "2106-02-07T06:28:16Z",
       "json": "\"2106-02-07T06:28:16Z\"",
-      "note": "64-bit form although nanoseconds are zero"
+      "note": "64-bit form although nanoseconds are zero",
+      "jsonCanonical": "{\"$timestamp\":\"2106-02-07T06:28:16Z\"}"
     },
     {
       "name": "timestamp-2^34-1-nanos",
@@ -552,7 +613,8 @@
       "hex": "d7ffee6b27ffffffffff",
       "text": "2514-05-30T01:53:03.999999999Z",
       "json": "\"2514-05-30T01:53:03.999999999Z\"",
-      "note": "largest 64-bit form"
+      "note": "largest 64-bit form",
+      "jsonCanonical": "{\"$timestamp\":\"2514-05-30T01:53:03.999999999Z\"}"
     },
     {
       "name": "timestamp-2^34",
@@ -564,7 +626,8 @@
       "hex": "c70cff000000000000000400000000",
       "text": "2514-05-30T01:53:04Z",
       "json": "\"2514-05-30T01:53:04Z\"",
-      "note": "96-bit form"
+      "note": "96-bit form",
+      "jsonCanonical": "{\"$timestamp\":\"2514-05-30T01:53:04Z\"}"
     },
     {
       "name": "timestamp-neg1",
@@ -576,7 +639,8 @@
       "hex": "c70cff00000000ffffffffffffffff",
       "text": "1969-12-31T23:59:59Z",
       "json": "\"1969-12-31T23:59:59Z\"",
-      "note": "96-bit form: seconds before the epoch"
+      "note": "96-bit form: seconds before the epoch",
+      "jsonCanonical": "{\"$timestamp\":\"1969-12-31T23:59:59Z\"}"
     },
     {
       "name": "timestamp-neg-half",
@@ -588,7 +652,8 @@
       "hex": "c70cff1dcd6500ffffffffffffffff",
       "text": "1969-12-31T23:59:59.5Z",
       "json": "\"1969-12-31T23:59:59.5Z\"",
-      "note": "96-bit form, 1969-12-31T23:59:59.5Z"
+      "note": "96-bit form, 1969-12-31T23:59:59.5Z",
+      "jsonCanonical": "{\"$timestamp\":\"1969-12-31T23:59:59.5Z\"}"
     },
     {
       "name": "timestamp-year-1",
@@ -600,7 +665,8 @@
       "hex": "c70cff00000000fffffff1886e0900",
       "text": "0001-01-01T00:00:00Z",
       "json": "\"0001-01-01T00:00:00Z\"",
-      "note": "Go's zero time.Time, 96-bit form"
+      "note": "Go's zero time.Time, 96-bit form",
+      "jsonCanonical": "{\"$timestamp\":\"0001-01-01T00:00:00Z\"}"
     },
     {
       "name": "timestamp-year-9999",
@@ -612,7 +678,8 @@
       "hex": "c70cff3b9ac9ff0000003afff4417f",
       "text": "9999-12-31T23:59:59.999999999Z",
       "json": "\"9999-12-31T23:59:59.999999999Z\"",
-      "note": "9999-12-31T23:59:59.999999999Z, 96-bit form"
+      "note": "9999-12-31T23:59:59.999999999Z, 96-bit form",
+      "jsonCanonical": "{\"$timestamp\":\"9999-12-31T23:59:59.999999999Z\"}"
     },
     {
       "name": "utf8-empty",
@@ -621,7 +688,8 @@
         "text": ""
       },
       "hex": "a0",
-      "json": "\"\""
+      "json": "\"\"",
+      "jsonCanonical": "\"\""
     },
     {
       "name": "utf8-hello",
@@ -630,7 +698,8 @@
         "text": "hello"
       },
       "hex": "a568656c6c6f",
-      "json": "\"hello\""
+      "json": "\"hello\"",
+      "jsonCanonical": "\"hello\""
     },
     {
       "name": "utf8-unicode",
@@ -639,7 +708,8 @@
         "text": "héllo wörld ✓"
       },
       "hex": "b168c3a96c6c6f2077c3b6726c6420e29c93",
-      "json": "\"héllo wörld ✓\""
+      "json": "\"héllo wörld ✓\"",
+      "jsonCanonical": "\"héllo wörld ✓\""
     },
     {
       "name": "raw-empty",
@@ -647,7 +717,8 @@
         "kind": "bin",
         "hex": ""
       },
-      "hex": "c400"
+      "hex": "c400",
+      "jsonCanonical": "{\"$bin\":\"\"}"
     },
     {
       "name": "raw-123",
@@ -655,7 +726,8 @@
         "kind": "bin",
         "hex": "010203"
       },
-      "hex": "c403010203"
+      "hex": "c403010203",
+      "jsonCanonical": "{\"$bin\":\"AQID\"}"
     },
     {
       "name": "ext-unknown",
@@ -665,7 +737,8 @@
         "hex": "0102"
       },
       "hex": "d5070102",
-      "note": "an extension the reader does not know passes through"
+      "note": "an extension the reader does not know passes through",
+      "jsonCanonical": "{\"$ext\":{\"base64\":\"AQI=\",\"type\":7}}"
     },
     {
       "name": "list-empty",
@@ -674,7 +747,8 @@
         "items": []
       },
       "hex": "90",
-      "json": "[]"
+      "json": "[]",
+      "jsonCanonical": "[]"
     },
     {
       "name": "list-123",
@@ -696,7 +770,8 @@
         ]
       },
       "hex": "93010203",
-      "json": "[1,2,3]"
+      "json": "[1,2,3]",
+      "jsonCanonical": "[{\"$long\":\"1\"},{\"$long\":\"2\"},{\"$long\":\"3\"}]"
     },
     {
       "name": "list-mixed",
@@ -721,7 +796,8 @@
         ]
       },
       "hex": "9401a178c0c3",
-      "json": "[1,\"x\",null,true]"
+      "json": "[1,\"x\",null,true]",
+      "jsonCanonical": "[{\"$long\":\"1\"},\"x\",null,true]"
     },
     {
       "name": "map-empty",
@@ -730,7 +806,8 @@
         "entries": {}
       },
       "hex": "80",
-      "json": "{}"
+      "json": "{}",
+      "jsonCanonical": "{}"
     },
     {
       "name": "map-ab",
@@ -747,7 +824,8 @@
           }
         }
       },
-      "hex": "82a16101a16202"
+      "hex": "82a16101a16202",
+      "jsonCanonical": "{\"a\":{\"$long\":\"1\"},\"b\":{\"$long\":\"2\"}}"
     },
     {
       "name": "map-sorted-bytewise",
@@ -773,7 +851,8 @@
         }
       },
       "hex": "84a14203a16101a2616104a16202",
-      "note": "keys sort by their UTF-8 bytes: uppercase before lowercase, prefixes first"
+      "note": "keys sort by their UTF-8 bytes: uppercase before lowercase, prefixes first",
+      "jsonCanonical": "{\"B\":{\"$long\":\"3\"},\"a\":{\"$long\":\"1\"},\"aa\":{\"$long\":\"4\"},\"b\":{\"$long\":\"2\"}}"
     },
     {
       "name": "map-nested",
@@ -804,7 +883,8 @@
           }
         }
       },
-      "hex": "83a6616d6f756e74c70502000000026ea46c697374920102a47768656ed6ff6ae44727"
+      "hex": "83a6616d6f756e74c70502000000026ea46c697374920102a47768656ed6ff6ae44727",
+      "jsonCanonical": "{\"amount\":{\"$decimal\":\"1.10\"},\"list\":[{\"$long\":\"1\"},{\"$long\":\"2\"}],\"when\":{\"$timestamp\":\"2026-10-30T07:28:39Z\"}}"
     }
   ]
 }

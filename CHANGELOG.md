@@ -4,6 +4,43 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and the project aims to follow
 [Semantic Versioning](https://semver.org/).
 
+## v1.6.0 — unreleased
+
+Lossless JSON.
+
+### Added
+
+- **`ParseJSON`, `FormatJSON` and `AppendJSON`** with two modes, `JSONCanonical`
+  and `JSONRelaxed` ([CANONICAL.md](CANONICAL.md#json)). Kinds plain JSON lacks
+  are written as single-key wrapper objects (`$long`, `$double`, `$bigint`,
+  `$decimal`, `$bin`, `$timestamp`, `$sparse`, `$ext`, and `$map` for a map whose
+  only key is a wrapper key); canonical mode wraps every one of them, so a round
+  trip keeps the kinds and exact digits, and relaxed mode writes numbers as plain
+  JSON numbers. `ParseJSON` reads a bare JSON number as a `Decimal` from its
+  exact text, integers included, so an untyped number never changes kind with
+  its size.
+- `DoubleText` and `DecimalText`: the exact texts the JSON modes use.
+- `FuzzParseJSON`.
+- **Lossless number conversion** (`ValueCodec.Lossless()`): `Unmarshal` sets a
+  numeric field only when the number survives the conversion and fails naming
+  the field otherwise ([CANONICAL.md](CANONICAL.md#numbers-into-go-fields));
+  `ExactInt`, `ExactUint`, `ExactFloat`, `ExactDecimal`, `ExactBigInt`.
+- `ValueCodec.AllowMissing()`: absent fields stay at their zero value, for
+  readers of structs that gained fields.
+- `ValueCodec.StructFields`: the fields of a struct type as the codec maps them.
+- An interface field, such as `any`, unmarshals the value's tree (a field of
+  the interface `Value` already did); it used to fail.
+- **`decimal.Decimal` and `big.Int` fields** marshal as `Decimal` and `BigInt`
+  and unmarshal from any number that converts exactly. They used to marshal as
+  empty maps.
+- `jsonCanonical` in `testdata/canonical.json`: the canonical lossless JSON of
+  every vector.
+
+### Unchanged
+
+- `Jsonify`, `PrintJSON` and `MarshalJSON` keep their rendering (the `base64,`
+  prefix, hexadecimal big numbers), which value-rpc's JSON wire codec speaks.
+
 ## v1.5.0 — 2026-11-03
 
 Timestamps and portable big numbers. **The wire format of `BigInt` and

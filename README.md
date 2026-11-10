@@ -139,6 +139,24 @@ back, _ := value.Unpack(mp, false)
 v.Equal(back) // true
 ```
 
+## Lossless JSON
+
+`FormatJSON` writes JSON that `ParseJSON` reads back to the same kinds and exact
+digits; kinds plain JSON lacks become single-key wrappers
+([CANONICAL.md](CANONICAL.md#json)):
+
+```go
+m := value.EmptyImmutableMap().
+	Put("qty", value.Long(5)).
+	Put("raw", value.Raw([]byte{1, 2}, false))
+
+value.FormatJSON(m, value.JSONCanonical) // {"qty":{"$long":"5"},"raw":{"$bin":"AQI="}}
+value.FormatJSON(m, value.JSONRelaxed)   // {"qty":5,"raw":{"$bin":"AQI="}}
+
+v, _ := value.ParseJSON([]byte(`{"price": 1.10}`))
+// a bare number has no type: price is Decimal 1.10, both digits kept
+```
+
 ## Go struct schemas
 
 Value deliberately provides two struct schema families. Both are deterministic,

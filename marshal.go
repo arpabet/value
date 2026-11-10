@@ -7,13 +7,20 @@ package value
 
 import (
 	"crypto"
-	"golang.org/x/xerrors"
+	"math/big"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/shopspring/decimal"
+	"golang.org/x/xerrors"
 )
 
-var timeType = reflect.TypeOf(time.Time{})
+var (
+	timeType    = reflect.TypeOf(time.Time{})
+	decimalType = reflect.TypeOf(decimal.Decimal{})
+	bigIntType  = reflect.TypeOf(big.Int{})
+)
 
 type valueCodecProfile uint8
 
@@ -31,7 +38,9 @@ const (
 // final byte encoding. Call Pack/Unpack separately when canonical MessagePack
 // bytes are required.
 type ValueCodec struct {
-	profile valueCodecProfile
+	profile  valueCodecProfile
+	missing  bool // absent fields stay at their zero value
+	lossless bool // numbers convert into fields only without loss
 }
 
 // DefaultValueCodec returns the classic codec using `value:"field"` tags.
@@ -69,7 +78,61 @@ func (c ValueCodec) tagName() string {
 }
 
 func (c ValueCodec) allowsMissingFields() bool {
-	return c.profile != valueTags
+	return c.profile != valueTags || c.missing
+}
+
+// AllowMissing returns the codec with absent fields allowed: Unmarshal leaves
+// a field whose key the map lacks at its zero value instead of failing, as a
+// reader of a struct that gained fields must for values written before (the
+// json and msgpack codecs always do).
+func (c ValueCodec) AllowMissing() ValueCodec {
+	c.missing = true
+	return c
+}
+
+// Lossless returns the codec with lossless number conversion: Unmarshal sets a
+// numeric field only when the number survives the conversion, and fails
+// naming the field otherwise, where the default codec truncates and wraps. An
+// integer field takes an integral number within its range; a float field a
+// number whose shortest text reads back as the same number; decimal.Decimal
+// and big.Int fields behave the same in every codec (see Unmarshal).
+func (c ValueCodec) Lossless() ValueCodec {
+	c.lossless = true
+	return c
+}
+
+// StructField is a struct field as a codec maps it.
+type StructField struct {
+	// Name is the field's key in the map.
+	Name string
+	// OmitEmpty: Marshal leaves the field out at its zero value, and
+	// Unmarshal does not require it.
+	OmitEmpty bool
+	// Field is the Go field.
+	Field reflect.StructField
+}
+
+// StructFields returns the fields of a struct type that Marshal writes and
+// Unmarshal reads, in declaration order: the exported fields not tagged "-",
+// named by the codec's tag or else by the Go name.
+func (c ValueCodec) StructFields(t reflect.Type) ([]StructField, error) {
+	if t.Kind() != reflect.Struct {
+		return nil, xerrors.Errorf("value: %s is not a struct", t)
+	}
+	var out []StructField
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		name, opts, skip, err := c.parseStructTag(f)
+		if err != nil {
+			return nil, err
+		}
+		if skip {
+			continue
+		}
+		_, omit := opts["omitempty"]
+		out = append(out, StructField{Name: name, OmitEmpty: omit, Field: f})
+	}
+	return out, nil
 }
 
 // Marshal converts a plain Go value (typically a struct) into the dynamic Value
@@ -241,10 +304,20 @@ func (c ValueCodec) toValue(rv reflect.Value) (Value, error) {
 			return v, nil
 		}
 	}
-	// time.Time is a struct but encodes as a Timestamp (an instant, without
-	// its location), not a map of its unexported fields.
-	if rv.Type() == timeType {
+	// time.Time, decimal.Decimal and big.Int are structs but encode as the
+	// kinds they are (a Timestamp is an instant, without its location), not as
+	// maps of their unexported fields.
+	switch rv.Type() {
+	case timeType:
 		return Time(rv.Interface().(time.Time)), nil
+	case decimalType:
+		return Decimal(rv.Interface().(decimal.Decimal)), nil
+	case bigIntType:
+		if rv.CanAddr() {
+			return BigInt(new(big.Int).Set(rv.Addr().Interface().(*big.Int))), nil
+		}
+		b := rv.Interface().(big.Int)
+		return BigInt(new(big.Int).Set(&b)), nil
 	}
 	switch rv.Kind() {
 	case reflect.Bool:
@@ -407,6 +480,11 @@ func (c ValueCodec) fromValue(v Value, rv reflect.Value) error {
 	if v == nil || v.Kind() == NULL {
 		return nil // leave the zero value
 	}
+	// An interface field the value implements, such as any, holds the tree.
+	if rv.Kind() == reflect.Interface && reflect.TypeOf(v).AssignableTo(rv.Type()) {
+		rv.Set(reflect.ValueOf(v))
+		return nil
+	}
 	if rv.Type() == timeType {
 		switch x := v.(type) {
 		case Timestamp:
@@ -419,6 +497,26 @@ func (c ValueCodec) fromValue(v Value, rv reflect.Value) error {
 		}
 		return xerrors.Errorf("value: cannot unmarshal %s into time.Time", v.Kind())
 	}
+	if rv.Type() == decimalType || rv.Type() == bigIntType {
+		n, ok := v.(Number)
+		if !ok {
+			return xerrors.Errorf("value: cannot unmarshal %s into %s", v.Kind(), rv.Type())
+		}
+		if rv.Type() == decimalType {
+			d, err := ExactDecimal(n)
+			if err != nil {
+				return err
+			}
+			rv.Set(reflect.ValueOf(d))
+			return nil
+		}
+		i, err := ExactBigInt(n)
+		if err != nil {
+			return err
+		}
+		rv.Addr().Interface().(*big.Int).Set(i)
+		return nil
+	}
 	switch rv.Kind() {
 	case reflect.Bool:
 		if b, ok := v.(Bool); ok {
@@ -427,17 +525,41 @@ func (c ValueCodec) fromValue(v Value, rv reflect.Value) error {
 		}
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		if n, ok := v.(Number); ok {
-			rv.SetInt(n.Long())
+			if !c.lossless {
+				rv.SetInt(n.Long())
+				return nil
+			}
+			i, err := ExactInt(n, rv.Type().Bits())
+			if err != nil {
+				return err
+			}
+			rv.SetInt(i)
 			return nil
 		}
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		if n, ok := v.(Number); ok {
-			rv.SetUint(uint64(n.Long()))
+			if !c.lossless {
+				rv.SetUint(uint64(n.Long()))
+				return nil
+			}
+			u, err := ExactUint(n, rv.Type().Bits())
+			if err != nil {
+				return err
+			}
+			rv.SetUint(u)
 			return nil
 		}
 	case reflect.Float32, reflect.Float64:
 		if n, ok := v.(Number); ok {
-			rv.SetFloat(n.Double())
+			if !c.lossless {
+				rv.SetFloat(n.Double())
+				return nil
+			}
+			f, err := ExactFloat(n, rv.Type().Bits())
+			if err != nil {
+				return err
+			}
+			rv.SetFloat(f)
 			return nil
 		}
 	case reflect.String:
