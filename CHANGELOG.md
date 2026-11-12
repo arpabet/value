@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and the project aims to follow
 [Semantic Versioning](https://semver.org/).
 
-## v1.6.1 — unreleased
+## v1.6.1 — 2026-11-11
 
 Unsigned integers above the range of a long keep their number.
 
