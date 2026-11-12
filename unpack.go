@@ -31,7 +31,19 @@ func doParse(unpacker Unpacker, parser Parser, depth int) (Value, error) {
 	case BoolToken:
 		return Boolean(parser.ParseBool(header)), parser.Error()
 	case LongToken:
-		return Long(parser.ParseLong(header)), parser.Error()
+		n := parser.ParseLong(header)
+		if n < 0 {
+			// MessagePack's uint 64 holds integers a long does not, and a
+			// long read from one is negative. A canonical writer packs such
+			// an integer as a big integer; one from another writer reads as
+			// the same number.
+			if up, ok := parser.(unsignedParser); ok {
+				if u, beyond := up.parseUnsigned(header); beyond {
+					return Unsigned(u), parser.Error()
+				}
+			}
+		}
+		return Long(n), parser.Error()
 	case DoubleToken:
 		return Double(parser.ParseDouble(header)), parser.Error()
 	case FixExtToken:
@@ -84,6 +96,12 @@ func doParse(unpacker Unpacker, parser Parser, depth int) (Value, error) {
 		return nil, xerrors.Errorf("parse: invalid format %v", format)
 	}
 
+}
+
+// unsignedParser is a Parser whose integer tokens can hold a number above the
+// range of a long.
+type unsignedParser interface {
+	parseUnsigned(header []byte) (val uint64, beyond bool)
 }
 
 func doParseList(header []byte, unpacker Unpacker, parser Parser, depth int) (List, error) {

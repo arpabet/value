@@ -513,6 +513,16 @@ func (r *messageParser) ParseLong(b []byte) int64 {
 	}
 }
 
+// parseUnsigned returns the integer of a uint 64 token above the range of a
+// long, which ParseLong cannot return; beyond is false for every other token.
+func (r *messageParser) parseUnsigned(b []byte) (val uint64, beyond bool) {
+	if b[0] != mpUint64 {
+		return 0, false
+	}
+	val = binary.BigEndian.Uint64(b[1:])
+	return val, val > math.MaxInt64
+}
+
 func (r *messageParser) ParseDouble(b []byte) float64 {
 
 	code := b[0]

@@ -4,7 +4,52 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and the project aims to follow
 [Semantic Versioning](https://semver.org/).
 
-## v1.6.0 — unreleased
+## v1.6.1 — unreleased
+
+Unsigned integers above the range of a long keep their number.
+
+### Fixed
+
+- **`Marshal` of an unsigned field above `math.MaxInt64`** (`uint64`, `uint`)
+  wrote the negative long of the same bits: `uint64(1<<63)` went out as
+  `-9223372036854775808`, which another reader takes for a negative number and
+  `Unmarshal` with `Lossless()` refused ("overflows uint64"). The field is now
+  written as the big integer it is, in the encoding
+  [CANONICAL.md](CANONICAL.md#integers-long) already gives that number
+  (`c70901008000000000000000`). A value within the range of a long is written
+  as before.
+- **`Unpack` and `Read` of MessagePack's `uint 64` above the range of a long**
+  (`cf` with the top bit set), which a canonical writer never produces and
+  other MessagePack writers do, gave the negative long of the same bits. They
+  give the big integer of that number, which packs again canonically.
+- `ParseNumber` of an integer text beyond the range of a long
+  (`"18446744073709551615"`) gave the nearest double and gives the big integer
+  now; `GetNumber` and `GetNumberAt` on a string value use it.
+- `Number.BigInt()` of a decimal gave the coefficient of its floor: 1 for
+  `1e3`, and -2 for -1.5 where `Long()` gives -1. It gives the integer part,
+  rounded toward zero as `Long()` rounds.
+
+### Added
+
+- `Unsigned(uint64) Number`: the number of an unsigned integer, a long while it
+  fits one and a big integer above. `Long(int64(u))` is a negative number for
+  such a `u`.
+
+### Compatibility
+
+- **Stored data.** An unsigned field above the range of a long that an earlier
+  version wrote is a negative long. The default codec reads it back into an
+  unsigned field as before, since it wraps; the lossless codec refuses it, as
+  it always did. Reading with the default codec and writing again migrates it.
+- **Signatures and hashes.** The bytes of a value with such a field change, and
+  with them its `SignBytes`, `SignHash` and `Hash`: a signature an earlier
+  version made over one does not verify against the projection this version
+  builds. Fields within the range of a long are not affected.
+- **Earlier readers** read the new encoding: the lossless codec exactly, the
+  default codec through `Number.Long()` of the big integer, which is its low 64
+  bits.
+
+## v1.6.0 — 2026-11-10
 
 Lossless JSON.
 

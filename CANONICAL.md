@@ -68,6 +68,13 @@ Encoded in the **smallest** MessagePack integer form that fits the `int64` value
 (positive/negative fixint, then `int8/16/32/64` or `uint8/16/32/64`). Boundary
 encodings are pinned in `number_test.go`.
 
+A LONG is an `int64`. MessagePack's `uint 64` form (`cf`) also holds the integers
+from 2^63 to 2^64−1, and none of them is a LONG: a canonical writer packs such an
+integer as a BIGINT (2^63 is `c70901008000000000000000`). A decoder that meets
+one in the `uint 64` form, which other MessagePack writers produce, reads the
+BIGINT of that number, so that it packs again canonically; it never reads the
+negative `int64` of the same bits. (The Go decoder did before v1.6.1.)
+
 ### Floats (DOUBLE)
 
 Always encoded as 64-bit `float64` (`0xcb` + 8 bytes, big-endian IEEE-754) — never
@@ -232,6 +239,13 @@ codec truncates and wraps, as it always has):
 | `float32` | the same at 32 bits; a DOUBLE only when it is a float32 |
 | `decimal.Decimal` | always; a DOUBLE through its shortest text, and it must be finite (every codec) |
 | `big.Int`, `*big.Int` | the number is integral (every codec) |
+
+An unsigned field (`uint8` … `uint64`, `uint`) marshals as a LONG while its value
+fits one and as a BIGINT above, so that the number on the wire is the number the
+field holds: `uint64(2^64−1)` is `c7090100ffffffffffffffff`. Before v1.6.1 such a
+field was written as the negative LONG of the same bits; the default codec still
+reads that back into an unsigned field, since it wraps, and the lossless codec
+refuses it.
 
 `decimal.Decimal` and `big.Int` fields marshal as DECIMAL and BIGINT in every
 codec. `ExactInt`, `ExactUint`, `ExactFloat`, `ExactDecimal` and `ExactBigInt`

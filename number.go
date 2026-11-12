@@ -40,6 +40,16 @@ func Long(val int64) Number {
 	return longNumber(val)
 }
 
+// Unsigned returns the number of an unsigned integer: a long while it fits
+// one, and a big integer above the range of a long, so that the number is val
+// in both cases. Long(int64(val)) is a negative number for such a val.
+func Unsigned(val uint64) Number {
+	if val <= math.MaxInt64 {
+		return longNumber(val)
+	}
+	return bigIntNumber{new(big.Int).SetUint64(val)}
+}
+
 func Double(val float64) Number {
 	return doubleNumber(val)
 }
@@ -92,11 +102,18 @@ func ParseNumber(str string) Number {
 	long, err := strconv.ParseInt(str, 10, 64)
 	if err == nil {
 		return Long(long)
-	} else {
-		double, err := strconv.ParseFloat(str, 64)
-		if err == nil {
-			return Double(double)
+	}
+	// An integer beyond the range of a long is the big integer it spells; as
+	// a double it would lose its low digits.
+	if ne, ok := err.(*strconv.NumError); ok && ne.Err == strconv.ErrRange &&
+		(MaxDecimalExponent <= 0 || len(str) <= MaxDecimalExponent) {
+		if i, ok := new(big.Int).SetString(str, 10); ok {
+			return BigInt(i)
 		}
+	}
+	double, err := strconv.ParseFloat(str, 64)
+	if err == nil {
+		return Double(double)
 	}
 
 	return Nan
@@ -477,8 +494,10 @@ func (n bigIntNumber) BigInt() *big.Int {
 	return n.Int
 }
 
+// BigInt is the integer part, rounded toward zero as Long rounds. (It used to
+// be the coefficient of the floor: 1 for 1e3, and -2 for -1.5 where Long is -1.)
 func (n decimalNumber) BigInt() *big.Int {
-	return decimal.Decimal(n).Floor().Coefficient()
+	return decimal.Decimal(n).BigInt()
 }
 
 func (n longNumber) Decimal() decimal.Decimal {

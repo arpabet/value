@@ -7,6 +7,7 @@ package value
 
 import (
 	"crypto"
+	"math"
 	"math/big"
 	"reflect"
 	"strings"
@@ -138,7 +139,8 @@ func (c ValueCodec) StructFields(t reflect.Type) ([]StructField, error) {
 // Marshal converts a plain Go value (typically a struct) into the dynamic Value
 // model. Struct fields are mapped to a Map keyed by their `value:"name"` tag (or
 // the field name when untagged); a `value:"-"` tag skips the field. Go types map
-// as: bool→Bool, signed/unsigned ints→Number(long), floats→Number(double),
+// as: bool→Bool, signed ints→Number(long), unsigned ints→Number(long) or, above
+// the range of a long, Number(bigint), floats→Number(double),
 // string→String(utf8), []byte / [N]byte→String(raw), other slices/arrays→List,
 // map[string]T→Map, nested struct→Map. A field whose type already implements
 // Value is used as-is. A field tagged with the `omitempty` option (e.g.
@@ -325,7 +327,10 @@ func (c ValueCodec) toValue(rv reflect.Value) (Value, error) {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return Long(rv.Int()), nil
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return Long(int64(rv.Uint())), nil
+		// Above the range of a long the number is a big integer: the long of
+		// the same bits is a negative number, which is not what the field
+		// holds.
+		return Unsigned(rv.Uint()), nil
 	case reflect.Float32, reflect.Float64:
 		return Double(rv.Float()), nil
 	case reflect.String:
@@ -539,7 +544,7 @@ func (c ValueCodec) fromValue(v Value, rv reflect.Value) error {
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		if n, ok := v.(Number); ok {
 			if !c.lossless {
-				rv.SetUint(uint64(n.Long()))
+				rv.SetUint(wrapUnsigned(n))
 				return nil
 			}
 			u, err := ExactUint(n, rv.Type().Bits())
@@ -603,6 +608,25 @@ func (c ValueCodec) fromValue(v Value, rv reflect.Value) error {
 		}
 	}
 	return xerrors.Errorf("value: cannot unmarshal %s into %s", v.Kind(), rv.Type())
+}
+
+var maxUint64 = new(big.Int).SetUint64(math.MaxUint64)
+
+// wrapUnsigned is the default codec's conversion of a number into an unsigned
+// field. A big integer or a decimal gives the low 64 bits of its integer part,
+// so that one within the range of the field is that number; any other number
+// goes through Long, so that a negative long, which is how an unsigned field
+// above the range of a long was written before v1.6.1, wraps back into it.
+func wrapUnsigned(n Number) uint64 {
+	switch n.Type() {
+	case BIGINT, DECIMAL:
+		x := n.BigInt()
+		if x.IsUint64() {
+			return x.Uint64()
+		}
+		return new(big.Int).And(x, maxUint64).Uint64()
+	}
+	return uint64(n.Long())
 }
 
 func (c ValueCodec) mapFromValue(m Map, rv reflect.Value) error {
