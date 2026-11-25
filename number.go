@@ -349,9 +349,10 @@ func (n longNumber) PrintJSON(out *strings.Builder) {
 	out.WriteString(n.String())
 }
 
+// A double that is not a number, or not finite, has no JSON form: it is null.
 func (n doubleNumber) PrintJSON(out *strings.Builder) {
 	d := float64(n)
-	if math.IsNaN(d) {
+	if math.IsNaN(d) || math.IsInf(d, 0) {
 		out.WriteString("null")
 	} else {
 		out.WriteString(strconv.FormatFloat(d, 'f', -1, 64))
@@ -376,7 +377,7 @@ func (n longNumber) MarshalJSON() ([]byte, error) {
 
 func (n doubleNumber) MarshalJSON() ([]byte, error) {
 	d := float64(n)
-	if math.IsNaN(d) {
+	if math.IsNaN(d) || math.IsInf(d, 0) {
 		return []byte("null"), nil
 	} else {
 		return []byte(strconv.FormatFloat(d, 'f', -1, 64)), nil
