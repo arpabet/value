@@ -223,7 +223,15 @@ apply. Strings are written with only the escapes JSON requires (`"`, `\`, and
 control characters); a string that is not valid UTF-8 has no JSON form.
 
 `Jsonify` / `PrintJSON` keep their earlier, human-oriented rendering (below),
-which value-rpc's JSON wire codec speaks.
+which value-rpc's JSON wire codec speaks. It is JSON too, and since v1.6.2 for
+every value: text and map keys are quoted as Go's `strconv.Quote` quotes them
+wherever that is JSON (a printable character as it is, any other as `\uNNNN`),
+a control character that Go writes as `\a`, `\v` or `\xNN` is written `\u00NN`,
+a character beyond the basic plane that is not printable is written as its
+surrogate pair, a byte that is not UTF-8 is written as U+FFFD, and a double
+that is NaN or infinite is `null`. Unlike the lossless JSON it does not tell
+every kind apart: binary is a `base64,` string, a big integer or a decimal a
+hexadecimal string, a timestamp its RFC 3339 text, a sparse list an object.
 
 ## Numbers into Go fields
 

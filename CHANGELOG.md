@@ -4,6 +4,40 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and the project aims to follow
 [Semantic Versioning](https://semver.org/).
 
+## v1.6.2 — 2026-11-24
+
+`Jsonify` writes JSON for every value.
+
+### Fixed
+
+- **`Jsonify`, `PrintJSON` and `MarshalJSON` of text quoted it as a Go string
+  literal** (`strconv.Quote`), which is JSON for most text and not for all of
+  it: a control character came out as `\a`, `\v` or `\x1b`, a byte that is not
+  UTF-8 as `\xff`, and a character beyond the basic plane that is not printable
+  as `\U000e0001`. No JSON reader takes those, `encoding/json` and a browser's
+  `JSON.parse` included, so `json.Marshal` of such a value failed and a
+  value-rpc frame in the JSON wire codec that carried one was refused by the
+  peer. They are written `\u0007`, `\u000b`, `\u001b`, the surrogate pair
+  `\udb40\udc01`, and U+FFFD for a byte that is not UTF-8 (which has no JSON
+  form; `encoding/json` writes the same). Text that was rendered as JSON before
+  is rendered as it was, character for character.
+- **A map key was written between quotes with no escape at all**, so a key with
+  a quote, a backslash or a control character in it gave text that is not JSON,
+  and a quote ended the key early. A key is quoted as text is. A key without
+  such a character is written as before, but for one that is not printable
+  (a zero-width space, say), which is escaped now as it is in text.
+- **A double that is infinite** was written `+Inf` or `-Inf`. It is `null`, as
+  NaN already was. `String()` is unchanged (`+Inf`, `-Inf`, `NaN`).
+
+### Compatibility
+
+- The MessagePack bytes, the lossless JSON (`FormatJSON`, `ParseJSON`) and
+  `String()` of anything but a list or a map are untouched. `String()` of a
+  list or a map is its `Jsonify`, and changes with it.
+- A reader of the earlier rendering reads the new one: wherever the two differ,
+  the earlier one was not JSON, or was the unescaped form of the same key.
+- value-java mirrors the rendering from its v0.2.0.
+
 ## v1.6.1 — 2026-11-11
 
 Unsigned integers above the range of a long keep their number.

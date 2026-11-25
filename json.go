@@ -44,7 +44,8 @@ Decimal built from its exact text, integers included: 1 is Decimal 1 and 1.10
 keeps both digits.
 
 Jsonify and PrintJSON keep their earlier rendering, which value-rpc's JSON wire
-codec speaks.
+codec speaks. It is JSON as well (quoteJSON), but does not tell every kind
+apart.
 */
 
 // JSONMode selects how AppendJSON writes the kinds plain JSON lacks.

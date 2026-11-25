@@ -133,9 +133,7 @@ func (t sortedMapValue) PrintJSON(out *strings.Builder) {
 		if i != 0 {
 			out.WriteRune(',')
 		}
-		out.WriteRune(jsonQuote)
-		out.WriteString(entry.Key())
-		out.WriteRune(jsonQuote)
+		quoteJSON(out, entry.Key())
 
 		out.WriteString(": ")
 		value := entry.Value()
